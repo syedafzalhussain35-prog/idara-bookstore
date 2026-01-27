@@ -1,0 +1,46 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card shadow border-0">
+            {% if book.main_cover %}
+                <img src="{{ book.main_cover.url }}" class="img-fluid rounded" alt="{{ book.title }}">
+            {% else %}
+                <div class="bg-light text-center py-5">No Image Available</div>
+            {% endif %}
+        </div>
+        
+        <div class="d-flex mt-2 justify-content-center">
+            {% for img in book.images.all %}
+                <img src="{{ img.image.url }}" class="img-thumbnail me-2" style="height: 60px; width: 60px; object-fit: cover;">
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <h1 class="display-5 text-dark">{{ book.title }}</h1>
+        <h4 class="text-muted mb-3">{{ book.author }}</h4>
+        <h3 class="text-success fw-bold mb-4">₹{{ book.price }}</h3>
+        
+        <p class="lead">{{ book.description }}</p>
+
+        <hr>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'add_to_cart' book.id %}" class="btn btn-success btn-lg px-5 shadow-sm">Add to Cart 🛒</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary">Login to Buy</a>
+        {% endif %}
+        
+        <div class="mt-4 p-3 bg-light rounded small">
+            <strong>Stock Status:</strong> 
+            {% if book.stock > 0 %}
+                <span class="text-success">In Stock ({{ book.stock }} copies)</span>
+            {% else %}
+                <span class="text-danger">Out of Stock</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

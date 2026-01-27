@@ -1,0 +1,48 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <div class="card shadow border-0">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Shipping Details</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-success w-100 btn-lg mt-3">Place Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card bg-light border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="mb-3">Order Summary</h4>
+                <ul class="list-group list-group-flush bg-transparent">
+                    {% for item in cart.items.all %}
+                    <li class="list-group-item d-flex justify-content-between bg-transparent px-0">
+                        <div>
+                            <h6 class="my-0">{{ item.book.title }}</h6>
+                            <small class="text-muted">Qty: {{ item.quantity }}</small>
+                        </div>
+                        <span class="text-muted">₹{{ item.total_price }}</span>
+                    </li>
+                    {% endfor %}
+                    <li class="list-group-item d-flex justify-content-between bg-transparent px-0 fw-bold border-top mt-2 pt-2">
+                        <span>Total (INR)</span>
+                        <span class="text-success">₹{{ cart.items.all|length|yesno:"...,..." }} </span> 
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
