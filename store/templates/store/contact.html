@@ -1,0 +1,195 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Contact Us - Idara Kitab Ul Shifa{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Contact Section */
+    .contact-section {
+        background: linear-gradient(to right, #fce4ec, #ffe0b2);
+        text-align: center;
+        padding: 60px 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .contact-section h2 {
+        font-size: 38px;
+        color: var(--primary-magenta);
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .contact-section p {
+        font-size: 18px;
+        color: #444;
+        margin-bottom: 30px;
+    }
+
+    /* Contact Cards */
+    .contact-cards {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .contact-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.12);
+        width: 300px; /* Slightly wider for better fit */
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 2px solid var(--primary-magenta);
+    }
+
+    .contact-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .contact-card h3 {
+        font-size: 24px;
+        color: var(--primary-magenta);
+        margin-bottom: 12px;
+        font-weight: bold;
+    }
+
+    .contact-card p {
+        font-size: 15px; /* Adjusted for readability */
+        color: #333;
+        line-height: 1.5;
+        margin-bottom: 10px;
+        word-wrap: break-word;
+    }
+
+    /* Location Section */
+    .location-section {
+        background: #fff;
+        padding: 50px 20px;
+        text-align: center;
+        border-radius: 10px;
+    }
+
+    .location-section h2 {
+        font-size: 30px;
+        color: var(--primary-magenta);
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+
+    /* Locations in a Horizontal Line */
+    .locations-line {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 30px;
+        padding-bottom: 20px;
+    }
+
+    /* Location Box */
+    .location-box {
+        width: 350px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    /* Map Container */
+    .map-container {
+        width: 100%;
+        max-width: 350px;
+        margin: auto;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.12);
+        margin-bottom: 30px;
+        border: 2px solid var(--primary-magenta);
+    }
+
+    .map-container iframe {
+        width: 100%;
+        height: 300px;
+        border-radius: 12px;
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+        .locations-line {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .location-box {
+            width: 100%;
+        }
+
+        .contact-card {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="container my-5">
+    
+    <section class="contact-section">
+        <h2>Contact Us</h2>
+        <p>We're here to help! Reach out to us via email, phone, or visit our offices.</p>
+
+        <div class="contact-cards">
+            <div class="contact-card">
+                <h3>Main Branch</h3>
+                <p><strong>Email:</strong><br> idara.asad@gmail.com</p>
+                <p><strong>Phone:</strong><br> +91 9312273887</p>
+                <p><strong>Address:</strong><br> 2075, 1st Floor, Masjid Mazar Wali, Kucha Chelan, Darya Ganj, New Delhi-110002</p>
+            </div>
+
+            <div class="contact-card">
+                <h3>Branch 1</h3>
+                <p><strong>Email:</strong><br> idara.kitabusshifa@gmail.com</p>
+                <p><strong>Phone:</strong><br> +91 8700875706</p>
+                <p><strong>Address:</strong><br> C-424/1, Gali no. 7 Chauhan Bangar, Near Raza Masjid, Delhi - 110053</p>
+            </div>
+
+            <div class="contact-card">
+                <h3>Branch 2</h3>
+                <p><strong>Email:</strong><br> idara.asad@gmail.com</p>
+                <p><strong>Phone:</strong><br> +91 9312273887</p>
+                <p><strong>Address:</strong><br> L.G.F.-20, Ameethi House Building, Near P.O. Aminabad, Opp. Canara Bank, Lucknow- 226018</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="location-section">
+        <h2>📍 Our Locations</h2>
+        
+        <div class="locations-line">
+            <div class="location-box">
+                <h3>Darya Ganj</h3>
+                <div class="map-container">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.7699456637385!2d77.23886631508272!3d28.63665798241617!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd2d9c0a0a09%3A0x6b6f7b3a4a4a4a4a!2sDaryaganj%2C%20New%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1645000000000!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+            
+            <div class="location-box">
+                <h3>Jaffrabad/Chauhan Banger</h3>
+                <div class="map-container">
+                     <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3500.6710432345!2d77.2650!3d28.6692!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfc8b0b0b0b0b%3A0x0!2sChauhan%20Bangar!5e0!3m2!1sen!2sin!4v1645000000000" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+            
+            <div class="location-box">
+                <h3>Aminabad, Lucknow</h3>
+                <div class="map-container">
+                     <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3559.87654321!2d80.9250!3d26.8467!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sAminabad%2C%20Lucknow!5e0!3m2!1sen!2sin!4v1645000000000" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% load static %}
+
+<style>
+    /* Footer Base Styles */
+    footer {
+        background: linear-gradient(to right, #f0ee93, #ffe0b2);
+        padding: 40px 0 0 0;
+        color: #000000;
+        font-family: Arial, sans-serif;
+        font-size: 15px;
+        margin-top: auto;
+    }
+
+    /* Footer Container */
+    .footer-container {
+        display: flex;
+        justify-content: space-between;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px 30px 20px;
+    }
+
+    /* Footer Columns */
+    .footer-column {
+        width: 30%;
+    }
+
+    .footer-column h3 {
+        color: #f30c0c;
+        font-size: 18px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .footer-column ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .footer-column ul li {
+        margin-bottom: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .footer-column a {
+        color: #1b07cf;
+        text-decoration: none;
+    }
+
+    .footer-column a:hover {
+        text-decoration: underline;
+    }
+
+    /* Social Icons */
+    .social-icons {
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .social-icons a {
+        margin-right: 15px;
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+
+    .social-icons a:hover {
+        transform: scale(1.1);
+    }
+
+    .social-icons img {
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Footer Bottom */
+    .footer-bottom {
+        text-align: center;
+        padding: 15px;
+        background: #ce9b0e;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+    }
+
+    /* Mobile Styles */
+    @media screen and (max-width: 768px) {
+        .footer-container {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .footer-column {
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .social-icons {
+            justify-content: center;
+        }
+    }
+</style>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-column">
+            <h3>Why Us?</h3>
+            <ul>
+                <li>✅ 100% Original Products</li>
+                <li>🔒 Secure Online Payments</li>
+                <li>📦 Real-Time Tracking</li>
+                <li>📍 28,125+ Pin Codes in India</li>
+                <li>💰 COD Available (Selected Locations)</li>
+                <li>🎁 Earn Rewards on Referrals</li>
+                <li>🔄 5 Days Replacement Policy</li>
+            </ul>
+        </div>
+
+        <div class="footer-column">
+            <h3>Policy</h3>
+            <ul>
+                <li><a href="{% url 'home' %}">Refund Policy</a></li>
+                <li><a href="{% url 'home' %}">Shipping & Delivery Policy</a></li>
+                <li><a href="{% url 'home' %}">Privacy Policy</a></li>
+                <li><a href="{% url 'home' %}">Terms & Conditions</a></li>
+                <li><a href="{% url 'home' %}">Returns & Cancellations</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-column">
+            <h3>Contact Us</h3>
+            <p>📧 Email: <a href="mailto:idara.asad@gmail.com">idara.asad@gmail.com</a></p>
+            <p>📞 Phone: +91 9312273887</p>
+            <p>📍 New Delhi, India</p>
+            
+            <div class="social-icons">
+                <a href="https://wa.me/919312273887" target="_blank">
+                    <img src="{% static 'store/images/logo/whatsapp-icon.png' %}" alt="WhatsApp">
+                </a>
+                <a href="https://www.instagram.com/idara_kitab_ul_shifa/profilecard/?igshid=bnNtejlsOGF1aG9l" target="_blank">
+                    <img src="{% static 'store/images/logo/instagram-icon.png' %}" alt="Instagram">
+                </a>
+                <a href="https://www.facebook.com/share/19yzFoewKQ/?mibextid=wwXIfr" target="_blank">
+                    <img src="{% static 'store/images/logo/facebook-icon.png' %}" alt="Facebook">
+                </a> 
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        &copy; 2026 Idara Kitab Ul Shifa. All Rights Reserved.
+    </div>
+</footer>

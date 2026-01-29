@@ -1,8 +1,26 @@
 from django.db import models
-from django.contrib.auth.models import User  # <--- This line fixes your error!
+from django.contrib.auth.models import User
+from django.utils.text import slugify  # <--- Imported for auto-slugs
+
+# 0. NEW: Category Model
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True) # URL-friendly name (e.g., '1st-prof')
+    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
 # 1. Book Model
 class Book(models.Model):
+    # Link Book to Category
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='books')
+    
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
@@ -42,7 +60,7 @@ class CartItem(models.Model):
     def total_price(self):
         return self.quantity * self.book.price
 
-# 5. Order (New!)
+# 5. Order
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
@@ -56,7 +74,7 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
 
-# 6. Order Items (New!)
+# 6. Order Items
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
@@ -65,3 +83,12 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.book.title}"
+    
+# 7. Wishlist
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.book.title}"

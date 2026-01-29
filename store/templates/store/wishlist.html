@@ -1,0 +1,60 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist - Idara Kitab Ul Shifa{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4 fw-bold" style="color: var(--primary-magenta);">My Wishlist <i class="fas fa-heart"></i></h2>
+
+    {% if wishlist_items %}
+        <div class="row">
+            {% for item in wishlist_items %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card shadow-sm h-100 border-0">
+                    <div class="row g-0 align-items-center">
+                        <div class="col-4 text-center p-2">
+                            {% if item.book.image %}
+                                <img src="{{ item.book.image.url }}" class="img-fluid rounded" alt="{{ item.book.title }}" style="max-height: 120px;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 120px;">
+                                    <i class="fas fa-book fa-2x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-8">
+                            <div class="card-body py-2">
+                                <h6 class="card-title fw-bold mb-1">{{ item.book.title }}</h6>
+                                <p class="text-muted small mb-1">{{ item.book.author }}</p>
+                                <p class="fw-bold mb-2" style="color: var(--primary-magenta);">₹{{ item.book.price }}</p>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'add_to_cart' item.book.id %}" class="btn btn-sm btn-dark flex-grow-1">
+                                        <i class="fas fa-shopping-cart"></i> Add
+                                    </a>
+                                    <a href="{% url 'remove_from_wishlist' item.book.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="far fa-heart fa-4x text-muted"></i>
+            </div>
+            <h4 class="text-muted">Your wishlist is empty</h4>
+            <p class="text-muted">Save items you like to check them out later.</p>
+            <a href="{% url 'home' %}" class="btn mt-3 text-white fw-bold px-4" style="background-color: var(--primary-magenta);">
+                Start Shopping
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

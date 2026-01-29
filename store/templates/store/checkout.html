@@ -1,124 +1,129 @@
 {% extends 'store/base.html' %}
 {% load static %}
 
+{% block title %}Checkout - Idara Kitab Ul Shifa{% endblock %}
+
 {% block content %}
-<div class="container my-5">
-    <div class="row g-5">
-        
-        <div class="col-md-7 col-lg-8">
-            <h4 class="mb-3 fw-bold" style="color: var(--primary-magenta);">Shipping Address</h4>
-            <div class="card shadow-sm border-0 rounded-3">
+<div class="container py-5">
+    <h2 class="mb-4 fw-bold" style="color: var(--primary-magenta);">Checkout <i class="fas fa-check-circle"></i></h2>
+
+    <div class="row">
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header text-white py-3" style="background-color: var(--primary-magenta);">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-shipping-fast me-2"></i>Shipping Details</h5>
+                </div>
                 <div class="card-body p-4">
-                    <form id="form">
-                        <div id="shipping-info">
-                            <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <label class="form-label">First Name</label>
-                                    <input type="text" class="form-control" name="address" placeholder="Enter name" required>
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">Mobile Number</label>
-                                    <input type="text" class="form-control" name="city" placeholder="10-digit mobile" required>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Full Address</label>
-                                    <input type="text" class="form-control" name="state" placeholder="House No, Street, Area" required>
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label">City</label>
-                                    <input type="text" class="form-control" name="zipcode" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">State</label>
-                                    <input type="text" class="form-control" name="country" placeholder="e.g. Delhi" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Pincode</label>
-                                    <input type="text" class="form-control" name="zipcode" required>
-                                </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Full Name</label>
+                            {{ form.full_name }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Address</label>
+                            {{ form.address }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">City</label>
+                                {{ form.city }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Zip Code</label>
+                                {{ form.zip_code }}
                             </div>
                         </div>
 
                         <hr class="my-4">
 
-                        <button id="form-button" class="btn btn-custom w-100 btn-lg rounded-pill" type="submit">
-                            Continue to Payment
+                        <h5 class="fw-bold mb-3" style="color: var(--primary-magenta);">Payment Method</h5>
+                        <div class="p-3 border rounded bg-light mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="cod" checked>
+                                <label class="form-check-label fw-bold" for="cod">
+                                    Cash on Delivery (COD)
+                                </label>
+                                <div class="text-muted small mt-1">Pay with cash upon arrival.</div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-lg w-100 mt-2 text-white fw-bold shadow-sm" style="background-color: var(--primary-magenta);">
+                            Place Order
                         </button>
                     </form>
                 </div>
             </div>
-            
-            <div class="box-element hidden mt-4 p-4 shadow-sm bg-white rounded border" id="payment-info">
-                <h5 class="fw-bold mb-3">Payment Options</h5>
-                <small class="text-muted d-block mb-3">Select a payment method:</small>
-                
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-success" id="make-payment">
-                        <i class="fab fa-whatsapp me-2"></i> Order via WhatsApp (COD)
-                    </button>
-                    </div>
-            </div>
         </div>
 
-        <div class="col-md-5 col-lg-4">
-            <h4 class="d-flex justify-content-between align-items-center mb-3">
-                <span class="fw-bold" style="color: var(--primary-magenta);">Your Cart</span>
-                <span class="badge rounded-pill bg-dark">{{ order.get_cart_items }}</span>
-            </h4>
-            <div class="card shadow-sm border-0 rounded-3">
-                <ul class="list-group list-group-flush">
-                    {% for item in items %}
-                    <li class="list-group-item d-flex justify-content-between lh-sm py-3">
-                        <div>
-                            <h6 class="my-0 text-dark fw-bold">{{ item.product.title }}</h6>
-                            <small class="text-muted">Qty: {{ item.quantity }}</small>
-                        </div>
-                        <span class="text-muted">₹{{ item.get_total|floatform:0 }}</span>
-                    </li>
-                    {% endfor %}
-                    
-                    <li class="list-group-item d-flex justify-content-between py-3 bg-light">
-                        <span class="fw-bold text-dark">Total (INR)</span>
-                        <strong style="color: var(--primary-magenta);">₹{{ order.get_cart_total|floatform:0 }}</strong>
-                    </li>
-                </ul>
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-header py-3" style="background-color: var(--accent-gold);">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-clipboard-list me-2"></i>Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for item in cart.items.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 position-relative">
+                                    {% if item.book.main_cover %}
+                                        <img src="{{ item.book.main_cover.url }}" class="rounded" style="width: 50px; height: 60px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 60px;">
+                                            <i class="fas fa-book text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                                        {{ item.quantity }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="my-0 small fw-bold text-dark">{{ item.book.title }}</h6>
+                                    <small class="text-muted">₹{{ item.book.price }} each</small>
+                                </div>
+                            </div>
+                            <span class="fw-bold item-price" data-price="{{ item.total_price }}">₹{{ item.total_price }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Subtotal</span>
+                        <span id="subtotal">₹0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>Shipping</span>
+                        <span>Free</span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                        <span class="h5 fw-bold">Total</span>
+                        <span class="h5 fw-bold" style="color: var(--primary-magenta);" id="grandTotal">₹0</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script type="text/javascript">
-    var form = document.getElementById('form')
-    var total = '{{order.get_cart_total}}'
-
-    // Show Payment Options on Submit
-    form.addEventListener('submit', function(e){
-        e.preventDefault()
-        console.log('Form Submitted...')
-        document.getElementById('form-button').classList.add("d-none");
-        document.getElementById('payment-info').classList.remove("d-none");
-    })
-
-    // Handle WhatsApp Order
-    document.getElementById('make-payment').addEventListener('click', function(e){
-        var address = form.address.value; // Taking value from "address" input
-        var mobile = form.city.value;     // Taking value from "mobile" input
+<script>
+    // Simple JavaScript to calculate totals on the client side
+    document.addEventListener("DOMContentLoaded", function() {
+        let total = 0;
+        document.querySelectorAll('.item-price').forEach(function(el) {
+            // Get price from data attribute
+            let price = parseFloat(el.getAttribute('data-price'));
+            total += price;
+        });
         
-        // Create WhatsApp Message
-        var msg = "Assalamoalaikum, I want to order books from your website.\n";
-        msg += "Total Amount: ₹" + total + "\n";
-        msg += "Name: " + form.address.value + "\n"; // Just using the inputs as example
-        msg += "Address: " + address + "\n";
-        
-        var url = "https://wa.me/919312273887?text=" + encodeURIComponent(msg);
-        window.open(url, '_blank');
-        
-        // In a real app, you would also save this order to your DB via fetch() here
-        // submitFormData()
-    })
+        // Update HTML
+        document.getElementById('subtotal').innerText = "₹" + total.toFixed(2);
+        document.getElementById('grandTotal').innerText = "₹" + total.toFixed(2);
+    });
 </script>
-
-<style>
-    .hidden { display: none!important; }
-</style>
 {% endblock %}

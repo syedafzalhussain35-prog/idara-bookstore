@@ -1,0 +1,91 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Idara Kitab Ul Shifa{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center py-5">
+                    <div class="mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                             style="width: 100px; height: 100px; background-color: var(--accent-gold); color: var(--primary-magenta);">
+                            <span class="display-4 fw-bold">{{ user.username.0|upper }}</span>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold">{{ user.username }}</h4>
+                    <p class="text-muted mb-4">{{ user.email }}</p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'wishlist' %}" class="btn btn-outline-dark">
+                            <i class="far fa-heart me-2"></i> My Wishlist
+                        </a>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h3 class="fw-bold mb-4" style="color: var(--primary-magenta);">Order History</h3>
+
+            {% if orders %}
+                <div class="card shadow-sm border-0">
+                    <ul class="list-group list-group-flush">
+                        {% for order in orders %}
+                        <li class="list-group-item p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-1">Order #{{ order.id }}</h5>
+                                    <small class="text-muted">Placed on: {{ order.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <span class="badge bg-success rounded-pill px-3">
+                                    {% if order.is_paid %}Paid{% else %}COD{% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="bg-light p-3 rounded mb-2">
+                                {% for item in order.items.all %}
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>{{ item.quantity }} x {{ item.book.title }}</span>
+                                    <span class="fw-bold">₹{{ item.price }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <span class="text-muted me-2">Total Amount:</span>
+                                    <span class="h5 fw-bold" style="color: var(--primary-magenta);">₹{{ order.total_cost }}</span>
+                                </div>
+                                <small class="text-muted">Status: Processing</small>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="card shadow-sm border-0 py-5 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5>No orders yet</h5>
+                        <p class="text-muted">Once you place an order, it will appear here.</p>
+                        <a href="{% url 'home' %}" class="btn btn-sm text-white fw-bold px-4" style="background-color: var(--primary-magenta);">
+                            Browse Books
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
