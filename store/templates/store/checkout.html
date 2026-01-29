@@ -5,53 +5,88 @@
 
 {% block content %}
 <div class="container py-5">
-    <h2 class="mb-4 fw-bold" style="color: var(--primary-magenta);">Checkout <i class="fas fa-check-circle"></i></h2>
+    <h2 class="mb-4 fw-bold" style="color: var(--primary-magenta);">
+        Checkout <i class="fas fa-check-circle"></i>
+    </h2>
 
     <div class="row">
+        <!-- ================= LEFT : FORM ================= -->
         <div class="col-md-7 mb-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header text-white py-3" style="background-color: var(--primary-magenta);">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-shipping-fast me-2"></i>Shipping Details</h5>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-shipping-fast me-2"></i>Shipping Details
+                    </h5>
                 </div>
+
                 <div class="card-body p-4">
                     <form method="post">
                         {% csrf_token %}
-                        
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Full Name</label>
                             {{ form.full_name }}
+                            {{ form.full_name.errors }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            {{ form.email }}
+                            {{ form.email.errors }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mobile Number</label>
+                            {{ form.mobile }}
+                            {{ form.mobile.errors }}
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Address</label>
                             {{ form.address }}
+                            {{ form.address.errors }}
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">City</label>
                                 {{ form.city }}
+                                {{ form.city.errors }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Zip Code</label>
                                 {{ form.zip_code }}
+                                {{ form.zip_code.errors }}
                             </div>
                         </div>
 
                         <hr class="my-4">
 
-                        <h5 class="fw-bold mb-3" style="color: var(--primary-magenta);">Payment Method</h5>
+                        <h5 class="fw-bold mb-3" style="color: var(--primary-magenta);">
+                            Payment Method
+                        </h5>
+
                         <div class="p-3 border rounded bg-light mb-3">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment" id="cod" checked>
-                                <label class="form-check-label fw-bold" for="cod">
+                                <input class="form-check-input" type="radio" checked>
+                                <label class="form-check-label fw-bold">
                                     Cash on Delivery (COD)
                                 </label>
-                                <div class="text-muted small mt-1">Pay with cash upon arrival.</div>
+                                <div class="text-muted small mt-1">
+                                    Pay with cash upon arrival.
+                                </div>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-lg w-100 mt-2 text-white fw-bold shadow-sm" style="background-color: var(--primary-magenta);">
+                        <button type="submit"
+                                class="btn btn-lg w-100 mt-2 text-white fw-bold shadow-sm"
+                                style="background-color: var(--primary-magenta);">
                             Place Order
                         </button>
                     </form>
@@ -59,11 +94,15 @@
             </div>
         </div>
 
+        <!-- ================= RIGHT : SUMMARY ================= -->
         <div class="col-md-5">
             <div class="card shadow-sm border-0 bg-white">
                 <div class="card-header py-3" style="background-color: var(--accent-gold);">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-clipboard-list me-2"></i>Order Summary</h5>
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-clipboard-list me-2"></i>Order Summary
+                    </h5>
                 </div>
+
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
                         {% for item in cart.items.all %}
@@ -71,9 +110,12 @@
                             <div class="d-flex align-items-center">
                                 <div class="me-3 position-relative">
                                     {% if item.book.main_cover %}
-                                        <img src="{{ item.book.main_cover.url }}" class="rounded" style="width: 50px; height: 60px; object-fit: cover;">
+                                        <img src="{{ item.book.main_cover.url }}"
+                                             class="rounded"
+                                             style="width: 50px; height: 60px; object-fit: cover;">
                                     {% else %}
-                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 60px;">
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 60px;">
                                             <i class="fas fa-book text-muted"></i>
                                         </div>
                                     {% endif %}
@@ -81,12 +123,21 @@
                                         {{ item.quantity }}
                                     </span>
                                 </div>
+
                                 <div>
-                                    <h6 class="my-0 small fw-bold text-dark">{{ item.book.title }}</h6>
-                                    <small class="text-muted">₹{{ item.book.price }} each</small>
+                                    <h6 class="my-0 small fw-bold text-dark">
+                                        {{ item.book.title }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        ₹{{ item.book.price }} each
+                                    </small>
                                 </div>
                             </div>
-                            <span class="fw-bold item-price" data-price="{{ item.total_price }}">₹{{ item.total_price }}</span>
+
+                            <span class="fw-bold item-price"
+                                  data-price="{{ item.total_price }}">
+                                ₹{{ item.total_price }}
+                            </span>
                         </li>
                         {% endfor %}
                     </ul>
@@ -95,15 +146,21 @@
 
                     <div class="d-flex justify-content-between mb-2 text-muted">
                         <span>Subtotal</span>
-                        <span id="subtotal">₹0</span>
+                        <span id="subtotal">₹0.00</span>
                     </div>
+
                     <div class="d-flex justify-content-between mb-2 text-success">
                         <span>Shipping</span>
                         <span>Free</span>
                     </div>
+
                     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
                         <span class="h5 fw-bold">Total</span>
-                        <span class="h5 fw-bold" style="color: var(--primary-magenta);" id="grandTotal">₹0</span>
+                        <span class="h5 fw-bold"
+                              style="color: var(--primary-magenta);"
+                              id="grandTotal">
+                            ₹0.00
+                        </span>
                     </div>
                 </div>
             </div>
@@ -112,18 +169,13 @@
 </div>
 
 <script>
-    // Simple JavaScript to calculate totals on the client side
-    document.addEventListener("DOMContentLoaded", function() {
-        let total = 0;
-        document.querySelectorAll('.item-price').forEach(function(el) {
-            // Get price from data attribute
-            let price = parseFloat(el.getAttribute('data-price'));
-            total += price;
-        });
-        
-        // Update HTML
-        document.getElementById('subtotal').innerText = "₹" + total.toFixed(2);
-        document.getElementById('grandTotal').innerText = "₹" + total.toFixed(2);
+document.addEventListener("DOMContentLoaded", function () {
+    let total = 0;
+    document.querySelectorAll('.item-price').forEach(function (el) {
+        total += parseFloat(el.dataset.price);
     });
+    document.getElementById('subtotal').innerText = "₹" + total.toFixed(2);
+    document.getElementById('grandTotal').innerText = "₹" + total.toFixed(2);
+});
 </script>
 {% endblock %}

@@ -5,20 +5,29 @@ Django settings for idara_project project.
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# --------------------------------------------------
+# BASE DIRECTORY
+# --------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# --------------------------------------------------
+# SECURITY
+# --------------------------------------------------
 SECRET_KEY = 'django-insecure-zu30#9m=k&%gnan4gpdw=k&$jy%q@0cvf6zji+s#y(zk*8ss@='
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Updated for PythonAnywhere deployment
-ALLOWED_HOSTS = ['syedafzalhussain35.pythonanywhere.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [
+    'syedafzalhussain35.pythonanywhere.com',
+    '127.0.0.1',
+    'localhost'
+]
 
-# Application definition
+
+# --------------------------------------------------
+# APPLICATIONS
+# --------------------------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -26,10 +35,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    'store', # Your Store App
+
+    'store',  # Your app
 ]
 
+
+# --------------------------------------------------
+# MIDDLEWARE
+# --------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -40,27 +53,43 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'idara_project.urls'
 
+# --------------------------------------------------
+# URL & WSGI
+# --------------------------------------------------
+ROOT_URLCONF = 'idara_project.urls'
+WSGI_APPLICATION = 'idara_project.wsgi.application'
+
+
+# --------------------------------------------------
+# TEMPLATES
+# --------------------------------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+
+        # ✅ Recommended: global templates folder (optional but good)
+        'DIRS': [BASE_DIR / 'templates'],
+
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # ✅ VERY IMPORTANT (for {{ MEDIA_URL }})
+                'django.template.context_processors.media',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'idara_project.wsgi.application'
 
-
-# Database
+# --------------------------------------------------
+# DATABASE
+# --------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -69,48 +98,67 @@ DATABASES = {
 }
 
 
-# Password validation
+# --------------------------------------------------
+# PASSWORD VALIDATION
+# --------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
-    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
-    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
-    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
-# Internationalization
+# --------------------------------------------------
+# INTERNATIONALIZATION
+# --------------------------------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+# --------------------------------------------------
+# STATIC FILES
+# --------------------------------------------------
+STATIC_URL = '/static/'   # ✅ FIXED (leading slash)
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# Additional locations of static files
+
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# Media Files (Images) Configuration
+
+# --------------------------------------------------
+# MEDIA FILES (Gallery Images & Videos)
+# --------------------------------------------------
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
+
+# --------------------------------------------------
+# DEFAULT PRIMARY KEY
+# --------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# --- 📧 EMAIL CONFIGURATION (LIVE) ---
-# Using your provided Gmail ID and App Password
+# --------------------------------------------------
+# EMAIL CONFIGURATION
+# --------------------------------------------------
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
 EMAIL_HOST_USER = 'idara.kitabulshifa@gmail.com'
-EMAIL_HOST_PASSWORD = 'mkbj dvfj croa puia' 
+EMAIL_HOST_PASSWORD = 'mkbj dvfj croa puia'  # ⚠️ move to env later
+
 DEFAULT_FROM_EMAIL = 'Idara Kitab Ul Shifa <idara.kitabulshifa@gmail.com>'
 
-# Login Redirects
+
+# --------------------------------------------------
+# AUTH REDIRECTS
+# --------------------------------------------------
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'

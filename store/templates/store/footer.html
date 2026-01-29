@@ -1,26 +1,24 @@
 {% load static %}
 
 <style>
-    /* Footer Base Styles */
+    /* ================= FOOTER BASE ================= */
     footer {
         background: linear-gradient(to right, #f0ee93, #ffe0b2);
         padding: 40px 0 0 0;
-        color: #000000;
+        color: #000;
         font-family: Arial, sans-serif;
         font-size: 15px;
         margin-top: auto;
     }
 
-    /* Footer Container */
     .footer-container {
         display: flex;
         justify-content: space-between;
         max-width: 1200px;
         margin: 0 auto;
-        padding: 0 20px 30px 20px;
+        padding: 0 20px 30px;
     }
 
-    /* Footer Columns */
     .footer-column {
         width: 30%;
     }
@@ -52,16 +50,16 @@
         text-decoration: underline;
     }
 
-    /* Social Icons */
+    /* ================= SOCIAL ICONS ================= */
     .social-icons {
         margin-top: 15px;
         display: flex;
         align-items: center;
+        gap: 15px;
     }
-    
+
     .social-icons a {
-        margin-right: 15px;
-        display: inline-block;
+        display: inline-flex;
         transition: transform 0.2s;
     }
 
@@ -74,18 +72,18 @@
         height: 30px;
     }
 
-    /* Footer Bottom */
+    /* ================= FOOTER BOTTOM ================= */
     .footer-bottom {
         text-align: center;
         padding: 15px;
         background: #ce9b0e;
         font-size: 16px;
         font-weight: bold;
-        color: white;
+        color: #fff;
     }
 
-    /* Mobile Styles */
-    @media screen and (max-width: 768px) {
+    /* ================= MOBILE ================= */
+    @media (max-width: 768px) {
         .footer-container {
             flex-direction: column;
             align-items: center;
@@ -105,6 +103,8 @@
 
 <footer>
     <div class="footer-container">
+
+        <!-- WHY US -->
         <div class="footer-column">
             <h3>Why Us?</h3>
             <ul>
@@ -118,38 +118,43 @@
             </ul>
         </div>
 
+        <!-- POLICY -->
         <div class="footer-column">
             <h3>Policy</h3>
             <ul>
-                <li><a href="{% url 'home' %}">Refund Policy</a></li>
-                <li><a href="{% url 'home' %}">Shipping & Delivery Policy</a></li>
-                <li><a href="{% url 'home' %}">Privacy Policy</a></li>
-                <li><a href="{% url 'home' %}">Terms & Conditions</a></li>
-                <li><a href="{% url 'home' %}">Returns & Cancellations</a></li>
+                <li><a href="{% url 'refund' %}">Refund Policy</a></li>
+                <li><a href="{% url 'shipping' %}">Shipping & Delivery Policy</a></li>
+                <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
+                <li><a href="{% url 'terms' %}">Terms & Conditions</a></li>
+                <li><a href="{% url 'returns' %}">Returns & Cancellations</a></li>
             </ul>
         </div>
 
+        <!-- CONTACT -->
         <div class="footer-column">
             <h3>Contact Us</h3>
             <p>📧 Email: <a href="mailto:idara.asad@gmail.com">idara.asad@gmail.com</a></p>
             <p>📞 Phone: +91 9312273887</p>
             <p>📍 New Delhi, India</p>
-            
+
             <div class="social-icons">
-                <a href="https://wa.me/919312273887" target="_blank">
-                    <img src="{% static 'store/images/logo/whatsapp-icon.png' %}" alt="WhatsApp">
+                <a href="https://www.facebook.com/idarakitabulshifa" target="_blank" aria-label="Facebook">
+                    <img src="{% static 'store/images/socialmedia/facebook-icon.png' %}" alt="Facebook">
                 </a>
-                <a href="https://www.instagram.com/idara_kitab_ul_shifa/profilecard/?igshid=bnNtejlsOGF1aG9l" target="_blank">
-                    <img src="{% static 'store/images/logo/instagram-icon.png' %}" alt="Instagram">
+
+                <a href="https://www.instagram.com/idara_kitab_ul_shifa/" target="_blank" aria-label="Instagram">
+                    <img src="{% static 'store/images/socialmedia/instagram-icon.png' %}" alt="Instagram">
                 </a>
-                <a href="https://www.facebook.com/share/19yzFoewKQ/?mibextid=wwXIfr" target="_blank">
-                    <img src="{% static 'store/images/logo/facebook-icon.png' %}" alt="Facebook">
-                </a> 
+
+                <a href="https://wa.me/919312273887" target="_blank" aria-label="WhatsApp">
+                    <img src="{% static 'store/images/socialmedia/whatsapp-icon.png' %}" alt="WhatsApp">
+                </a>
             </div>
         </div>
+
     </div>
-    
+
     <div class="footer-bottom">
-        &copy; 2026 Idara Kitab Ul Shifa. All Rights Reserved.
+        © 2026 Idara Kitab Ul Shifa. All Rights Reserved.
     </div>
 </footer>

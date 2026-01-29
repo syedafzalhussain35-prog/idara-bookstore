@@ -1,0 +1,152 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Gallery | Idara Kitab Ul Shifa{% endblock %}
+
+{% block content %}
+
+<style>
+/* ================= GALLERY PAGE ================= */
+
+.gallery-wrapper {
+    max-width: 1200px;
+    margin: auto;
+    padding: 50px 20px;
+}
+
+.gallery-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.gallery-header h1 {
+    color: var(--primary-magenta);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.gallery-header p {
+    color: #555;
+    font-size: 16px;
+}
+
+/* ================= EVENT SECTION ================= */
+
+.event-section {
+    margin-bottom: 70px;
+}
+
+.event-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #222;
+    border-left: 6px solid var(--primary-magenta);
+    padding-left: 15px;
+    margin-bottom: 25px;
+}
+
+/* ================= MEDIA GRID ================= */
+
+.gallery-media {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    align-items: start;
+}
+
+/* Media Card */
+.media-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    padding: 10px;
+}
+
+/* Images */
+.media-card img {
+    width: 100%;
+    height: auto;
+    max-height: 260px;
+    object-fit: contain;   /* ✅ NO CROPPING */
+    display: block;
+}
+
+/* Videos */
+.media-card video {
+    width: 100%;
+    height: 260px;
+    object-fit: contain;   /* ✅ NO CROPPING */
+    display: block;
+    background: #000;
+    border-radius: 8px;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+    .gallery-wrapper {
+        padding: 30px 15px;
+    }
+
+    .event-title {
+        font-size: 22px;
+    }
+}
+</style>
+
+<div class="gallery-wrapper">
+
+    <!-- ================= HEADER ================= -->
+    <div class="gallery-header">
+        <h1>Event Gallery</h1>
+        <p>Moments from conferences, book fairs, and academic events</p>
+    </div>
+
+    <!-- ================= UDMA 2023 ================= -->
+    <section class="event-section">
+        <div class="event-title">UDMA 2023</div>
+
+        <div class="gallery-media">
+            <div class="media-card">
+                <img src="{{ MEDIA_URL }}gallery/udma2023/image1.jpg" alt="UDMA 2023">
+            </div>
+
+            <div class="media-card">
+                <img src="{{ MEDIA_URL }}gallery/udma2023/image2.jpg" alt="UDMA 2023">
+            </div>
+
+            <div class="media-card">
+                <video controls>
+                    <source src="{{ MEDIA_URL }}gallery/udma2023/video1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= UDMA 2024 ================= -->
+    <section class="event-section">
+        <div class="event-title">UDMA 2024</div>
+
+        <div class="gallery-media">
+            <div class="media-card">
+                <img src="{{ MEDIA_URL }}gallery/udma2024/img1.jpg" alt="UDMA 2024">
+            </div>
+
+            <div class="media-card">
+                <img src="{{ MEDIA_URL }}gallery/udma2024/img2.jpg" alt="UDMA 2024">
+            </div>
+
+            <div class="media-card">
+                <video controls>
+                    <source src="{{ MEDIA_URL }}gallery/udma2024/inauguration.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

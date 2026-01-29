@@ -1,180 +1,287 @@
 {% extends 'store/base.html' %}
 {% load static %}
 
-{% block content %}
-
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
 <style>
-    .swiper { width: 100%; height: 350px; }
-    .swiper-slide {
-        display: flex; justify-content: center; align-items: center;
-        background-color: #eee; 
+    /* ================= HERO / SLIDER ================= */
+    .hero-section {
+        width: 100%;
+        height: 380px;
+        overflow: hidden;
+        background: #f5f5f5;
     }
-    .swiper-slide img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* CATEGORY GRID STYLING */
+    .swiper {
+        width: 100%;
+        height: 100%;
+    }
+
+    .swiper-slide {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #eee;
+    }
+
+    .swiper-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ================= CATEGORY GRID ================= */
     .category-card {
         transition: transform 0.3s, box-shadow 0.3s;
         border: 1px solid #eee;
+        background: #fff;
         text-decoration: none;
-        display: block;
-        background: white;
     }
+
     .category-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(189, 24, 89, 0.15) !important;
+        transform: translateY(-6px);
+        box-shadow: 0 12px 22px rgba(189, 24, 89, 0.15);
         border-color: var(--accent-gold);
     }
+
     .cat-img-box {
         height: 120px;
         background: #f8f9fa;
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
     }
+
     .cat-img-box img {
         max-height: 80%;
         max-width: 80%;
         object-fit: contain;
     }
+
     .cat-title {
         font-weight: 600;
-        color: #333;
         font-size: 0.9rem;
+        color: #333;
     }
+
+    /* ================= BOOK CARDS ================= */
     .wishlist-btn {
         transition: transform 0.2s, background-color 0.2s;
     }
+
     .wishlist-btn:hover {
         transform: scale(1.1);
-        background-color: #ffe6f0; 
+        background-color: #ffe6f0;
+    }
+
+    .btn-custom {
+        background: var(--primary-magenta);
+        color: #fff;
+        border: none;
+    }
+
+    .btn-custom:hover {
+        background: #9c1248;
+        color: #fff;
     }
 </style>
+{% endblock %}
 
-<div class="swiper mySwiper">
-    <div class="swiper-wrapper">
-        <div class="swiper-slide"><img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Slide 1"></div>
-        <div class="swiper-slide"><img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Slide 2"></div>
-        <div class="swiper-slide"><img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Slide 3"></div>
-        <div class="swiper-slide"><img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Slide 4"></div>
-        <div class="swiper-slide"><img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Slide 5"></div>
+{% block content %}
+
+<!-- ================= HERO SLIDER ================= -->
+<section class="hero-section">
+    <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Banner 1">
+            </div>
+            <div class="swiper-slide">
+                <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Banner 2">
+            </div>
+            <div class="swiper-slide">
+                <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Banner 3">
+            </div>
+            <div class="swiper-slide">
+                <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Banner 4">
+            </div>
+            <div class="swiper-slide">
+                <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Banner 5">
+            </div>
+        </div>
+
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
     </div>
-    <div class="swiper-button-next"></div>
-    <div class="swiper-button-prev"></div>
-    <div class="swiper-pagination"></div>
-</div>
+</section>
 
-<div class="container my-5">
-    
+<!-- ================= CATEGORY SECTION ================= -->
+<section class="container my-5">
+
     <div class="text-center mb-4">
-        <h2 class="fw-bold" style="color: var(--primary-magenta);">Explore by Category</h2>
-        <p class="text-muted">Select your course to find relevant books quickly</p>
+        <h2 class="fw-bold" style="color: var(--primary-magenta);">
+            Explore by Category
+        </h2>
+        <p class="text-muted">
+            Select your course to find relevant books quickly
+        </p>
     </div>
 
     <div class="row g-3 justify-content-center mb-5">
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{% url 'home' %}?category=1st-first-prof" class="card category-card h-100 shadow-sm border-0 text-center">
-                <div class="cat-img-box"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt="1st Prof"></div>
-                <div class="card-body py-2"><p class="cat-title mb-0">1st Prof Books</p></div>
+            <a href="{% url 'home' %}?category=1st-first-prof" class="card category-card text-center h-100">
+                <div class="cat-img-box">
+                    <img src="{% static 'store/images/categories/firstprof.jpg' %}">
+                </div>
+                <div class="card-body py-2">
+                    <p class="cat-title mb-0">1st Prof Books</p>
+                </div>
             </a>
         </div>
+
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{% url 'home' %}?category=2nd-second-prof" class="card category-card h-100 shadow-sm border-0 text-center">
-                <div class="cat-img-box"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt="2nd Prof"></div>
-                <div class="card-body py-2"><p class="cat-title mb-0">2nd Prof Books</p></div>
+            <a href="{% url 'home' %}?category=2nd-second-prof" class="card category-card text-center h-100">
+                <div class="cat-img-box">
+                    <img src="{% static 'store/images/categories/secondprof.jpg' %}">
+                </div>
+                <div class="card-body py-2">
+                    <p class="cat-title mb-0">2nd Prof Books</p>
+                </div>
             </a>
         </div>
+
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{% url 'home' %}?category=3rd-final-prof" class="card category-card h-100 shadow-sm border-0 text-center">
-                <div class="cat-img-box"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt="3rd Prof"></div>
-                <div class="card-body py-2"><p class="cat-title mb-0">3rd Prof Books</p></div>
+            <a href="{% url 'home' %}?category=3rd-final-prof" class="card category-card text-center h-100">
+                <div class="cat-img-box">
+                    <img src="{% static 'store/images/categories/thirdprof.jpg' %}">
+                </div>
+                <div class="card-body py-2">
+                    <p class="cat-title mb-0">3rd Prof Books</p>
+                </div>
             </a>
         </div>
+
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{% url 'home' %}?category=masters-or-pg" class="card category-card h-100 shadow-sm border-0 text-center">
-                <div class="cat-img-box"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt="MD Books"></div>
-                <div class="card-body py-2"><p class="cat-title mb-0">MD & PG Books</p></div>
+            <a href="{% url 'home' %}?category=masters-or-pg" class="card category-card text-center h-100">
+                <div class="cat-img-box">
+                    <img src="{% static 'store/images/categories/mdbooks.jpg' %}">
+                </div>
+                <div class="card-body py-2">
+                    <p class="cat-title mb-0">MD & PG Books</p>
+                </div>
             </a>
         </div>
+
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{% url 'home' %}?category=exam-preparation" class="card category-card h-100 shadow-sm border-0 text-center">
-                <div class="cat-img-box"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt="AIAPGET"></div>
-                <div class="card-body py-2"><p class="cat-title mb-0">AIAPGET Exam</p></div>
+            <a href="{% url 'home' %}?category=exam-preparation" class="card category-card text-center h-100">
+                <div class="cat-img-box">
+                    <img src="{% static 'store/images/categories/aiapget.jpg' %}">
+                </div>
+                <div class="card-body py-2">
+                    <p class="cat-title mb-0">AIAPGET Exam</p>
+                </div>
             </a>
         </div>
+
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{% url 'home' %}" class="card category-card h-100 shadow-sm border-0 text-center" style="background: var(--accent-gold);">
-                <div class="cat-img-box" style="background: transparent;">
+            <a href="{% url 'home' %}" class="card category-card text-center h-100"
+               style="background: var(--accent-gold);">
+                <div class="cat-img-box bg-transparent">
                     <i class="fas fa-th-large fa-3x" style="color: var(--primary-magenta);"></i>
                 </div>
-                <div class="card-body py-2"><p class="cat-title mb-0" style="color: var(--primary-magenta);">View All</p></div>
+                <div class="card-body py-2">
+                    <p class="cat-title mb-0" style="color: var(--primary-magenta);">
+                        View All
+                    </p>
+                </div>
             </a>
         </div>
     </div>
 
+    <!-- ================= SEARCH ================= -->
     <div class="row justify-content-center mb-5">
         <div class="col-md-8">
             <form method="get" action="{% url 'home' %}" class="d-flex shadow-sm">
-                <input class="form-control form-control-lg rounded-0" style="border: 2px solid var(--primary-magenta);" type="search" name="q" placeholder="Search for books, authors, or topics..." value="{{ query|default:'' }}">
-                <button class="btn btn-custom btn-lg rounded-0 px-4" type="submit">Search</button>
+                <input class="form-control form-control-lg rounded-0"
+                       style="border: 2px solid var(--primary-magenta);"
+                       type="search" name="q"
+                       placeholder="Search for books, authors, or topics..."
+                       value="{{ query|default:'' }}">
+                <button class="btn btn-custom btn-lg rounded-0 px-4">Search</button>
             </form>
         </div>
     </div>
 
     {% if query %}
-        <p class="text-center text-muted mb-4">Found {{ books|length }} result(s) for "<strong>{{ query }}</strong>"</p>
+        <p class="text-center text-muted mb-4">
+            Found {{ books|length }} result(s) for "<strong>{{ query }}</strong>"
+        </p>
     {% endif %}
 
+    <!-- ================= BOOK GRID ================= -->
     <div class="row">
         {% for book in books %}
-        <div class="col-6 col-md-3 mb-4"> 
+        <div class="col-6 col-md-3 mb-4">
             <div class="card h-100 shadow-sm border-0">
-                
+
                 <div class="position-relative">
                     {% if book.main_cover %}
-                        <img src="{{ book.main_cover.url }}" class="card-img-top p-3" style="height: 250px; object-fit: contain;" alt="{{ book.title }}">
+                        <img src="{{ book.main_cover.url }}"
+                             class="card-img-top p-3"
+                             style="height: 240px; object-fit: contain;">
                     {% else %}
-                        <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="height: 250px;">
-                            <span>No Image</span>
+                        <div class="bg-light d-flex align-items-center justify-content-center"
+                             style="height: 240px;">
+                            No Image
                         </div>
                     {% endif %}
 
-                    <a href="{% url 'add_to_wishlist' book.id %}" class="btn btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-2 wishlist-btn" title="Add to Wishlist" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                    <a href="{% url 'add_to_wishlist' book.id %}"
+                       class="btn btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-2 wishlist-btn">
                         <i class="far fa-heart text-danger"></i>
                     </a>
                 </div>
-                
+
                 <div class="card-body d-flex flex-column text-center">
-                    <h6 class="card-title text-dark fw-bold text-truncate">{{ book.title }}</h6>
-                    <p class="text-muted small mb-1">{{ book.author }}</p>
-                    <h5 class="fw-bold mb-3" style="color: var(--primary-magenta);">₹{{ book.price }}</h5>
-                    
-                    <a href="{% url 'add_to_cart' book.id %}" class="btn btn-custom w-100 rounded-pill mb-2 shadow-sm">
-                        Add to Cart <i class="fas fa-shopping-cart ms-2"></i>
+                    <h6 class="fw-bold text-truncate">{{ book.title }}</h6>
+                    <p class="text-muted small">{{ book.author }}</p>
+                    <h5 class="fw-bold" style="color: var(--primary-magenta);">
+                        ₹{{ book.price }}
+                    </h5>
+
+                    <a href="{% url 'add_to_cart' book.id %}"
+                       class="btn btn-custom rounded-pill mb-2">
+                        Add to Cart <i class="fas fa-shopping-cart ms-1"></i>
                     </a>
 
-                    <a href="{% url 'book_detail' book.id %}" class="btn btn-outline-dark btn-sm mt-auto w-100">View Details</a>
+                    <a href="{% url 'book_detail' book.id %}"
+                       class="btn btn-outline-dark btn-sm mt-auto">
+                        View Details
+                    </a>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <h3 class="text-muted">No books found in this category.</h3>
-            <a href="/" class="btn btn-primary mt-3">View All Books</a>
+            <h4 class="text-muted">No books found.</h4>
+            <a href="/" class="btn btn-custom mt-3">View All Books</a>
         </div>
         {% endfor %}
     </div>
-</div>
+
+</section>
 
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
-    var swiper = new Swiper(".mySwiper", {
+    new Swiper(".mySwiper", {
         loop: true,
         autoplay: { delay: 3500, disableOnInteraction: false },
         pagination: { el: ".swiper-pagination", clickable: true },
-        navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+        navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" }
     });
 </script>
 {% endblock %}

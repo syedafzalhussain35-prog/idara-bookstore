@@ -1,43 +1,62 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Book, Cart, CartItem, Order, OrderItem, Wishlist, Category
-from .forms import CheckoutForm
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q 
-
-# Email specific imports for HTML content
+from django.db.models import Q
+from django.db import transaction
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-# 1. Homepage (Updated for Categories)
+from .models import (
+    Book,
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    Wishlist,
+    Category,
+)
+from .forms import CheckoutForm
+
+
+# ==================================================
+# HOME & BOOK LISTING
+# ==================================================
+
 def home(request):
-    category_slug = request.GET.get('category') # Get ?category=... from URL
-    query = request.GET.get('q') 
+    category_slug = request.GET.get('category')
+    query = request.GET.get('q')
 
-    books = Book.objects.all()
+    books = Book.objects.select_related('category').all()
 
-    # Filter by Category if clicked
     if category_slug:
         books = books.filter(category__slug=category_slug)
 
-    # Filter by Search if typed
     if query:
         books = books.filter(
-            Q(title__icontains=query) | 
-            Q(author__icontains=query) |
-            Q(description__icontains=query)
+            Q(title__icontains=query) |
+            Q(author__icontains=query)
         )
-    
-    return render(request, 'store/home.html', {'books': books, 'query': query})
 
-# 2. Book Detail
+    categories = Category.objects.all()
+
+    return render(request, 'store/home.html', {
+        'books': books,
+        'categories': categories,
+        'query': query,
+    })
+
+
 def book_detail(request, book_id):
-    book = get_object_or_404(Book, pk=book_id)
+    book = get_object_or_404(Book, id=book_id)
     return render(request, 'store/book_detail.html', {'book': book})
 
-# 3. Signup
+
+# ==================================================
+# AUTHENTICATION
+# ==================================================
+
 def signup(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -47,121 +66,221 @@ def signup(request):
             return redirect('home')
     else:
         form = UserCreationForm()
+
     return render(request, 'store/signup.html', {'form': form})
 
-# 4. Login
+
 def login_page(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            if 'next' in request.POST:
-                return redirect(request.POST.get('next'))
-            return redirect('home')
+            login(request, form.get_user())
+            return redirect(request.POST.get('next', 'home'))
     else:
         form = AuthenticationForm()
+
     return render(request, 'store/login.html', {'form': form})
 
-# --- WISHLIST LOGIC ---
+
+# ==================================================
+# WISHLIST
+# ==================================================
 
 @login_required
 def wishlist_view(request):
-    wishlist_items = Wishlist.objects.filter(user=request.user)
-    return render(request, 'store/wishlist.html', {'wishlist_items': wishlist_items})
+    wishlist_items = Wishlist.objects.select_related('book').filter(
+        user=request.user
+    )
+    return render(request, 'store/wishlist.html', {
+        'wishlist_items': wishlist_items,
+    })
+
 
 @login_required
 def add_to_wishlist(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
-    Wishlist.objects.get_or_create(user=request.user, book=book)
+    if request.method == 'POST':
+        book = get_object_or_404(Book, id=book_id)
+        Wishlist.objects.get_or_create(user=request.user, book=book)
     return redirect('wishlist')
+
 
 @login_required
 def remove_from_wishlist(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
-    Wishlist.objects.filter(user=request.user, book=book).delete()
+    if request.method == 'POST':
+        Wishlist.objects.filter(
+            user=request.user,
+            book_id=book_id,
+        ).delete()
     return redirect('wishlist')
 
-# --- PROFILE LOGIC ---
+
+# ==================================================
+# PROFILE
+# ==================================================
 
 @login_required
 def profile_view(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'store/profile.html', {'orders': orders})
+    orders = (
+        Order.objects
+        .filter(user=request.user)
+        .prefetch_related('items__book')
+        .order_by('-created_at')
+    )
+    return render(request, 'store/profile.html', {
+        'orders': orders,
+    })
 
-# --- CART LOGIC ---
+
+# ==================================================
+# CART
+# ==================================================
 
 @login_required
 def add_to_cart(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, book=book)
-    
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()
-        
+    if request.method == 'POST':
+        book = get_object_or_404(Book, id=book_id)
+
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            book=book,
+        )
+
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+
     return redirect('cart_detail')
+
 
 @login_required
 def cart_detail(request):
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    return render(request, 'store/cart.html', {'cart': cart})
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart_items = cart.items.select_related('book')
+    return render(request, 'store/cart.html', {
+        'cart': cart,
+        'cart_items': cart_items,
+    })
+
 
 @login_required
 def remove_from_cart(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id)
-    if cart_item.cart.user == request.user:
+    if request.method == 'POST':
+        cart_item = get_object_or_404(
+            CartItem,
+            id=item_id,
+            cart__user=request.user,
+        )
         cart_item.delete()
     return redirect('cart_detail')
 
-# --- CHECKOUT LOGIC (With Branded HTML Email) ---
+
+# ==================================================
+# CHECKOUT & ORDER
+# ==================================================
 
 @login_required
 def checkout(request):
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+
+    if not cart.items.exists():
+        return redirect('cart_detail')
+
     if request.method == 'POST':
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            # 1. Save Order
-            order = form.save(commit=False)
-            order.user = request.user
-            order.total_cost = sum(item.total_price for item in cart.items.all())
-            order.save()
-            
-            # 2. Save Items
-            for item in cart.items.all():
-                OrderItem.objects.create(
-                    order=order,
-                    book=item.book,
-                    price=item.book.price,
-                    quantity=item.quantity
+
+            with transaction.atomic():
+
+                # Stock check
+                for item in cart.items.select_related('book'):
+                    if item.book.stock < item.quantity:
+                        return redirect('cart_detail')
+
+                # Create order
+                order = form.save(commit=False)
+                order.user = request.user
+                order.total_cost = sum(
+                    item.total_price for item in cart.items.all()
                 )
-            
-            # 3. Send Branded HTML Email Receipt
-            subject = f'Order Confirmation - Idara Kitab Ul Shifa (# {order.id})'
-            from_email = 'idara.kitabulshifa@gmail.com'
-            to = [request.user.email]
+                order.save()
 
-            # Rendering the HTML template with order details
-            html_content = render_to_string('emails/order_confirmation.html', {'order': order})
-            text_content = strip_tags(html_content) # Fallback for plain-text clients
+                # Create order items
+                for item in cart.items.all():
+                    OrderItem.objects.create(
+                        order=order,
+                        book=item.book,
+                        price=item.book.price,
+                        quantity=item.quantity,
+                    )
+                    item.book.stock -= item.quantity
+                    item.book.save()
 
-            # Constructing the email with alternative HTML content
-            msg = EmailMultiAlternatives(subject, text_content, from_email, to)
-            msg.attach_alternative(html_content, "text/html")
-            msg.send(fail_silently=True)
+                cart.items.all().delete()
 
-            # 4. Clear Cart
-            cart.items.all().delete()
-            return render(request, 'store/order_success.html', {'order': order})
-            
+            # Email confirmation
+            subject = f'Order Confirmation – Idara Kitab Ul Shifa (# {order.id})'
+            html_content = render_to_string(
+                'emails/order_confirmation.html',
+                {'order': order},
+            )
+
+            email = EmailMultiAlternatives(
+                subject,
+                strip_tags(html_content),
+                'idara.kitabulshifa@gmail.com',
+                [order.email],
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send(fail_silently=True)
+
+            return render(request, 'store/order_success.html', {
+                'order': order,
+            })
     else:
         form = CheckoutForm()
-        
-    return render(request, 'store/checkout.html', {'form': form, 'cart': cart})
 
-# 5. Contact View
+    return render(request, 'store/checkout.html', {
+        'form': form,
+        'cart': cart,
+    })
+
+
+# ==================================================
+# STATIC PAGES
+# ==================================================
+
 def contact_view(request):
     return render(request, 'store/contact.html')
+
+
+def about_view(request):
+    return render(request, 'store/about.html')
+
+
+def gallery_view(request):
+    return render(request, 'store/gallery.html')
+
+
+# ==================================================
+# POLICY PAGES
+# ==================================================
+
+def refund_policy(request):
+    return render(request, 'store/policies/refund.html')
+
+
+def shipping_policy(request):
+    return render(request, 'store/policies/shipping.html')
+
+
+def privacy_policy(request):
+    return render(request, 'store/policies/privacy.html')
+
+
+def terms_policy(request):
+    return render(request, 'store/policies/terms.html')
+
+
+def returns_policy(request):
+    return render(request, 'store/policies/returns.html')
