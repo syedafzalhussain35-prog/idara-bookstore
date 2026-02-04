@@ -29,6 +29,7 @@ from .models import (
     Review,
     Coupon,
     GalleryItem,
+    UserProfile,
 )
 from .forms import CheckoutForm
 
@@ -279,11 +280,17 @@ def remove_from_wishlist(request, book_id):
 @login_required
 def profile_view(request):
     user = request.user
+    profile, _ = UserProfile.objects.get_or_create(user=user)
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         email = request.POST.get("email", "").strip()
         first_name = request.POST.get("first_name", "").strip()
         last_name = request.POST.get("last_name", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        address = request.POST.get("address", "").strip()
+        city = request.POST.get("city", "").strip()
+        zip_code = request.POST.get("zip_code", "").strip()
+        company = request.POST.get("company", "").strip()
 
         has_error = False
 
@@ -305,12 +312,22 @@ def profile_view(request):
         user.last_name = last_name
         user.save()
 
+        profile.phone = phone
+        profile.address = address
+        profile.city = city
+        profile.zip_code = zip_code
+        profile.company = company
+        profile.save()
+
         if not has_error:
             messages.success(request, "Profile updated successfully.")
         return redirect('profile')
 
     orders = Order.objects.filter(user=user).prefetch_related('items__book')
-    return render(request, 'store/profile.html', {'orders': orders})
+    return render(request, 'store/profile.html', {
+        'orders': orders,
+        'profile': profile,
+    })
 
 
 # ==================================================

@@ -85,6 +85,30 @@
                             <input type="text" name="last_name" class="form-control"
                                    value="{{ user.last_name }}">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input type="text" name="phone" class="form-control"
+                                   value="{{ profile.phone }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Company/Clinic</label>
+                            <input type="text" name="company" class="form-control"
+                                   value="{{ profile.company }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Address</label>
+                            <textarea name="address" class="form-control" rows="2">{{ profile.address }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">City</label>
+                            <input type="text" name="city" class="form-control"
+                                   value="{{ profile.city }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Zip Code</label>
+                            <input type="text" name="zip_code" class="form-control"
+                                   value="{{ profile.zip_code }}">
+                        </div>
                         <div class="col-12">
                             <button type="submit"
                                     class="btn text-white fw-bold px-4"

@@ -15,6 +15,7 @@ from .models import (
     Review,
     Coupon,
     GalleryItem,
+    UserProfile,
 )
 
 # ======================
@@ -275,3 +276,14 @@ class GalleryItemAdmin(admin.ModelAdmin):
     search_fields = ("event", "title", "media")
     ordering = ("event", "order", "created_at")
     readonly_fields = ("created_at",)
+
+
+# ======================
+# USER PROFILE ADMIN
+# ======================
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "phone", "city", "company", "updated_at")
+    search_fields = ("user__username", "user__email", "phone", "city", "company")
+    ordering = ("-updated_at",)
