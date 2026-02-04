@@ -36,11 +36,6 @@ urlpatterns = [
     path('gallery/', views.gallery_view, name='gallery'),
 
     # ==================================================
-    # DOWNLOADS
-    # ==================================================
-    path('downloads/', views.download_list, name='download_list'),
-
-    # ==================================================
     # POLICY PAGES
     # ==================================================
     path('refund/', views.refund_policy, name='refund_policy'),

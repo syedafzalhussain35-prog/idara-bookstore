@@ -21,7 +21,6 @@ from .models import (
     OrderItem,
     Wishlist,
     Category,
-    SyllabusPDF,
     Review,
     Coupon,
 )
@@ -344,24 +343,6 @@ def checkout(request):
         return render(request, 'store/order_success.html', {'order': order})
 
     return render(request, "store/checkout.html", {'cart': cart})
-# ==================================================
-# DOWNLOADS
-# ==================================================
-
-def download_list(request):
-    pdfs = SyllabusPDF.objects.all()
-
-    if request.GET.get('cat'):
-        pdfs = pdfs.filter(category=request.GET['cat'])
-    if request.GET.get('sem'):
-        pdfs = pdfs.filter(semester=request.GET['sem'])
-
-    return render(request, 'store/downloads.html', {
-        'pdfs': pdfs,
-        'is_homepage': False,
-    })
-
-
 # ==================================================
 # STATIC & POLICY PAGES
 # ==================================================

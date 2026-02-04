@@ -93,10 +93,17 @@
                 {% endif %}
 
                 <a href="{% url 'book_detail' book.id %}">
+                    {% if book.main_cover %}
                     <img src="{{ book.main_cover.url }}"
                          class="card-img-top p-3"
                          alt="{{ book.title }}"
                          style="height: 220px; object-fit: contain;">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center"
+                         style="height: 220px;">
+                        <span class="text-muted small">No Image</span>
+                    </div>
+                    {% endif %}
                 </a>
 
                 <div class="card-body text-center d-flex flex-column">
