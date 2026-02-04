@@ -5,6 +5,7 @@ Django settings for idara_project
 from pathlib import Path
 import os
 import dj_database_url
+import cloudinary
 
 # ==================================================
 # BASE DIRECTORY
@@ -229,6 +230,14 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
+
+# Optional explicit Cloudinary config (fallback if CLOUDINARY_URL is mis-read)
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+    api_key=os.getenv('CLOUDINARY_API_KEY', ''),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
+    secure=True,
+)
 
 
 # ==================================================
