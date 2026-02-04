@@ -247,6 +247,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # ==================================================
+# LOGGING (capture errors in Render logs)
+# ==================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
+
+
+# ==================================================
 # EMAIL CONFIGURATION
 # ==================================================
 EMAIL_HOST = 'smtp.gmail.com'
