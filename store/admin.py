@@ -14,6 +14,7 @@ from .models import (
     SyllabusPDF,
     Review,
     Coupon,
+    GalleryItem,
 )
 
 # ======================
@@ -261,3 +262,16 @@ class SyllabusPDFAdmin(admin.ModelAdmin):
             "fields": ("category", "semester")
         }),
     )
+
+
+# ======================
+# GALLERY ADMIN
+# ======================
+
+@admin.register(GalleryItem)
+class GalleryItemAdmin(admin.ModelAdmin):
+    list_display = ("event", "media_type", "title", "order", "created_at")
+    list_filter = ("event", "media_type")
+    search_fields = ("event", "title", "media")
+    ordering = ("event", "order", "created_at")
+    readonly_fields = ("created_at",)

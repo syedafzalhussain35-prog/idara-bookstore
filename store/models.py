@@ -116,6 +116,31 @@ class BookImage(models.Model):
 
 
 # ======================
+# GALLERY (EVENT MEDIA)
+# ======================
+
+class GalleryItem(models.Model):
+    MEDIA_TYPE_CHOICES = [
+        ('image', 'Image'),
+        ('video', 'Video'),
+    ]
+
+    event = models.CharField(max_length=100, db_index=True)
+    title = models.CharField(max_length=200, blank=True)
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPE_CHOICES, default='image')
+    media = models.FileField(upload_to='gallery/')
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['event', 'order', 'id']
+
+    def __str__(self):
+        label = self.title or self.media.name
+        return f"{self.event} - {label}"
+
+
+# ======================
 # REVIEWS & RATINGS ⭐⭐⭐⭐⭐
 # ======================
 

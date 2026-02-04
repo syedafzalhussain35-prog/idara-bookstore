@@ -26,6 +26,7 @@ from .models import (
     Category,
     Review,
     Coupon,
+    GalleryItem,
 )
 from .forms import CheckoutForm
 
@@ -390,7 +391,23 @@ def checkout(request):
 
 def about_view(request): return render(request, 'store/about.html')
 def contact_view(request): return render(request, 'store/contact.html')
-def gallery_view(request): return render(request, 'store/gallery.html')
+def gallery_view(request):
+    items = GalleryItem.objects.all().order_by('event', 'order', 'id')
+    events = []
+    current_event = None
+
+    for item in items:
+        if current_event != item.event:
+            events.append({
+                'name': item.event,
+                'items': [],
+            })
+            current_event = item.event
+        events[-1]['items'].append(item)
+
+    return render(request, 'store/gallery.html', {
+        'events': events,
+    })
 
 def refund_policy(request): return render(request, 'store/policies/refund.html')
 def shipping_policy(request): return render(request, 'store/policies/shipping.html')
