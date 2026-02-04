@@ -327,7 +327,8 @@
 
 
 
-<body>
+<body data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
+      data-login-url="{% url 'account_login' %}?next={{ request.path }}">
 
 <!-- TOP BAR -->
 <div class="top-bar">
@@ -626,6 +627,61 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!e.target.closest(".search-container")) {
             resultsBox.style.display = "none";
         }
+    });
+
+    /* ============================
+       WISHLIST TOGGLE
+    ============================ */
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.querySelectorAll(".wishlist-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isAuthed = document.body.dataset.auth === "1";
+            if (!isAuthed) {
+                window.location.href = document.body.dataset.loginUrl;
+                return;
+            }
+
+            const bookId = this.getAttribute("data-book-id");
+            if (!bookId) return;
+
+            fetch(`/wishlist/toggle/${bookId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            })
+            .then(res => res.json())
+            .then(data => {
+                const icon = this.querySelector("i");
+                if (!icon) return;
+                if (data.status === "added") {
+                    icon.classList.remove("far");
+                    icon.classList.add("fas");
+                } else if (data.status === "removed") {
+                    icon.classList.remove("fas");
+                    icon.classList.add("far");
+                }
+            })
+            .catch(() => {});
+        });
     });
 
 });

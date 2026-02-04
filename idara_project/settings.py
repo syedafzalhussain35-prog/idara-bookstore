@@ -36,6 +36,18 @@ else:
         'syedafzalhussain35.pythonanywhere.com',
     ]
 
+render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if render_external_host:
+    if render_external_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(render_external_host)
+    # Render sits behind a proxy (https). Trust forwarded proto for CSRF/session.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{render_external_host}",
+    ]
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # Trust Render HTTPS proxy headers and prevent CSRF issues in production
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -298,6 +310,7 @@ LOGGING = {
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 10
 
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'idara.kitabulshifa@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')

@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.core.mail import EmailMultiAlternatives
+import logging
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
@@ -29,6 +30,8 @@ from .models import (
     GalleryItem,
 )
 from .forms import CheckoutForm
+
+logger = logging.getLogger(__name__)
 
 
 # ==================================================
@@ -49,7 +52,11 @@ def send_order_confirmation_email(order):
         to=[order.email],
     )
     msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=True)
+
+    try:
+        msg.send(fail_silently=True)
+    except Exception as exc:
+        logger.exception("Order email failed to send: %s", exc)
 
 
 # ==================================================
