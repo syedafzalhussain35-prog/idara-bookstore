@@ -1,104 +1,131 @@
 {% load static %}
 
 <style>
-    /* ================= FOOTER BASE ================= */
-    footer {
-        background: linear-gradient(to right, #f0ee93, #ffe0b2);
-        padding: 40px 0 0 0;
-        color: #000;
-        font-family: Arial, sans-serif;
-        font-size: 15px;
-        margin-top: auto;
-    }
+/* ================= FOOTER BASE ================= */
+footer {
+    background: linear-gradient(135deg, #fff6d6, #fde3b4);
+    padding: 45px 0 0;
+    color: #333;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 15px;
+    margin-top: auto;
+    border-top: 4px solid #BD1859;
+}
 
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 35px;
+}
+
+.footer-column {
+    width: 32%;
+}
+
+.footer-column h3 {
+    color: #BD1859;
+    font-size: 18px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    position: relative;
+}
+
+.footer-column h3::after {
+    content: "";
+    display: block;
+    width: 45px;
+    height: 3px;
+    background: #FED3A9;
+    margin-top: 6px;
+    border-radius: 2px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.footer-column a {
+    color: #2b2bbf;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-column a:hover {
+    color: #BD1859;
+    text-decoration: underline;
+}
+
+/* ================= SOCIAL ICONS ================= */
+.social-icons {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.social-icons a {
+    display: inline-flex;
+    background: #fff;
+    padding: 6px;
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.social-icons a:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+.social-icons img {
+    width: 26px;
+    height: 26px;
+}
+
+/* ================= FOOTER BOTTOM ================= */
+.footer-bottom {
+    text-align: center;
+    padding: 14px;
+    background: linear-gradient(to right, #BD1859, #9e1249);
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
     .footer-container {
-        display: flex;
-        justify-content: space-between;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px 30px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
     .footer-column {
-        width: 30%;
+        width: 100%;
+        margin-bottom: 28px;
     }
 
-    .footer-column h3 {
-        color: #f30c0c;
-        font-size: 18px;
-        margin-bottom: 15px;
-        font-weight: bold;
+    .footer-column h3::after {
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    .footer-column ul {
-        list-style: none;
-        padding: 0;
-    }
-
-    .footer-column ul li {
-        margin-bottom: 10px;
-        font-size: 14px;
-        line-height: 1.6;
-    }
-
-    .footer-column a {
-        color: #1b07cf;
-        text-decoration: none;
-    }
-
-    .footer-column a:hover {
-        text-decoration: underline;
-    }
-
-    /* ================= SOCIAL ICONS ================= */
     .social-icons {
-        margin-top: 15px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
+        justify-content: center;
     }
-
-    .social-icons a {
-        display: inline-flex;
-        transition: transform 0.2s;
-    }
-
-    .social-icons a:hover {
-        transform: scale(1.1);
-    }
-
-    .social-icons img {
-        width: 30px;
-        height: 30px;
-    }
-
-    /* ================= FOOTER BOTTOM ================= */
-    .footer-bottom {
-        text-align: center;
-        padding: 15px;
-        background: #ce9b0e;
-        font-size: 16px;
-        font-weight: bold;
-        color: #fff;
-    }
-
-    /* ================= MOBILE ================= */
-    @media (max-width: 768px) {
-        .footer-container {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .footer-column {
-            width: 100%;
-            margin-bottom: 25px;
-        }
-
-        .social-icons {
-            justify-content: center;
-        }
-    }
+}
 </style>
 
 <footer>
@@ -106,35 +133,35 @@
 
         <!-- WHY US -->
         <div class="footer-column">
-            <h3>Why Us?</h3>
+            <h3>Why Choose Us</h3>
             <ul>
-                <li>✅ 100% Original Products</li>
-                <li>🔒 Secure Online Payments</li>
-                <li>📦 Real-Time Tracking</li>
-                <li>📍 28,125+ Pin Codes in India</li>
-                <li>💰 COD Available (Selected Locations)</li>
-                <li>🎁 Earn Rewards on Referrals</li>
-                <li>🔄 5 Days Replacement Policy</li>
+                <li>✅ 100% Original & Authentic Books</li>
+                <li>🔒 Safe & Secure Online Payments</li>
+                <li>📦 Real-Time Order Tracking</li>
+                <li>📍 Delivery to 28,000+ Pin Codes</li>
+                <li>💰 Cash on Delivery (Selected Areas)</li>
+                <li>🎁 Referral Rewards & Offers</li>
+                <li>🔄 5-Day Replacement Policy</li>
             </ul>
         </div>
 
         <!-- POLICY -->
         <div class="footer-column">
-            <h3>Policy</h3>
+            <h3>Policies</h3>
             <ul>
-                <li><a href="{% url 'refund' %}">Refund Policy</a></li>
-                <li><a href="{% url 'shipping' %}">Shipping & Delivery Policy</a></li>
-                <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
-                <li><a href="{% url 'terms' %}">Terms & Conditions</a></li>
-                <li><a href="{% url 'returns' %}">Returns & Cancellations</a></li>
+                <li><a href="{% url 'refund_policy' %}">Refund Policy</a></li>
+                <li><a href="{% url 'shipping_policy' %}">Shipping & Delivery</a></li>
+                <li><a href="{% url 'privacy_policy' %}">Privacy Policy</a></li>
+                <li><a href="{% url 'terms_policy' %}">Terms & Conditions</a></li>
+                <li><a href="{% url 'returns_policy' %}">Returns & Cancellations</a></li>
             </ul>
         </div>
 
         <!-- CONTACT -->
         <div class="footer-column">
             <h3>Contact Us</h3>
-            <p>📧 Email: <a href="mailto:idara.asad@gmail.com">idara.asad@gmail.com</a></p>
-            <p>📞 Phone: +91 9312273887</p>
+            <p>📧 <a href="mailto:idara.kitabulshifa@gmail.com">idara.kitabulshifa@gmail.com</a></p>
+            <p>📞 +91 9312273887</p>
             <p>📍 New Delhi, India</p>
 
             <div class="social-icons">
@@ -155,6 +182,6 @@
     </div>
 
     <div class="footer-bottom">
-        © 2026 Idara Kitab Ul Shifa. All Rights Reserved.
+        © 2026 Idara Kitab Ul Shifa · All Rights Reserved
     </div>
 </footer>

@@ -1,12 +1,17 @@
+from decimal import Decimal
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 from django.db import transaction
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.models import User
+from django.utils.crypto import get_random_string
+
 
 from .models import (
     Book,
@@ -16,69 +21,171 @@ from .models import (
     OrderItem,
     Wishlist,
     Category,
+    SyllabusPDF,
+    Review,
+    Coupon,
 )
 from .forms import CheckoutForm
 
 
 # ==================================================
-# HOME & BOOK LISTING
+# HOME
 # ==================================================
 
 def home(request):
-    category_slug = request.GET.get('category')
-    query = request.GET.get('q')
+    bestsellers = Book.objects.filter(is_bestseller=True)[:8]
+    new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
 
-    books = Book.objects.select_related('category').all()
+    return render(request, 'store/home.html', {
+        'bestsellers': bestsellers,
+        'new_arrivals': new_arrivals,
+        'is_homepage': True,
+    })
 
-    if category_slug:
-        books = books.filter(category__slug=category_slug)
 
+# ==================================================
+# CATEGORY PAGE
+# ==================================================
+
+def category_books(request, slug):
+    category = get_object_or_404(Category, slug=slug)
+    books_qs = Book.objects.filter(category=category)
+
+    query = request.GET.get('q', '').strip()
     if query:
-        books = books.filter(
+        books_qs = books_qs.filter(
             Q(title__icontains=query) |
             Q(author__icontains=query)
         )
 
-    categories = Category.objects.all()
+    sort = request.GET.get('sort')
+    if sort == 'newest':
+        books_qs = books_qs.order_by('-created_at')
+    elif sort == 'price_low':
+        books_qs = books_qs.order_by('price')
+    elif sort == 'price_high':
+        books_qs = books_qs.order_by('-price')
+    elif sort == 'bestseller':
+        books_qs = books_qs.filter(is_bestseller=True)
 
-    return render(request, 'store/home.html', {
+    paginator = Paginator(books_qs, 12)
+    books = paginator.get_page(request.GET.get('page'))
+
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = Wishlist.objects.filter(
+            user=request.user
+        ).values_list('book_id', flat=True)
+
+    return render(request, 'store/category_books.html', {
+        'category': category,
         'books': books,
-        'categories': categories,
         'query': query,
+        'sort': sort,
+        'wishlist_ids': wishlist_ids,
+        'is_homepage': False,
     })
 
 
-def book_detail(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
-    return render(request, 'store/book_detail.html', {'book': book})
+# ==================================================
+# SEARCH
+# ==================================================
+
+def search(request):
+    query = request.GET.get('q', '').strip()
+
+    books_qs = Book.objects.filter(
+        Q(title__icontains=query) | Q(author__icontains=query)
+    ) if query else Book.objects.none()
+
+    paginator = Paginator(books_qs, 12)
+    books = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'store/search_results.html', {
+        'books': books,
+        'query': query,
+        'is_homepage': False,
+    })
 
 
 # ==================================================
-# AUTHENTICATION
+# BOOK DETAIL + REVIEWS ⭐⭐⭐⭐⭐
+# ==================================================
+
+def book_detail(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+
+    reviews = Review.objects.filter(book=book).select_related('user')
+    total_reviews = reviews.count()
+
+    avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
+
+    # ⭐ Amazon-style rating breakdown
+    rating_breakdown = []
+    for star in range(5, 0, -1):
+        count = reviews.filter(rating=star).count()
+        percent = int((count / total_reviews) * 100) if total_reviews else 0
+        rating_breakdown.append({
+            'stars': star,
+            'count': count,
+            'percent': percent,
+        })
+
+    has_purchased = (
+        request.user.is_authenticated and
+        OrderItem.objects.filter(
+            order__user=request.user,
+            book=book
+        ).exists()
+    )
+
+    return render(request, 'store/book_detail.html', {
+        'book': book,
+        'reviews': reviews,
+        'avg_rating': round(avg_rating, 1),
+        'rating_breakdown': rating_breakdown,
+        'has_purchased': has_purchased,
+    })
+
+
+@login_required
+@require_POST
+def add_review(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+
+    # ✔ Only verified buyers
+    if not OrderItem.objects.filter(order__user=request.user, book=book).exists():
+        return redirect('book_detail', book_id=book.id)
+
+    Review.objects.update_or_create(
+        user=request.user,
+        book=book,
+        defaults={
+            'rating': int(request.POST.get('rating')),
+            'comment': request.POST.get('comment', '').strip()
+        }
+    )
+
+    return redirect('book_detail', book_id=book.id)
+
+
+# ==================================================
+# AUTH
 # ==================================================
 
 def signup(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('home')
-    else:
-        form = UserCreationForm()
-
+    form = UserCreationForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.save())
+        return redirect('home')
     return render(request, 'store/signup.html', {'form': form})
 
 
 def login_page(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            login(request, form.get_user())
-            return redirect(request.POST.get('next', 'home'))
-    else:
-        form = AuthenticationForm()
-
+    form = AuthenticationForm(data=request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.get_user())
+        return redirect(request.GET.get('next', 'home'))
     return render(request, 'store/login.html', {'form': form})
 
 
@@ -88,30 +195,35 @@ def login_page(request):
 
 @login_required
 def wishlist_view(request):
-    wishlist_items = Wishlist.objects.select_related('book').filter(
-        user=request.user
-    )
-    return render(request, 'store/wishlist.html', {
-        'wishlist_items': wishlist_items,
-    })
+    wishlist_items = Wishlist.objects.select_related('book').filter(user=request.user)
+    return render(request, 'store/wishlist.html', {'wishlist_items': wishlist_items})
+
+
+@login_required
+@require_POST
+def wishlist_toggle(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    obj, created = Wishlist.objects.get_or_create(user=request.user, book=book)
+
+    if created:
+        return JsonResponse({'status': 'added'})
+    obj.delete()
+    return JsonResponse({'status': 'removed'})
 
 
 @login_required
 def add_to_wishlist(request, book_id):
-    if request.method == 'POST':
-        book = get_object_or_404(Book, id=book_id)
-        Wishlist.objects.get_or_create(user=request.user, book=book)
-    return redirect('wishlist')
+    Wishlist.objects.get_or_create(
+        user=request.user,
+        book=get_object_or_404(Book, id=book_id)
+    )
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
 @login_required
 def remove_from_wishlist(request, book_id):
-    if request.method == 'POST':
-        Wishlist.objects.filter(
-            user=request.user,
-            book_id=book_id,
-        ).delete()
-    return redirect('wishlist')
+    Wishlist.objects.filter(user=request.user, book_id=book_id).delete()
+    return redirect(request.META.get('HTTP_REFERER', 'wishlist'))
 
 
 # ==================================================
@@ -120,15 +232,8 @@ def remove_from_wishlist(request, book_id):
 
 @login_required
 def profile_view(request):
-    orders = (
-        Order.objects
-        .filter(user=request.user)
-        .prefetch_related('items__book')
-        .order_by('-created_at')
-    )
-    return render(request, 'store/profile.html', {
-        'orders': orders,
-    })
+    orders = Order.objects.filter(user=request.user).prefetch_related('items__book')
+    return render(request, 'store/profile.html', {'orders': orders})
 
 
 # ==================================================
@@ -137,18 +242,13 @@ def profile_view(request):
 
 @login_required
 def add_to_cart(request, book_id):
-    if request.method == 'POST':
-        book = get_object_or_404(Book, id=book_id)
+    book = get_object_or_404(Book, id=book_id)
+    cart, _ = Cart.objects.get_or_create(user=request.user)
 
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            book=book,
-        )
-
-        if not created:
-            cart_item.quantity += 1
-            cart_item.save()
+    item, created = CartItem.objects.get_or_create(cart=cart, book=book)
+    if not created:
+        item.quantity += 1
+        item.save()
 
     return redirect('cart_detail')
 
@@ -156,131 +256,170 @@ def add_to_cart(request, book_id):
 @login_required
 def cart_detail(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
-    cart_items = cart.items.select_related('book')
     return render(request, 'store/cart.html', {
         'cart': cart,
-        'cart_items': cart_items,
+        'cart_items': cart.items.select_related('book'),
     })
 
 
 @login_required
 def remove_from_cart(request, item_id):
-    if request.method == 'POST':
-        cart_item = get_object_or_404(
-            CartItem,
-            id=item_id,
-            cart__user=request.user,
-        )
-        cart_item.delete()
+    CartItem.objects.filter(id=item_id, cart__user=request.user).delete()
     return redirect('cart_detail')
 
 
 # ==================================================
-# CHECKOUT & ORDER
+# CHECKOUT + AUTO USER HANDLING 🧾
 # ==================================================
-
-@login_required
 def checkout(request):
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-
-    if not cart.items.exists():
+    # 🛒 Cart handling
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    else:
+        # Better Guest logic: Check session for a temporary cart ID
+        cart_id = request.session.get('cart_id')
+        cart = Cart.objects.filter(id=cart_id, user__isnull=True).first()
+    
+    if not cart or not cart.items.exists():
         return redirect('cart_detail')
 
-    if request.method == 'POST':
-        form = CheckoutForm(request.POST)
-        if form.is_valid():
+    if request.method == "POST":
+        email = request.POST.get("email")
+        full_name = request.POST.get("full_name")
+        
+        # 🔐 AUTO USER HANDLING
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        else:
+            # Atomic check to prevent duplicate user creation under high load
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={"username": email}
+            )
 
-            with transaction.atomic():
+            if created:
+                password = get_random_string(10)
+                user.set_password(password)
+                user.save()
+            
+            # Attach the guest cart to the newly created user
+            cart.user = user
+            cart.save()
 
-                # Stock check
-                for item in cart.items.select_related('book'):
-                    if item.book.stock < item.quantity:
-                        return redirect('cart_detail')
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-                # Create order
-                order = form.save(commit=False)
-                order.user = request.user
-                order.total_cost = sum(
-                    item.total_price for item in cart.items.all()
+        # 🧾 CREATE ORDER
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=user,
+                full_name=full_name,
+                email=email,
+                mobile=request.POST.get("mobile"),
+                address=request.POST.get("address"),
+                city=request.POST.get("city"),
+                zip_code=request.POST.get("zip_code"),
+                total_cost=cart.get_total(), 
+                is_paid=False,
+            )
+
+            for item in cart.items.all():
+                OrderItem.objects.create(
+                    order=order,
+                    book=item.book,
+                    price=item.book.price,
+                    quantity=item.quantity
                 )
-                order.save()
-
-                # Create order items
-                for item in cart.items.all():
-                    OrderItem.objects.create(
-                        order=order,
-                        book=item.book,
-                        price=item.book.price,
-                        quantity=item.quantity,
-                    )
+                # 📦 Update Stock
+                if item.book.stock >= item.quantity:
                     item.book.stock -= item.quantity
                     item.book.save()
 
-                cart.items.all().delete()
+            # 🧹 Clear cart
+            cart.items.all().delete()
+            # Clean up guest session
+            if 'cart_id' in request.session:
+                del request.session['cart_id']
 
-            # Email confirmation
-            subject = f'Order Confirmation – Idara Kitab Ul Shifa (# {order.id})'
-            html_content = render_to_string(
-                'emails/order_confirmation.html',
-                {'order': order},
-            )
+        return render(request, 'store/order_success.html', {'order': order})
 
-            email = EmailMultiAlternatives(
-                subject,
-                strip_tags(html_content),
-                'idara.kitabulshifa@gmail.com',
-                [order.email],
-            )
-            email.attach_alternative(html_content, "text/html")
-            email.send(fail_silently=True)
+    return render(request, "store/checkout.html", {'cart': cart})
+# ==================================================
+# DOWNLOADS
+# ==================================================
 
-            return render(request, 'store/order_success.html', {
-                'order': order,
-            })
-    else:
-        form = CheckoutForm()
+def download_list(request):
+    pdfs = SyllabusPDF.objects.all()
 
-    return render(request, 'store/checkout.html', {
-        'form': form,
-        'cart': cart,
+    if request.GET.get('cat'):
+        pdfs = pdfs.filter(category=request.GET['cat'])
+    if request.GET.get('sem'):
+        pdfs = pdfs.filter(semester=request.GET['sem'])
+
+    return render(request, 'store/downloads.html', {
+        'pdfs': pdfs,
+        'is_homepage': False,
     })
 
 
 # ==================================================
-# STATIC PAGES
+# STATIC & POLICY PAGES
 # ==================================================
 
-def contact_view(request):
-    return render(request, 'store/contact.html')
+def about_view(request): return render(request, 'store/about.html')
+def contact_view(request): return render(request, 'store/contact.html')
+def gallery_view(request): return render(request, 'store/gallery.html')
 
-
-def about_view(request):
-    return render(request, 'store/about.html')
-
-
-def gallery_view(request):
-    return render(request, 'store/gallery.html')
-
+def refund_policy(request): return render(request, 'store/policies/refund.html')
+def shipping_policy(request): return render(request, 'store/policies/shipping.html')
+def privacy_policy(request): return render(request, 'store/policies/privacy.html')
+def terms_policy(request): return render(request, 'store/policies/terms.html')
+def returns_policy(request): return render(request, 'store/policies/returns.html')
 
 # ==================================================
-# POLICY PAGES
+# 🔍 LIVE SEARCH (AJAX)
 # ==================================================
 
-def refund_policy(request):
-    return render(request, 'store/policies/refund.html')
+from difflib import SequenceMatcher
+
+def similarity(a, b):
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 
-def shipping_policy(request):
-    return render(request, 'store/policies/shipping.html')
+def live_search(request):
+    q = request.GET.get('q', '').strip()
+    results = []
 
+    if len(q) < 2:
+        return JsonResponse({'results': []})
 
-def privacy_policy(request):
-    return render(request, 'store/policies/privacy.html')
+    books = (
+        Book.objects
+        .filter(
+            Q(title__icontains=q) |
+            Q(author__icontains=q)
+        )
+        .distinct()[:20]
+    )
 
+    ranked = []
+    for book in books:
+        score = max(
+            similarity(q, book.title),
+            similarity(q, book.author)
+        )
+        if score > 0.35:  # Roman-Urdu tolerance
+            ranked.append((score, book))
 
-def terms_policy(request):
-    return render(request, 'store/policies/terms.html')
+    ranked.sort(key=lambda x: x[0], reverse=True)
 
+    for score, book in ranked[:8]:
+        results.append({
+            'id': book.id,
+            'title': book.title,
+            'author': book.author,
+            'url': f"/book/{book.id}/",
+            'image': book.main_cover.url if book.main_cover else '',
+        })
 
-def returns_policy(request):
-    return render(request, 'store/policies/returns.html')
+    return JsonResponse({'results': results})

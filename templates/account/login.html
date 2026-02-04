@@ -1,0 +1,100 @@
+{% extends "store/base.html" %}
+{% load socialaccount %}
+
+{% block title %}Login | Idara Kitab Ul Shifa{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-6 col-lg-4">
+
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+
+            <div class="card-header text-center py-4"
+                 style="background-color: var(--primary-magenta); color: #fff;">
+                <h3 class="fw-bold mb-1">Welcome Back</h3>
+                <small class="opacity-75">Login to your account</small>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+
+                <form class="login" method="POST" action="{% url 'account_login' %}">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger small">
+      {{ form.non_field_errors.0 }}
+    </div>
+  {% endif %}
+
+  {% for field in form %}
+    <div class="mb-3">
+      {% if field.widget_type == "checkbox" %}
+        <div class="form-check">
+          {{ field }}
+          <label class="form-check-label text-muted" for="{{ field.id_for_label }}">
+            {{ field.label }}
+          </label>
+        </div>
+      {% else %}
+        <label class="form-label fw-semibold text-muted">{{ field.label }}</label>
+        <input type="{{ field.field.widget.input_type }}" 
+               name="{{ field.name }}" 
+               class="form-control" 
+               placeholder="{{ field.label }}"
+               {% if field.field.required %}required{% endif %}>
+      {% endif %}
+
+      {% if field.errors %}
+        <small class="text-danger">{{ field.errors.0 }}</small>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% if redirect_field_value %}
+    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+
+  <button class="btn w-100 py-2 fw-bold mt-3 text-white" 
+          style="background-color: var(--primary-magenta);" 
+          type="submit">
+    Login
+  </button>
+</form>
+
+                <div class="text-center my-4">
+                    <hr>
+                    <span class="text-muted small position-relative bg-white px-2" style="top: -13px;">OR</span>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{% provider_login_url 'google' %}"
+                       class="btn btn-outline-dark fw-bold">
+                        <i class="fab fa-google me-2"></i> Continue with Google
+                    </a>
+
+                    <a href="{% provider_login_url 'facebook' %}"
+                       class="btn btn-outline-primary fw-bold">
+                        <i class="fab fa-facebook-f me-2"></i> Continue with Facebook
+                    </a>
+                </div>
+
+                <div class="alert alert-light border mt-4 text-center small">
+                    You can also <strong>checkout as a guest</strong>.
+                    An account will be created automatically.
+                </div>
+
+            </div> <div class="card-footer text-center bg-light py-3">
+                <p class="mb-0 small">
+                    Don’t have an account?
+                    <a href="{% url 'account_signup' %}"
+                       class="fw-bold text-decoration-none"
+                       style="color: var(--primary-magenta);">
+                        Sign up here
+                    </a>
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

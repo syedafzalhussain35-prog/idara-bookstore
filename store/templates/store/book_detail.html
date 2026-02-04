@@ -1,111 +1,245 @@
 {% extends 'store/base.html' %}
 {% load static %}
 
-{% block title %}{{ book.title }} - Idara Kitab Ul Shifa{% endblock %}
+{% block title %}{{ book.title }} | Idara Kitab Ul Shifa{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    
+
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page" style="color: var(--primary-magenta);">{{ book.title }}</li>
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            {% if book.category %}
+            <li class="breadcrumb-item">
+                <a href="{% url 'category_books' book.category.slug %}">{{ book.category.name }}</a>
+            </li>
+            {% endif %}
+            <li class="breadcrumb-item active text-truncate" style="max-width: 250px;">{{ book.title }}</li>
         </ol>
     </nav>
 
-    <div class="row">
-        <div class="col-md-5 mb-4">
-            <div class="card border-0 shadow-sm mb-3 position-relative">
-                <div class="p-3 d-flex align-items-center justify-content-center bg-white rounded" style="height: 450px; overflow: hidden;">
+    <div class="row gy-4">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm position-relative overflow-hidden bg-white">
+                {% if book.discount_percentage > 0 %}
+                <span class="badge-sale position-absolute top-0 start-0 m-3 shadow-sm">
+                    {{ book.discount_percentage }}% OFF
+                </span>
+                {% endif %}
+
+                <div class="p-4 d-flex align-items-center justify-content-center" style="height: 450px;">
                     {% if book.main_cover %}
-                        <img id="mainImage" src="{{ book.main_cover.url }}" class="img-fluid" style="max-height: 100%; object-fit: contain;" alt="{{ book.title }}">
+                        <img id="mainImage"
+                             src="{{ book.main_cover.url }}"
+                             class="img-fluid"
+                             style="max-height: 100%; object-fit: contain; transition: opacity 0.3s;"
+                             alt="{{ book.title }}">
                     {% else %}
                         <div class="text-muted text-center">
-                            <i class="fas fa-book fa-5x mb-3"></i><br>No Image Available
+                            <i class="fas fa-book fa-4x mb-3"></i><br>No image available
                         </div>
                     {% endif %}
                 </div>
             </div>
 
             {% if book.images.all or book.main_cover %}
-            <div class="d-flex gap-2 overflow-auto py-2">
+            <div class="d-flex gap-2 mt-3 overflow-auto pb-2 custom-scrollbar">
                 {% if book.main_cover %}
-                <img src="{{ book.main_cover.url }}" class="thumbnail border rounded p-1 shadow-sm" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer; transition: 0.2s;" onclick="changeImage(this.src)">
+                <img src="{{ book.main_cover.url }}" class="thumbnail active-thumbnail" 
+                     onclick="changeImage(this.src, this)">
                 {% endif %}
-                
                 {% for img in book.images.all %}
-                <img src="{{ img.image.url }}" class="thumbnail border rounded p-1 shadow-sm" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer; transition: 0.2s;" onclick="changeImage(this.src)">
+                <img src="{{ img.image.url }}" class="thumbnail" 
+                     onclick="changeImage(this.src, this)">
                 {% endfor %}
             </div>
             {% endif %}
         </div>
 
         <div class="col-md-7">
-            <h1 class="display-5 fw-bold text-dark mb-2" style="font-family: 'Amiri', serif;">{{ book.title }}</h1>
-            <p class="text-muted fs-5 mb-3">by <span class="fw-bold" style="color: var(--primary-magenta);">{{ book.author }}</span></p>
+            <h1 class="fw-bold mb-2 display-6" style="font-family: 'Amiri', serif; color: #222;">
+                {{ book.title }}
+            </h1>
 
-            <div class="mb-3 d-flex align-items-center gap-3">
-                <span class="display-6 fw-bold" style="color: var(--primary-magenta);">₹{{ book.price }}</span>
-                
-                {% if book.stock > 0 %}
-                    <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fas fa-check-circle me-1"></i> In Stock</span>
-                {% else %}
-                    <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fas fa-times-circle me-1"></i> Out of Stock</span>
-                {% endif %}
+            <p class="text-muted fs-5 mb-3">
+                by <strong class="text-magenta">{{ book.author }}</strong>
+            </p>
+
+            <div class="mb-3 d-flex align-items-center">
+                <span class="text-warning fs-5 me-2">
+                    {% for i in "12345" %}
+                        {% if avg_rating >= forloop.counter %}
+                            ★
+                        {% elif avg_rating > forloop.counter0 %}
+                            <i class="fas fa-star-half-alt"></i>
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                <span class="badge bg-light text-dark border fw-normal">
+                    {{ avg_rating|floatformat:1 }} / 5.0
+                </span>
+                <small class="text-muted ms-2">({{ reviews.count }} Verified Reviews)</small>
             </div>
 
-            <div class="mb-4 text-muted" style="line-height: 1.8;">
-                <p class="lead">{{ book.description|linebreaks }}</p>
-            </div>
-
-            <hr class="my-4">
-
-            <div class="d-flex flex-wrap gap-3 mb-5">
-                {% if book.stock > 0 %}
-                    <a href="{% url 'add_to_cart' book.id %}" class="btn btn-custom btn-lg px-5 rounded-pill shadow-sm text-white fw-bold" style="background-color: var(--primary-magenta);">
-                        <i class="fas fa-shopping-cart me-2"></i> Add to Cart
-                    </a>
-                {% else %}
-                    <button class="btn btn-secondary btn-lg px-5 rounded-pill" disabled>
-                        Out of Stock
-                    </button>
-                {% endif %}
-
-                <a href="{% url 'add_to_wishlist' book.id %}" class="btn btn-outline-dark btn-lg px-4 rounded-pill" title="Add to Wishlist">
-                    <i class="far fa-heart"></i> Save
-                </a>
-            </div>
-
-            <div class="p-3 bg-light rounded border">
-                <div class="row text-center text-muted small">
-                    <div class="col-4 border-end">
-                        <i class="fas fa-truck mb-2 fa-lg text-dark"></i><br>Fast Delivery
+            <div class="rating-breakdown mb-4 p-3 bg-white rounded shadow-sm" style="max-width: 450px;">
+                {% for item in rating_breakdown %}
+                <div class="d-flex align-items-center mb-2 small">
+                    <div class="me-2 fw-semibold text-nowrap" style="width: 50px;">
+                        {{ item.stars }} Star
                     </div>
-                    <div class="col-4 border-end">
-                        <i class="fas fa-shield-alt mb-2 fa-lg text-dark"></i><br>Secure Payment
+                    <div class="progress flex-grow-1" style="height: 10px;">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             style="width: {{ item.percent }}%" aria-valuenow="{{ item.percent }}" 
+                             aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <div class="col-4">
-                        <i class="fas fa-undo mb-2 fa-lg text-dark"></i><br>Easy Returns
+                    <div class="ms-2 text-muted text-end" style="width: 40px;">
+                        {{ item.percent }}%
                     </div>
                 </div>
+                {% endfor %}
             </div>
 
+            <div class="mb-4 d-flex align-items-center gap-3 flex-wrap">
+                <span class="display-5 fw-bold text-magenta">₹{{ book.price }}</span>
+
+                {% if book.mrp_price %}
+                <span class="text-muted fs-4 text-decoration-line-through">₹{{ book.mrp_price }}</span>
+                {% endif %}
+
+                {% if book.stock > 0 %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
+                        <i class="fas fa-check-circle me-1"></i> In Stock
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2">
+                        <i class="fas fa-times-circle me-1"></i> Out of Stock
+                    </span>
+                {% endif %}
+            </div>
+
+            {% if book.description %}
+            <div class="mb-4 text-secondary" style="line-height: 1.7; font-size: 1.05rem;">
+                {{ book.description|linebreaks }}
+            </div>
+            {% endif %}
+
+            <div class="d-flex flex-wrap gap-3 mt-5">
+                {% if book.stock > 0 %}
+                <a href="{% url 'add_to_cart' book.id %}" class="btn btn-magenta btn-lg rounded-pill px-5 shadow">
+                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                </a>
+                {% else %}
+                <button class="btn btn-secondary btn-lg rounded-pill px-5" disabled>Out of Stock</button>
+                {% endif %}
+
+                <form action="{% url 'add_to_wishlist' book.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-magenta btn-lg rounded-pill px-4">
+                        <i class="far fa-heart me-1"></i>Wishlist
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-lg-8">
+            <hr class="mb-5">
+            <h3 class="fw-bold mb-4"><i class="fas fa-comments text-magenta me-2"></i>Customer Reviews</h3>
+
+            {% for review in reviews %}
+            <div class="card border-0 bg-white shadow-sm mb-3 p-3">
+                <div class="d-flex justify-content-between">
+                    <strong class="text-dark">{{ review.user.username }}</strong>
+                    <small class="text-muted">{{ review.created_at|date:"d M Y" }}</small>
+                </div>
+                <div class="text-warning mb-2">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                    {% endfor %}
+                </div>
+                <p class="mb-0 text-secondary">{{ review.comment }}</p>
+            </div>
+            {% empty %}
+            <div class="alert alert-light border py-4 text-center">
+                <p class="text-muted mb-0">No reviews yet. Be the first to share your thoughts!</p>
+            </div>
+            {% endfor %}
+
+            {% if user.is_authenticated and has_purchased %}
+            <div class="mt-5 p-4 bg-white border rounded-4 shadow-sm">
+                <h5 class="fw-bold mb-3">Add Your Review</h5>
+                <form method="post" action="{% url 'add_review' book.id %}">
+                    {% csrf_token %}
+                    <div class="rating-stars mb-3">
+                        {% for i in "54321" %}
+                        <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                        <label for="star{{ i }}">★</label>
+                        {% endfor %}
+                    </div>
+                    <textarea name="comment" class="form-control mb-3" rows="3" 
+                              placeholder="Tell us what you liked or disliked about this book..."></textarea>
+                    <button class="btn btn-magenta px-4 rounded-pill">Submit Review</button>
+                </form>
+            </div>
+            {% elif user.is_authenticated %}
+            <div class="alert alert-warning mt-4 rounded-3 border-0">
+                <i class="fas fa-info-circle me-2"></i> Only verified buyers of this book can submit a review.
+            </div>
+            {% else %}
+            <div class="mt-4 text-center">
+                <p class="text-muted">Please <a href="{% url 'account_login' %}" class="text-magenta fw-bold">Login</a> to write a review.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
-    /* Hover effect for thumbnails */
-    .thumbnail:hover {
-        border-color: var(--primary-magenta) !important;
-        transform: scale(1.05);
+    :root { --primary-magenta: #BD1859; }
+    .text-magenta { color: var(--primary-magenta) !important; }
+    .btn-magenta { background-color: var(--primary-magenta); color: white; border: none; transition: 0.3s; }
+    .btn-magenta:hover { background-color: #9e144a; color: white; transform: translateY(-2px); }
+    .btn-outline-magenta { border: 2px solid var(--primary-magenta); color: var(--primary-magenta); }
+    .btn-outline-magenta:hover { background-color: var(--primary-magenta); color: white; }
+
+    .thumbnail {
+        width: 80px; height: 100px; object-fit: cover; cursor: pointer;
+        border: 2px solid #f0f0f0; border-radius: 8px; padding: 4px; transition: 0.2s;
     }
+    .thumbnail:hover, .active-thumbnail { border-color: var(--primary-magenta); transform: translateY(-3px); }
+
+    .badge-sale { background-color: var(--primary-magenta); color: white; padding: 6px 14px; border-radius: 50px; font-weight: bold; font-size: 0.85rem; }
+
+    .rating-stars { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
+    .rating-stars input { display: none; }
+    .rating-stars label { font-size: 2.2rem; color: #e0e0e0; cursor: pointer; transition: 0.2s; }
+    .rating-stars input:checked ~ label, .rating-stars label:hover, .rating-stars label:hover ~ label { color: #f5b301; }
+
+    .progress { background-color: #f0f0f0; border-radius: 50px; }
+    .progress-bar { border-radius: 50px; }
+    
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
 </style>
 
 <script>
-    // Javascript to swap main image when a thumbnail is clicked
-    function changeImage(src) {
-        document.getElementById('mainImage').src = src;
-    }
+function changeImage(src, element) {
+    const mainImg = document.getElementById('mainImage');
+    mainImg.style.opacity = '0.3';
+    setTimeout(() => {
+        mainImg.src = src;
+        mainImg.style.opacity = '1';
+    }, 150);
+
+    document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.classList.remove('active-thumbnail');
+    });
+    element.classList.add('active-thumbnail');
+}
 </script>
+
+
 {% endblock %}

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details</title>
+    <link rel="stylesheet" href="book-details.css">
+    <script defer src="script.js"></script>
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+<style>
+    .highlight-discount {
+        color: red; /* Red color for attention */
+        font-weight: bold; /* Make text bold */
+        font-size: 22px; /* Larger font size */
+        background-color: yellow; /* Highlight background */
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
+    }
+    .image-gallery {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .thumbnail {
+        width: 60px;
+        height: 60px;
+        cursor: pointer;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+    }
+    .thumbnail:hover {
+        border-color: #555;
+    }
+</style>
+</head>
+<body>
+    <header>
+
+<!-- Top Bar with Contact Info & Social Media Links -->
+<div class="top-bar">
+    <!-- Contact Info in Center -->
+    <div class="contact-info">
+        <span>Email: idara.asad@gmail.com | ✆ +91 9312273887</span>
+        </div>
+    </footer>
+
+    <!-- Social Media & About Us on the Right -->
+    <div class="social-icons">
+        <a href="https://wa.me/919312273887" target="_blank">
+            <img src="logo/whatsapp-icon.png" alt="WhatsApp">
+        </a>
+        <a href="https://www.instagram.com/idara_kitab_ul_shifa/profilecard/?igshid=bnNtejlsOGF1aG9l" target="_blank">
+            <img src="logo/instagram-icon.png" alt="Instagram">
+        </a>
+        <a href="https://www.facebook.com/share/19yzFoewKQ/?mibextid=wwXIfr" target="_blank">
+            <img src="logo/facebook-icon.png" alt="Facebook">
+        </a>
+    </div>
+</div>
+
+
+<!-- Navigation Bar -->
+<nav class="navbar">
+    <!-- Company Logo -->
+    <div class="logo-container">
+        <img src="logo/newlogo.png" alt="Company Logo">
+    </div>
+
+    <!-- Search Bar in New Line -->
+    <div class="search-wrapper">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search Books by Title, Author or ISBN">
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hamburger Menu Button -->
+<button class="nav-toggle">&#9776;</button>
+
+<!-- Navigation Tabs Below the Search Bar -->
+<div class="nav-tabs">
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="aboutus.html">About Us</a></li>
+        
+        <!-- Dropdown for BUMS Books -->
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle">BUMS Books ▼</a>
+            <ul class="dropdown-menu">
+                <li><a href="1st-prof-books.html">1st Prof Books</a></li>
+                <li><a href="2nd-prof-books.html">2nd Prof Books</a></li>
+                <li><a href="3rd-prof-books.html">3rd Prof Books</a></li>
+                <li><a href="md-books.html">MD, PG & PhD Books</a></li>
+            </ul>
+        </li>
+        
+        <li><a href="ncism-books.html">NCISM Books</a></li>
+        <li><a href="aiapget-exam.html">AIAPGET Exam</a></li>
+        <!-- Dropdown for NCISM Syllabus -->
+         <li class="dropdown">
+            <a href="#" class="dropdown-toggle">NCISM Syllabus ▼</a>
+            <ul class="dropdown-menu">
+                <li><a href="ncismsyllabus/1st Prof/1stprofsyllabus.pdf" download="1st Prof/1stprofsyllabus.pdf">1st Prof Syllabus</a></li>
+                <li><a href="ncismsyllabus/2nd Prof/2ndprofsyllabus.pdf" download="/2ndprofsyllabus.pdf">2nd Prof Syllabus</a></li>
+                <li><a href="lkashdflkajo.pdf" download="3rd_Prof_Catalog.pdf">3rd Prof Syllabus</a></li>
+                <li><a href="3rd-prof-catalo.pdf" download="3rd_Prof_Catalog.pdf">PG Syllabus</a></li>
+            </ul>
+        </li>
+        <li><a href="deeni-books.html">Deeni Books</a></li>
+        <li><a href="adbi-books.html">Adbi Books</a></li>
+        <!-- Dropdown for Downloads -->
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle">Downloads ▼</a>
+            <ul class="dropdown-menu">
+                <li><a href="catalogue/1st.pdf" download="1st_Prof_Catalog.pdf">1st Prof Catalog</a></li>
+                <li><a href="catalogue/2nd.pdf" download="2nd_Prof_Catalog.pdf">2nd Prof Catalog</a></li>
+                <li><a href="catalogue/3rd.pdf" download="3rd_Prof_Catalog.pdf">3rd Prof Catalog</a></li>
+                <li><a href="catalogue/md.pdf" download="MD_Catalog.pdf">MD Catalog</a></li>
+                <li><a href="catalogue/neet.pdf" download="AIAPGET_Catalog.pdf">AIAPGET Catalog</a></li>
+                <li><a href="catalogue/general.pdf" download="General_Catalog.pdf">General Books Catalog</a></li>
+            </ul>
+        </li>
+        
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="contact-us.html">Contact Us</a></li>
+    </ul>
+</div>
+
+<!-- Book Details Section -->
+<section class="book-details">
+    <h1 id="book-title">Book Title</h1>
+
+    <!-- Main Image Display -->
+    <img id="book-image" src="" alt="Book Image" width="200">
+    
+    <!-- Thumbnails for Multiple Images -->
+    <div class="image-gallery" id="image-gallery"></div>
+
+    <p><strong>Author:</strong> <span id="book-author"></span></p>
+    <p><strong>Binding:</strong> <span id="book-binding"></span></p>
+    <p><strong>Pages:</strong> <span id="book-pages"></span></p>
+    <p><strong>Edition:</strong> <span id="book-edition"></span></p>
+    <p><strong>MRP:</strong> ₹<span id="book-mrp"></span></p>
+
+    <!-- Discounted Price (Highlighted) -->
+    <p><span class="highlight-discount">Discounted Price: ₹<span id="book-discount">0.00</span></span></p>
+
+    <p><strong>Buy directly from us:</strong></p>
+    <div class="purchase-links">
+        <ul>
+            <li id="whatsapp-item">
+                <a id="whatsapp-link" href="https://wa.me/919312273887" target="_blank">
+                    <img src="logo/whatsapp-icon.png" alt="WhatsApp">
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <p><strong>Or Buy from:</strong></p>
+    <div class="purchase-links">
+        <ul>
+            <li id="amazon-item">
+                <a id="amazon-link" href="#" target="_blank">
+                    <img src="icons/amazon.png" alt="Buy on Amazon">
+                </a>
+            </li>
+            <li id="flipkart-item">
+                <a id="flipkart-link" href="#" target="_blank">
+                    <img src="icons/flipkart.png" alt="Buy on Flipkart">
+                </a>
+            </li>
+            <li id="meesho-item">
+                <a id="meesho-link" href="#" target="_blank">
+                    <img src="icons/meesho.png" alt="Buy on Meesho">
+                </a>
+            </li>
+        </ul>
+    </div>
+</section>
+
+<script>
+    // Get the book ID from the URL
+const urlParams = new URLSearchParams(window.location.search);
+const bookId = urlParams.get('id');
+
+
+
+// Populate book details
+if (books[bookId]) {
+   document.getElementById("book-title").innerText = books[bookId].title;
+   document.getElementById("book-author").innerText = books[bookId].author;
+   document.getElementById("book-image").src = books[bookId].image;
+   document.getElementById("book-binding").innerText = books[bookId].binding;
+   document.getElementById("book-pages").innerText = books[bookId].pages;
+   document.getElementById("book-edition").innerText = books[bookId].edition;
+   document.getElementById("book-mrp").innerText = books[bookId].mrp;
+   document.getElementById("book-discount").innerText = books[bookId].discount;
+
+   // Update purchase links dynamically
+   document.getElementById("amazon-link").href = books[bookId].amazon;
+   document.getElementById("flipkart-link").href = books[bookId].flipkart;
+   document.getElementById("meesho-link").href = books[bookId].meesho;
+} else {
+   document.body.innerHTML = "<h2>Book Not Found</h2>";
+}
+   </script>
+
+<!-- Footer Section -->
+<footer>
+    <div class="footer-container">
+        <div class="footer-column">
+            <h3>Why Us?</h3>
+            <ul>
+                <li>✅ 100% Original Products</li>
+                <li>🔒 Secure Online Payments</li>
+                <li>📦 Real-Time Tracking</li>
+                <li>📍 28,125+ Pin Codes in India</li>
+                <li>💰 COD Available (Selected Locations)</li>
+                <li>🎁 Earn Rewards on Referrals</li>
+                <li>🔄 5 Days Replacement Policy</li>
+            </ul>
+        </div>
+
+        <div class="footer-column">
+            <h3>Policy</h3>
+            <ul>
+                <li><a href="refund.html">Refund Policy</a></li>
+                <li><a href="shipping.html">Shipping & Delivery Policy</a></li>
+                <li><a href="privacy.html">Privacy Policy</a></li>
+                <li><a href="terms.html">Terms & Conditions</a></li>
+                <li><a href="returns.html">Returns & Cancellations</a></li>
+            </ul>
+        </div>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // --- Define the Google Sheet URL ---
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS3n4M-2hUV3y71_Cdpq0qT6Dn6D4d5IE5fsK4JXxNwumtvHSAthKPb9x9cP8_1AE9xHpZSeoR1k_du/pub?output=csv";
+    
+    // --- Variable to hold the data ---
+    let books = {};
+
+    // --- Fetch and Parse Data from Google Sheets ---
+    async function loadInventory() {
+        try {
+            const response = await fetch(sheetURL);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const csvText = await response.text();
+            
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            for (let i = 1; i < lines.length; i++) {
+                const rowValues = lines[i].split(',');
+                const bookData = {};
+                headers.forEach((header, index) => {
+                    bookData[header] = (rowValues[index] || "").trim();
+                });
+                if(bookData.id) {
+                    books[bookData.id] = bookData;
+                }
+            }
+        } catch (error) {
+            console.error("Failed to load inventory:", error);
+        }
+    }
+
+    // --- Populate the page after data is loaded ---
+    await loadInventory();
+
+    const bookDetailsSection = document.querySelector('.book-details'); // Using the class from your HTML
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get('id');
+    const book = books[bookId];
+
+    if (book) {
+        document.title = book.title; 
+        document.getElementById("book-title").innerText = book.title;
+        document.getElementById("book-author").innerText = book.author;
+        document.getElementById("book-image").src = book.image;
+        document.getElementById("book-binding").innerText = book.binding;
+        document.getElementById("book-pages").innerText = book.pages;
+        document.getElementById("book-edition").innerText = book.edition;
+        document.getElementById("book-mrp").innerText = book.mrp;
+        document.getElementById("book-discount").innerText = book.discount;
+
+        // Update purchase links if they exist
+        const amazonLink = document.getElementById("amazon-link");
+        if (amazonLink) amazonLink.href = book.amazon;
+
+        const flipkartLink = document.getElementById("flipkart-link");
+        if (flipkartLink) flipkartLink.href = book.flipkart;
+        
+        const meeshoLink = document.getElementById("meesho-link");
+        if (meeshoLink) meeshoLink.href = book.meesho;
+
+    } else {
+        // Display an error message if the book ID is not found
+        if(bookDetailsSection) {
+            bookDetailsSection.innerHTML = '<h2 style="text-align: center; padding: 40px;">Book Not Found</h2>';
+        }
+    }
+});
+</script>
+        <div class="footer-column">
+            <h3>Contact Us</h3>
+            <p>📧 Email: <a href="mailto:support@idarakitabulshifa.com">idara.asad@gmail.com</a></p>
+            <p>📞 Phone: +91 9312273887</p>
+            <p>📍 New Delhi, India</p>
+            <div class="social-icons">
+                <a href="https://wa.me/919312273887" target="_blank">
+                    <img src="logo/whatsapp-icon.png" alt="WhatsApp">
+                </a>
+                <a href="https://www.instagram.com/idara_kitab_ul_shifa/profilecard/?igshid=bnNtejlsOGF1aG9l" target="_blank">
+                    <img src="logo/instagram-icon.png" alt="Instagram">
+                </a>
+                <a href="https://www.facebook.com/share/19yzFoewKQ/?mibextid=wwXIfr" target="_blank">
+                    <img src="logo/facebook-icon.png" alt="Facebook">
+                </a> <!-- Properly close the <a> tag -->
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2025 IDARA KITAB UL SHIFA, New Delhi ❤️ INDIA</p>
+    </div>
+</footer>
+</body>
+</html>

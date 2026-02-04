@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+<tr>
+<td>
+<table width="600" align="center" cellpadding="0" cellspacing="0"
+       style="background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
+
+    <!-- HEADER -->
+    <tr>
+        <td style="background-color: #8e24aa; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0;">Idara Kitab Ul Shifa</h1>
+        </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+        <td style="padding: 30px;">
+            <h2 style="color: #8e24aa;">Thank you for your order!</h2>
+
+            <p>Hi <strong>{{ order.full_name }}</strong>,</p>
+            <p>
+                We’ve received your order <strong>#{{ order.id }}</strong>
+                and are preparing it for shipment.
+            </p>
+
+            <!-- ORDER ITEMS -->
+            <table width="100%" style="border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #eee;">
+                        <th align="left" style="padding: 10px;">Item</th>
+                        <th align="center" style="padding: 10px;">Qty</th>
+                        <th align="right" style="padding: 10px;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px;">{{ item.book.title }}</td>
+                        <td align="center" style="padding: 10px;">{{ item.quantity }}</td>
+                        <td align="right" style="padding: 10px;">₹{{ item.price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" align="right"
+                            style="padding: 10px; font-weight: bold;">
+                            Total:
+                        </td>
+                        <td align="right"
+                            style="padding: 10px; font-weight: bold; color: #8e24aa;">
+                            ₹{{ order.total_cost|floatformat:2 }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- SHIPPING -->
+            <div style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 5px;">
+                <h3 style="margin-top: 0; font-size: 16px;">Shipping Details</h3>
+                <p style="margin-bottom: 0; font-size: 14px;">
+                    {{ order.address }}<br>
+                    {{ order.city }} - {{ order.zip_code }}<br>
+                    <strong>Mobile:</strong> {{ order.mobile }}
+                </p>
+            </div>
+        </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+        <td style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #777;">
+            <p style="margin: 0;">© 2026 Idara Kitab Ul Shifa. All rights reserved.</p>
+            <p style="margin-top: 5px;">For queries, reply to this email.</p>
+        </td>
+    </tr>
+
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
