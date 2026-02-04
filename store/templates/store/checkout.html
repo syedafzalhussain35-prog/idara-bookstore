@@ -1,6 +1,5 @@
 {% extends 'store/base.html' %}
 {% load static %}
-{% load socialaccount %}
 
 {% block title %}Checkout - Idara Kitab Ul Shifa{% endblock %}
 
@@ -22,25 +21,6 @@
                 </div>
 
                 <div class="card-body p-4">
-
-                    <!-- 🔐 SOCIAL LOGIN (GUEST ONLY) -->
-                    {% if not user.is_authenticated %}
-                        <div class="d-grid gap-2 mb-3">
-                            <a href="{% provider_login_url 'google' %}"
-                               class="btn btn-outline-danger fw-bold">
-                                <i class="fab fa-google me-2"></i> Continue with Google
-                            </a>
-
-                            <a href="{% provider_login_url 'facebook' %}"
-                               class="btn btn-outline-primary fw-bold">
-                                <i class="fab fa-facebook me-2"></i> Continue with Facebook
-                            </a>
-                        </div>
-
-                        <div class="text-center text-muted mb-3 small">
-                            — OR —
-                        </div>
-                    {% endif %}
 
                     <!-- 🧾 CHECKOUT FORM -->
                     <form method="post">

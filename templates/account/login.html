@@ -1,5 +1,4 @@
 {% extends "store/base.html" %}
-{% load socialaccount %}
 
 {% block title %}Login | Idara Kitab Ul Shifa{% endblock %}
 
@@ -60,23 +59,6 @@
     Login
   </button>
 </form>
-
-                <div class="text-center my-4">
-                    <hr>
-                    <span class="text-muted small position-relative bg-white px-2" style="top: -13px;">OR</span>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <a href="{% provider_login_url 'google' %}"
-                       class="btn btn-outline-dark fw-bold">
-                        <i class="fab fa-google me-2"></i> Continue with Google
-                    </a>
-
-                    <a href="{% provider_login_url 'facebook' %}"
-                       class="btn btn-outline-primary fw-bold">
-                        <i class="fab fa-facebook-f me-2"></i> Continue with Facebook
-                    </a>
-                </div>
 
                 <div class="alert alert-light border mt-4 text-center small">
                     You can also <strong>checkout as a guest</strong>.
