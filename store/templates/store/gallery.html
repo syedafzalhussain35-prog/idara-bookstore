@@ -107,21 +107,27 @@
         <p>Moments from conferences, book fairs, and academic events</p>
     </div>
 
+    {% if cloudinary_base %}
+        {% with img_base=cloudinary_base|add:"/image/upload/media/" vid_base=cloudinary_base|add:"/video/upload/media/" %}
+    {% else %}
+        {% with img_base=MEDIA_URL vid_base=MEDIA_URL %}
+    {% endif %}
+
     <section class="event-section">
         <div class="event-title">UDMA 2023</div>
 
         <div class="gallery-media">
             <div class="media-card">
-                <img src="{{ MEDIA_URL }}gallery/udma2023/image1.jpg" alt="UDMA 2023">
+                <img src="{{ img_base }}gallery/udma2023/image1.jpg" alt="UDMA 2023">
             </div>
 
             <div class="media-card">
-                <img src="{{ MEDIA_URL }}gallery/udma2023/image2.jpg" alt="UDMA 2023">
+                <img src="{{ img_base }}gallery/udma2023/image2.jpg" alt="UDMA 2023">
             </div>
 
             <div class="media-card">
                 <video controls>
-                    <source src="{{ MEDIA_URL }}gallery/udma2023/video1.mp4" type="video/mp4">
+                    <source src="{{ vid_base }}gallery/udma2023/video1.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -133,16 +139,16 @@
 
         <div class="gallery-media">
             <div class="media-card">
-                <img src="{{ MEDIA_URL }}gallery/udma2024/img1.jpg" alt="UDMA 2024">
+                <img src="{{ img_base }}gallery/udma2024/img1.jpg" alt="UDMA 2024">
             </div>
 
             <div class="media-card">
-                <img src="{{ MEDIA_URL }}gallery/udma2024/img2.jpg" alt="UDMA 2024">
+                <img src="{{ img_base }}gallery/udma2024/img2.jpg" alt="UDMA 2024">
             </div>
 
             <div class="media-card">
                 <video controls>
-                    <source src="{{ MEDIA_URL }}gallery/udma2024/inauguration.mp4" type="video/mp4">
+                    <source src="{{ vid_base }}gallery/udma2024/inauguration.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -168,5 +174,7 @@
     </section>
 
 </div>
+
+{% endwith %}
 
 {% endblock %}

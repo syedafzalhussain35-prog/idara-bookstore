@@ -1,5 +1,6 @@
 from .models import Category, Cart
 from django.db.models import Sum
+from django.conf import settings
 
 def navbar_categories(request):
     """
@@ -31,7 +32,11 @@ def navbar_categories(request):
                 result = cart.items.aggregate(total_qty=Sum('quantity'))
                 cart_count = result.get('total_qty') or 0
 
+    cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', '') or ''
+    cloudinary_base = f"https://res.cloudinary.com/{cloud_name}" if cloud_name else ""
+
     return {
         'nav_categories': nav_categories,
         'cart_count': cart_count,
+        'cloudinary_base': cloudinary_base,
     }

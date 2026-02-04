@@ -21,6 +21,9 @@ SECRET_KEY = os.getenv(
     'django-insecure-change-this-in-production'
 )
 
+# Cloudinary env (used by templates too)
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
+
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
@@ -32,6 +35,15 @@ else:
         'localhost',
         'syedafzalhussain35.pythonanywhere.com',
     ]
+
+# Trust Render HTTPS proxy headers and prevent CSRF issues in production
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    CSRF_TRUSTED_ORIGINS = [
+        'https://idara-bookstore.onrender.com',
+    ]
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 # ==================================================
 # APPLICATIONS
 # ==================================================
