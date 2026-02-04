@@ -11,6 +11,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 
 from .models import (
@@ -28,6 +31,27 @@ from .forms import CheckoutForm
 
 
 # ==================================================
+# EMAILS
+# ==================================================
+
+def send_order_confirmation_email(order):
+    if not order.email:
+        return
+
+    subject = f"Order Confirmation #{order.id} - Idara Kitab Ul Shifa"
+    html_body = render_to_string('emails/order_confirmation.html', {'order': order})
+    text_body = strip_tags(html_body)
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        to=[order.email],
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=True)
+
+
+# ==================================================
 # HOME
 # ==================================================
 
@@ -35,9 +59,16 @@ def home(request):
     bestsellers = Book.objects.filter(is_bestseller=True)[:8]
     new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
 
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = Wishlist.objects.filter(
+            user=request.user
+        ).values_list('book_id', flat=True)
+
     return render(request, 'store/home.html', {
         'bestsellers': bestsellers,
         'new_arrivals': new_arrivals,
+        'wishlist_ids': wishlist_ids,
         'is_homepage': True,
     })
 
@@ -100,9 +131,16 @@ def search(request):
     paginator = Paginator(books_qs, 12)
     books = paginator.get_page(request.GET.get('page'))
 
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = Wishlist.objects.filter(
+            user=request.user
+        ).values_list('book_id', flat=True)
+
     return render(request, 'store/search_results.html', {
         'books': books,
         'query': query,
+        'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })
 
@@ -339,6 +377,9 @@ def checkout(request):
             # Clean up guest session
             if 'cart_id' in request.session:
                 del request.session['cart_id']
+
+        # Send confirmation email (best-effort)
+        send_order_confirmation_email(order)
 
         return render(request, 'store/order_success.html', {'order': order})
 

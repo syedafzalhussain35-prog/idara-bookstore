@@ -12,19 +12,7 @@
     {% if books %}
         <div class="row g-4">
             {% for book in books %}
-            <div class="col-md-3">
-                <div class="card book-card h-100">
-                    <a href="{% url 'book_detail' book.id %}">
-                        {% if book.main_cover %}
-                        <img src="{{ book.main_cover.url }}" class="card-img-top">
-                        {% endif %}
-                    </a>
-                    <div class="card-body">
-                        <h6 class="fw-semibold">{{ book.title }}</h6>
-                        <small class="text-muted">{{ book.author }}</small>
-                    </div>
-                </div>
-            </div>
+                {% include 'store/partials/book_card.html' %}
             {% endfor %}
         </div>
     {% else %}

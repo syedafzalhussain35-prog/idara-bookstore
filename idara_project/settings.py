@@ -154,7 +154,7 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # 1. Login Method
-ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
 
 # 2. THE FIX: Define the signup form fields explicitly.
 # The '*' means the field is required.
@@ -208,7 +208,6 @@ USE_TZ = True
 # ==================================================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -227,9 +226,12 @@ STORAGES = {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
+
+# Allow serving static files from finders if collectstatic didn't run
+WHITENOISE_USE_FINDERS = True
 
 # Optional explicit Cloudinary config (fallback if CLOUDINARY_URL is mis-read)
 cloudinary.config(

@@ -49,8 +49,10 @@
                      onclick="changeImage(this.src, this)">
                 {% endif %}
                 {% for img in book.images.all %}
-                <img src="{{ img.image.url }}" class="thumbnail" 
-                     onclick="changeImage(this.src, this)">
+                    {% if img.image %}
+                    <img src="{{ img.image.url }}" class="thumbnail" 
+                         onclick="changeImage(this.src, this)">
+                    {% endif %}
                 {% endfor %}
             </div>
             {% endif %}
