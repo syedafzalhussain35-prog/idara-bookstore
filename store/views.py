@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
+from django.contrib import messages
 from django.db.models import Q, Avg, Count
 from django.db import transaction
 from django.core.paginator import Paginator
@@ -277,7 +278,38 @@ def remove_from_wishlist(request, book_id):
 
 @login_required
 def profile_view(request):
-    orders = Order.objects.filter(user=request.user).prefetch_related('items__book')
+    user = request.user
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+
+        has_error = False
+
+        if username and username != user.username:
+            if User.objects.filter(username=username).exclude(id=user.id).exists():
+                messages.error(request, "Username already taken.")
+                has_error = True
+            else:
+                user.username = username
+
+        if email and email != user.email:
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                messages.error(request, "Email already in use.")
+                has_error = True
+            else:
+                user.email = email
+
+        user.first_name = first_name
+        user.last_name = last_name
+        user.save()
+
+        if not has_error:
+            messages.success(request, "Profile updated successfully.")
+        return redirect('profile')
+
+    orders = Order.objects.filter(user=user).prefetch_related('items__book')
     return render(request, 'store/profile.html', {'orders': orders})
 
 
