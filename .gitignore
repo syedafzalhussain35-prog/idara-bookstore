@@ -1,0 +1,12 @@
+# Django / local data
+media/
+staticfiles/
+
+# Backups / extras
+Backup/
+Extra/
+
+# Large/binary assets
+*.mp4
+*.exe
+*.docx
