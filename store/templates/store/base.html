@@ -124,6 +124,20 @@
         align-items: center;
     }
 
+    .user-actions .dropdown-toggle {
+        color: #555;
+        text-decoration: none;
+        font-size: 0.85rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .user-actions .dropdown-menu {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+        border-radius: 10px;
+    }
+
     .user-actions i {
         font-size: 1.3rem;
         color: var(--primary-magenta);
@@ -334,6 +348,10 @@
         border-radius: 50%;
         animation: spin 0.9s linear infinite;
         box-shadow: 0 6px 16px rgba(189, 24, 89, 0.15);
+    }
+
+    body.js-infinite .pagination-container {
+        display: none;
     }
 
     @keyframes spin {
@@ -584,6 +602,31 @@
                 </span>
             {% endif %}
         </a>
+
+        {% if recently_viewed_books %}
+        <div class="dropdown">
+            <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-clock"></i>Recent
+            </a>
+            <ul class="dropdown-menu p-2" style="min-width: 260px;">
+                {% for book in recently_viewed_books %}
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'book_detail' book.id %}">
+                        {% if book.main_cover %}
+                            <img src="{{ book.main_cover.url }}" alt="{{ book.title }}" style="width:36px;height:48px;object-fit:cover;border-radius:6px;">
+                        {% else %}
+                            <div class="bg-light" style="width:36px;height:48px;border-radius:6px;"></div>
+                        {% endif %}
+                        <div class="small">
+                            <div class="fw-semibold text-truncate" style="max-width: 160px;">{{ book.title }}</div>
+                            <div class="text-muted text-truncate" style="max-width: 160px;">{{ book.author }}</div>
+                        </div>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
         <a href="{% url 'profile' %}"><i class="fas fa-user-circle"></i>{{ user.username }}</a>
     {% else %}
@@ -912,6 +955,55 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     window.addEventListener("pageshow", () => hideLoader());
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const grid = document.querySelector(".infinite-scroll");
+    const loader = document.querySelector(".infinite-loader");
+    const nextLink = document.querySelector(".pagination-container a[rel='next']");
+
+    if (!grid || !loader || !nextLink) return;
+
+    document.body.classList.add("js-infinite");
+    let nextUrl = nextLink.getAttribute("href");
+    let loading = false;
+
+    const loadNext = () => {
+        if (!nextUrl || loading) return;
+        loading = true;
+        loader.style.display = "block";
+
+        fetch(nextUrl, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then((res) => res.text())
+            .then((html) => {
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                const newItems = doc.querySelectorAll(".infinite-scroll > *");
+                newItems.forEach((el) => grid.appendChild(el));
+
+                const newNext = doc.querySelector(".pagination-container a[rel='next']");
+                nextUrl = newNext ? newNext.getAttribute("href") : null;
+
+                if (!nextUrl) {
+                    loader.style.display = "none";
+                    observer.disconnect();
+                }
+            })
+            .catch(() => {})
+            .finally(() => {
+                loading = false;
+                if (nextUrl) loader.style.display = "none";
+            });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadNext();
+        }
+    }, { rootMargin: "200px" });
+
+    observer.observe(loader);
 });
 </script>
 

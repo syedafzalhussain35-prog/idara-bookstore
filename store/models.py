@@ -78,6 +78,7 @@ class Book(models.Model):
 
     is_bestseller = models.BooleanField(default=False)
     is_new_arrival = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

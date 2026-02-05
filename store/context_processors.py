@@ -1,5 +1,5 @@
-from .models import Category, Cart
-from django.db.models import Sum
+from .models import Category, Cart, Book
+from django.db.models import Sum, Case, When, IntegerField
 from django.conf import settings
 
 def navbar_categories(request):
@@ -39,8 +39,15 @@ def navbar_categories(request):
     cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', '') or ''
     cloudinary_base = f"https://res.cloudinary.com/{cloud_name}" if cloud_name else ""
 
+    recently_viewed_books = []
+    recent_ids = request.session.get("recently_viewed", [])[:5]
+    if recent_ids:
+        preserved = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(recent_ids)], output_field=IntegerField())
+        recently_viewed_books = list(Book.objects.filter(id__in=recent_ids).order_by(preserved))
+
     return {
         'nav_categories': nav_categories,
         'cart_count': cart_count,
         'cloudinary_base': cloudinary_base,
+        'recently_viewed_books': recently_viewed_books,
     }

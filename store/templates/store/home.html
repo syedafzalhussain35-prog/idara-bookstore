@@ -422,7 +422,19 @@
             {% endfor %}
         </div>
         {% endif %}
-        
+
+        {% if featured_books %}
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
+            <h3 class="fw-bold text-magenta">Featured Books</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row mb-5">
+            {% for book in featured_books %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold text-magenta">Best Sellers</h3>
             <hr class="flex-grow-1 ms-3 d-none d-md-block">
@@ -447,6 +459,64 @@
                         {% if subject.icon %}
                             <img src="{{ subject.icon.url }}" alt="{{ subject.name }}">
                         {% else %}
+                            <i class="fas fa-book-open"></i>
+                        {% endif %}
+                    </span>
+                    <span class="subject-label">{{ subject.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">New Arrivals</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row mb-5">
+            {% for book in new_arrivals %}
+                {% include 'store/partials/book_card.html' %}
+            {% empty %}
+                <p class="text-center text-muted w-100">Fresh stock arriving soon!</p>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">Most Popular</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row mb-5">
+            {% for book in popular_books %}
+                {% include 'store/partials/book_card.html' %}
+            {% empty %}
+                <p class="text-center text-muted w-100">Popular picks will show here soon!</p>
+            {% endfor %}
+        </div>
+
+        {% if recommended_books %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">Recommended for You</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row mb-5">
+            {% for book in recommended_books %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if recently_viewed %}
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+            <h3 class="fw-bold text-magenta">Continue Browsing</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row">
+            {% for book in recently_viewed %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+{% else %}
                             <i class="fas fa-book-open"></i>
                         {% endif %}
                     </span>

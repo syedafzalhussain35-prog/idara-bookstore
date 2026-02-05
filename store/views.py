@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Q, Avg, Count, Case, When, IntegerField
+from django.db.models import Q, Avg, Count, Case, When, IntegerField, Sum
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -216,11 +216,33 @@ def _send_publish_with_us(subject, text_body, html_body):
 
 def home(request):
     banners = Banner.objects.filter(is_active=True).order_by("order", "id")
+    featured_books = Book.objects.filter(is_featured=True).order_by("-id")[:8]
     bestsellers = Book.objects.filter(is_bestseller=True)[:8]
     new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
     recently_viewed = _get_recently_viewed(request, limit=8)
     bundles = Bundle.objects.filter(is_active=True).order_by('-id')[:8]
     subjects = Subject.objects.filter(is_active=True).order_by('name')[:8]
+    popular_books = (
+        Book.objects
+        .annotate(sales=Sum("orderitem__quantity"))
+        .order_by("-sales", "-id")[:8]
+    )
+
+    recommended = []
+    if recently_viewed:
+        viewed_ids = [b.id for b in recently_viewed]
+        category_ids = [b.category_id for b in recently_viewed if b.category_id]
+        subject_ids = list(
+            Book.objects.filter(id__in=viewed_ids).values_list("subjects__id", flat=True)
+        )
+        recommended_qs = (
+            Book.objects
+            .filter(Q(category_id__in=category_ids) | Q(subjects__id__in=subject_ids))
+            .exclude(id__in=viewed_ids)
+            .distinct()
+            .order_by("-is_bestseller", "-id")
+        )
+        recommended = list(recommended_qs[:8])
 
     wishlist_ids = []
     if request.user.is_authenticated:
@@ -230,8 +252,11 @@ def home(request):
 
     return render(request, 'store/home.html', {
         'banners': banners,
+        'featured_books': featured_books,
         'bestsellers': bestsellers,
         'new_arrivals': new_arrivals,
+        'popular_books': popular_books,
+        'recommended_books': recommended,
         'recently_viewed': recently_viewed,
         'bundles': bundles,
         'subjects': subjects,

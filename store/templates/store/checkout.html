@@ -9,7 +9,42 @@
         Checkout <i class="fas fa-check-circle"></i>
     </h2>
 
+    <div class="checkout-steps mb-4">
+        <div class="step completed">Cart</div>
+        <div class="step active">Shipping</div>
+        <div class="step">Payment</div>
+        <div class="step">Done</div>
+    </div>
+
 <style>
+    .checkout-steps {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .checkout-steps .step {
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid #eee;
+        background: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #777;
+    }
+
+    .checkout-steps .step.completed {
+        background: #f7f0f4;
+        border-color: #ead3df;
+        color: var(--primary-magenta);
+    }
+
+    .checkout-steps .step.active {
+        background: var(--primary-magenta);
+        border-color: var(--primary-magenta);
+        color: #fff;
+    }
+
 @media (max-width: 768px) {
     .card-body {
         padding: 16px !important;
@@ -100,6 +135,12 @@
                                     Pay with cash upon arrival.
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3 text-muted small">
+                            <span class="badge text-bg-light border">Secure Checkout</span>
+                            <span><i class="fas fa-lock me-1"></i>SSL Protected</span>
+                            <span><i class="fas fa-shield-alt me-1"></i>Trusted Payments</span>
                         </div>
 
                         <button type="submit"

@@ -82,6 +82,7 @@ class BookAdmin(admin.ModelAdmin):
         "category",
         "is_bestseller",
         "is_new_arrival",
+        "is_featured",
     )
 
     list_filter = (
@@ -89,6 +90,7 @@ class BookAdmin(admin.ModelAdmin):
         ("subjects", admin.RelatedOnlyFieldListFilter),
         "is_bestseller",
         "is_new_arrival",
+        "is_featured",
     )
     search_fields = ("title", "author", "description")
     list_select_related = ("category",)
@@ -99,6 +101,7 @@ class BookAdmin(admin.ModelAdmin):
         "stock",
         "is_bestseller",
         "is_new_arrival",
+        "is_featured",
     )
 
     readonly_fields = ("discount_display",)
@@ -115,7 +118,7 @@ class BookAdmin(admin.ModelAdmin):
             "fields": ("stock",)
         }),
         ("Homepage Flags", {
-            "fields": ("is_bestseller", "is_new_arrival")
+            "fields": ("is_bestseller", "is_new_arrival", "is_featured")
         }),
         ("Images", {
             "fields": ("main_cover",)
