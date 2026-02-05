@@ -567,6 +567,8 @@ def privacy_policy(request): return render(request, 'store/policies/privacy.html
 def terms_policy(request): return render(request, 'store/policies/terms.html')
 def returns_policy(request): return render(request, 'store/policies/returns.html')
 
+def publish_with_us(request): return render(request, 'store/publish_with_us.html')
+
 # ==================================================
 # 🔍 LIVE SEARCH (AJAX)
 # ==================================================
