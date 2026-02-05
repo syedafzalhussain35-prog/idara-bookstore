@@ -373,7 +373,7 @@
         }
 
         .header-logo img {
-            max-height: 50px;
+            max-height: 65px;
         }
 
         .user-actions {
@@ -586,7 +586,12 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
 
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#">Categories</a>
+                    <button class="nav-link dropdown-toggle btn btn-link text-white"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        Categories
+                    </button>
                     <ul class="dropdown-menu">
                         {% if not nav_categories %}
                         <li>
@@ -604,10 +609,13 @@
                 </li>
 
                 <!-- ===== UPDATED DOWNLOADS (CATALOGUES ONLY) ===== -->
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" role="button">
+                <li class="nav-item dropdown">
+    <button class="nav-link dropdown-toggle btn btn-link text-white"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
         Catalogue
-    </a>
+    </button>
     <ul class="dropdown-menu">
 
                         <li>
