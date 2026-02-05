@@ -10,7 +10,7 @@
     </h4>
 
     {% if books %}
-        <div class="row g-4">
+        <div class="row g-3">
             {% for book in books %}
                 {% include 'store/partials/book_card.html' %}
             {% endfor %}
@@ -20,4 +20,12 @@
     {% endif %}
 
 </div>
+
+<style>
+@media (max-width: 768px) {
+    h4.mb-4 {
+        font-size: 1.1rem;
+    }
+}
+</style>
 {% endblock %}

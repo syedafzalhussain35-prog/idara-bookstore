@@ -20,14 +20,14 @@
 
     <div class="row gy-4">
         <div class="col-md-5">
-            <div class="card border-0 shadow-sm position-relative overflow-hidden bg-white">
+            <div class="card border-0 shadow-sm position-relative overflow-hidden bg-white book-media-card">
                 {% if book.discount_percentage > 0 %}
                 <span class="badge-sale position-absolute top-0 start-0 m-3 shadow-sm">
                     {{ book.discount_percentage }}% OFF
                 </span>
                 {% endif %}
 
-                <div class="p-4 d-flex align-items-center justify-content-center" style="height: 450px;">
+                <div class="p-4 d-flex align-items-center justify-content-center book-media-area">
                     {% if book.main_cover %}
                         <img id="mainImage"
                              src="{{ book.main_cover.url }}"
@@ -43,7 +43,7 @@
             </div>
 
             {% if book.images.all or book.main_cover %}
-            <div class="d-flex gap-2 mt-3 overflow-auto pb-2 custom-scrollbar">
+            <div class="d-flex gap-2 mt-3 overflow-auto pb-2 custom-scrollbar thumbs-row">
                 {% if book.main_cover %}
                 <img src="{{ book.main_cover.url }}" class="thumbnail active-thumbnail" 
                      onclick="changeImage(this.src, this)">
@@ -85,7 +85,7 @@
                 <small class="text-muted ms-2">({{ reviews.count }} Verified Reviews)</small>
             </div>
 
-            <div class="rating-breakdown mb-4 p-3 bg-white rounded shadow-sm" style="max-width: 450px;">
+            <div class="rating-breakdown mb-4 p-3 bg-white rounded shadow-sm rating-box">
                 {% for item in rating_breakdown %}
                 <div class="d-flex align-items-center mb-2 small">
                     <div class="me-2 fw-semibold text-nowrap" style="width: 50px;">
@@ -127,7 +127,7 @@
             </div>
             {% endif %}
 
-            <div class="d-flex flex-wrap gap-3 mt-5">
+            <div class="d-flex flex-wrap gap-3 mt-4 action-row">
                 {% if book.stock > 0 %}
                 <a href="{% url 'add_to_cart' book.id %}" class="btn btn-magenta btn-lg rounded-pill px-5 shadow">
                     <i class="fas fa-shopping-cart me-2"></i>Add to Cart
@@ -225,6 +225,54 @@
     
     .custom-scrollbar::-webkit-scrollbar { height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+    @media (max-width: 991px) {
+        .book-media-area {
+            height: 360px;
+        }
+
+        .rating-box {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .book-media-area {
+            height: 300px;
+        }
+
+        .thumbs-row {
+            gap: 10px;
+        }
+
+        .thumbnail {
+            width: 70px;
+            height: 90px;
+        }
+
+        .action-row .btn {
+            width: 100%;
+        }
+
+        .breadcrumb .breadcrumb-item.active {
+            max-width: 160px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .book-media-area {
+            height: 240px;
+            padding: 16px;
+        }
+
+        h1.display-6 {
+            font-size: 1.5rem;
+        }
+
+        .rating-breakdown {
+            padding: 12px;
+        }
+    }
 </style>
 
 <script>
