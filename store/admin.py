@@ -78,7 +78,12 @@ class BookAdmin(admin.ModelAdmin):
         "is_new_arrival",
     )
 
-    list_filter = ("category", "subjects", "is_bestseller", "is_new_arrival")
+    list_filter = (
+        "category",
+        ("subjects", admin.RelatedOnlyFieldListFilter),
+        "is_bestseller",
+        "is_new_arrival",
+    )
     search_fields = ("title", "author", "description")
     list_select_related = ("category",)
 
