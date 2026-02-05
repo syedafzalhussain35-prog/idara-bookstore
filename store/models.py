@@ -151,11 +151,21 @@ class Subject(models.Model):
 class Banner(models.Model):
     title = models.CharField(max_length=200, blank=True)
     image = models.ImageField(upload_to='banners/')
-    link = models.URLField(blank=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="banners",
+    )
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     focal_x = models.PositiveSmallIntegerField(default=50)
     focal_y = models.PositiveSmallIntegerField(default=50)
+    mobile_height = models.PositiveSmallIntegerField(
+        default=240,
+        help_text="Banner height in pixels for mobile screens.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

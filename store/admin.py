@@ -339,10 +339,28 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ("title", "order", "is_active", "focal_x", "focal_y")
-    list_editable = ("order", "is_active", "focal_x", "focal_y")
+    list_display = ("preview", "title", "category", "order", "is_active", "focal_x", "focal_y", "mobile_height")
+    list_editable = ("order", "is_active", "focal_x", "focal_y", "mobile_height")
     search_fields = ("title",)
     ordering = ("order", "id")
+
+    fieldsets = (
+        ("Banner", {
+            "fields": ("title", "image", "category", "order", "is_active")
+        }),
+        ("Mobile & Crop", {
+            "fields": ("focal_x", "focal_y", "mobile_height")
+        }),
+    )
+
+    @admin.display(description="Preview")
+    def preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="height:48px;width:86px;object-fit:cover;border-radius:6px;border:1px solid #243149;" />',
+                obj.image.url,
+            )
+        return "—"
 
 
 # ======================

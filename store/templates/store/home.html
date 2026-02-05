@@ -83,7 +83,7 @@
 
     .hero-slide img {
         width: 100%;
-        height: 360px;
+        height: var(--banner-height, 360px);
         object-fit: cover;
         display: block;
     }
@@ -222,7 +222,7 @@
 
     @media (max-width: 991px) {
         .hero-slide img {
-            height: 300px;
+            height: var(--banner-height-tablet, 300px);
         }
 
         .swiper-button-next,
@@ -237,7 +237,7 @@
 
     @media (max-width: 576px) {
         .hero-slide img {
-            height: 260px;
+            height: var(--banner-height-mobile, 260px);
         }
 
         .cat-img-box {
@@ -255,7 +255,7 @@
 
     @media (max-width: 420px) {
         .hero-slide img {
-            height: 230px;
+            height: var(--banner-height-small, 230px);
         }
 
         .subject-grid {
@@ -275,12 +275,12 @@
                 {% for banner in banners %}
                 <div class="swiper-slide">
                     <div class="hero-slide">
-                        {% if banner.link %}
-                        <a href="{{ banner.link }}">
-                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                        {% if banner.category %}
+                        <a href="{% url 'category_books' banner.category.slug %}">
+                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%; --banner-height-mobile: {{ banner.mobile_height }}px;">
                         </a>
                         {% else %}
-                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%; --banner-height-mobile: {{ banner.mobile_height }}px;">
                         {% endif %}
                     </div>
                 </div>
@@ -288,27 +288,27 @@
             {% else %}
             <div class="swiper-slide">
                 <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
+                    <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1" style="--banner-height-mobile: 240px;">
                 </div>
             </div>
             <div class="swiper-slide">
                 <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2">
+                    <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2" style="--banner-height-mobile: 240px;">
                 </div>
             </div>
             <div class="swiper-slide">
                 <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3">
+                    <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3" style="--banner-height-mobile: 240px;">
                 </div>
             </div>
             <div class="swiper-slide">
                 <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4">
+                    <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4" style="--banner-height-mobile: 240px;">
                 </div>
             </div>
             <div class="swiper-slide">
                 <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
+                    <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5" style="--banner-height-mobile: 240px;">
                 </div>
             </div>
             {% endif %}
