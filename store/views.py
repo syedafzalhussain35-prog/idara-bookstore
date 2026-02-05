@@ -334,10 +334,25 @@ def profile_view(request):
 # CART
 # ==================================================
 
-@login_required
+def _get_or_create_cart(request):
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        return cart
+
+    cart_id = request.session.get('cart_id')
+    cart = Cart.objects.filter(id=cart_id, user__isnull=True).first()
+    if cart:
+        return cart
+
+    cart = Cart.objects.create(user=None)
+    request.session['cart_id'] = cart.id
+    request.session.modified = True
+    return cart
+
+
 def add_to_cart(request, book_id):
     book = get_object_or_404(Book, id=book_id)
-    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart = _get_or_create_cart(request)
 
     item, created = CartItem.objects.get_or_create(cart=cart, book=book)
     if not created:
@@ -347,18 +362,17 @@ def add_to_cart(request, book_id):
     return redirect('cart_detail')
 
 
-@login_required
 def cart_detail(request):
-    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart = _get_or_create_cart(request)
     return render(request, 'store/cart.html', {
         'cart': cart,
         'cart_items': cart.items.select_related('book'),
     })
 
 
-@login_required
 def remove_from_cart(request, item_id):
-    CartItem.objects.filter(id=item_id, cart__user=request.user).delete()
+    cart = _get_or_create_cart(request)
+    CartItem.objects.filter(id=item_id, cart=cart).delete()
     return redirect('cart_detail')
 
 

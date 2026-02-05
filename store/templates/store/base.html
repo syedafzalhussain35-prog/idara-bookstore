@@ -434,6 +434,11 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#">Categories</a>
                     <ul class="dropdown-menu">
+                        {% if not nav_categories %}
+                        <li>
+                            <span class="dropdown-item text-muted">No categories yet</span>
+                        </li>
+                        {% endif %}
                         {% for cat in nav_categories %}
                         <li>
                             <a class="dropdown-item" href="{% url 'category_books' cat.slug %}">
@@ -443,11 +448,6 @@
                         {% endfor %}
                     </ul>
                 </li>
-
-                <li class="nav-item"><a class="nav-link" href="{% url 'category_books' 'ncism-books' %}">NCISM Books</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'category_books' 'neet-exam' %}">NEET Exam</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'category_books' 'deeni-books' %}">Deeni Books</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'category_books' 'adbi-books' %}">Adbi Books</a></li>
 
                 <!-- ===== UPDATED DOWNLOADS (CATALOGUES ONLY) ===== -->
 <li class="nav-item dropdown">
