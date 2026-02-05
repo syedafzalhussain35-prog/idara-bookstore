@@ -1,0 +1,258 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+    :root {
+        --dash-bg: #f6f7fb;
+        --dash-card: #ffffff;
+        --dash-border: #e6e8ef;
+        --dash-text: #1b1f2a;
+        --dash-muted: #6b7280;
+        --dash-accent: #c2185b;
+        --dash-accent-2: #f5c27a;
+    }
+
+    body {
+        background: var(--dash-bg);
+    }
+
+    .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 18px 0 12px;
+    }
+
+    .dash-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--dash-text);
+    }
+
+    .dash-subtitle {
+        color: var(--dash-muted);
+        font-size: 13px;
+    }
+
+    .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 16px;
+    }
+
+    .dash-card {
+        background: var(--dash-card);
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+    }
+
+    .dash-card h3 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--dash-muted);
+        margin: 0 0 6px;
+    }
+
+    .dash-metric {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--dash-text);
+    }
+
+    .dash-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fff4e1;
+        color: #6b4a10;
+        border: 1px solid #f1d9b4;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+
+    .dash-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .dash-table th,
+    .dash-table td {
+        padding: 10px 6px;
+        border-bottom: 1px solid var(--dash-border);
+        font-size: 13px;
+    }
+
+    .dash-table th {
+        text-align: left;
+        color: var(--dash-muted);
+        font-weight: 600;
+    }
+
+    .dash-pill {
+        background: #f0f4ff;
+        color: #2d3a8c;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .dash-danger {
+        background: #fff1f2;
+        color: #9f1239;
+    }
+
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    @media (max-width: 1200px) {
+        .span-4, .span-6, .span-8 { grid-column: span 12; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-header">
+    <div>
+        <div class="dash-title">Sales Overview</div>
+        <div class="dash-subtitle">Quick snapshot of performance and inventory health</div>
+    </div>
+    <span class="dash-chip">Amazon-style seller view</span>
+</div>
+
+<div class="dash-grid">
+    <div class="dash-card span-4">
+        <h3>Total Sales</h3>
+        <div class="dash-metric">₹{{ total_sales|floatformat:0 }}</div>
+        <div class="dash-subtitle">Paid orders total</div>
+    </div>
+    <div class="dash-card span-4">
+        <h3>Total Orders</h3>
+        <div class="dash-metric">{{ total_orders }}</div>
+        <div class="dash-subtitle">Paid orders only</div>
+    </div>
+    <div class="dash-card span-4">
+        <h3>Orders Today</h3>
+        <div class="dash-metric">{{ today_orders }}</div>
+        <div class="dash-subtitle">Paid orders today</div>
+    </div>
+
+    <div class="dash-card span-6">
+        <h3>Sales Last 14 Days</h3>
+        <canvas id="salesDailyChart" height="120"></canvas>
+    </div>
+    <div class="dash-card span-6">
+        <h3>Sales Last 12 Months</h3>
+        <canvas id="salesMonthlyChart" height="120"></canvas>
+    </div>
+
+    <div class="dash-card span-6">
+        <h3>Best Selling Books</h3>
+        <table class="dash-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Units</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in best_sellers %}
+                <tr>
+                    <td>{{ row.book__title }}</td>
+                    <td><span class="dash-pill">{{ row.qty }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2">No sales yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dash-card span-6">
+        <h3>Low Stock Alerts</h3>
+        <table class="dash-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in low_stock %}
+                <tr>
+                    <td>{{ book.title }}</td>
+                    <td><span class="dash-pill dash-danger">{{ book.stock }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2">Stock levels look good.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dash-card span-12">
+        <h3>Manage</h3>
+        {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+    </div>
+</div>
+
+<script>
+    const dailyLabels = {{ day_labels|safe }};
+    const dailyData = {{ day_series|safe }};
+    const monthlyLabels = {{ month_labels|safe }};
+    const monthlyData = {{ month_series|safe }};
+
+    new Chart(document.getElementById("salesDailyChart"), {
+        type: "line",
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: "Sales",
+                data: dailyData,
+                borderColor: "#c2185b",
+                backgroundColor: "rgba(194, 24, 91, 0.12)",
+                tension: 0.35,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { ticks: { callback: (v) => "₹" + v } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById("salesMonthlyChart"), {
+        type: "bar",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: "Sales",
+                data: monthlyData,
+                backgroundColor: "#f5c27a",
+                borderColor: "#c2185b",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { ticks: { callback: (v) => "₹" + v } }
+            }
+        }
+    });
+</script>
+{% endblock %}

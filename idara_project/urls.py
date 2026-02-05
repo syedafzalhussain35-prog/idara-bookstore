@@ -3,13 +3,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from store import views
+from store.admin import admin_site
 
 urlpatterns = [
 
     # ==================================================
     # ADMIN
     # ==================================================
-    path('admin/', admin.site.urls),
+    path('admin/', admin_site.urls),
 
     # ==================================================
     # AUTH (DJANGO-ALLAUTH)

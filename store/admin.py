@@ -17,6 +17,9 @@ from .models import (
     GalleryItem,
     UserProfile,
 )
+from .admin_site import IdaraAdminSite
+
+admin_site = IdaraAdminSite(name="idara_admin")
 
 # ======================
 # CATEGORY ADMIN
@@ -287,3 +290,19 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "phone", "city", "company", "updated_at")
     search_fields = ("user__username", "user__email", "phone", "city", "company")
     ordering = ("-updated_at",)
+
+
+# ======================
+# CUSTOM ADMIN SITE
+# ======================
+
+admin_site.register(Category, CategoryAdmin)
+admin_site.register(Book, BookAdmin)
+admin_site.register(Cart, CartAdmin)
+admin_site.register(Wishlist, WishlistAdmin)
+admin_site.register(Review, ReviewAdmin)
+admin_site.register(Coupon, CouponAdmin)
+admin_site.register(SyllabusPDF, SyllabusPDFAdmin)
+admin_site.register(GalleryItem, GalleryItemAdmin)
+admin_site.register(UserProfile, UserProfileAdmin)
+admin_site.register(Order, OrderAdmin)
