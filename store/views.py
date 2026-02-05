@@ -503,10 +503,12 @@ def add_to_cart(request, book_id):
 
 def cart_detail(request):
     cart = _get_or_create_cart(request)
+    has_cart_items = cart.items.exists() or cart.bundle_items.exists()
     return render(request, 'store/cart.html', {
         'cart': cart,
         'cart_items': cart.items.select_related('book'),
         'bundle_items': cart.bundle_items.select_related('bundle'),
+        'has_cart_items': has_cart_items,
     })
 
 
