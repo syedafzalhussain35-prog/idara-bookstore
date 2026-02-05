@@ -298,18 +298,24 @@ def book_detail(request, book_id):
         ).exists()
     )
 
-    related_books = (
-        Book.objects
-        .exclude(id=book.id)
-        .annotate(
-            score=(
-                Case(When(category=book.category, then=2), default=0, output_field=IntegerField())
-                + Case(When(author=book.author, then=2), default=0, output_field=IntegerField())
-                + Case(When(is_bestseller=True, then=1), default=0, output_field=IntegerField())
-            )
+    related_books = []
+    if book.category_id:
+        related_books = list(
+            Book.objects
+            .filter(category=book.category)
+            .exclude(id=book.id)
+            .order_by("-is_bestseller", "-id")[:8]
         )
-        .order_by("-score", "-id")[:8]
-    )
+
+    if len(related_books) < 4:
+        exclude_ids = [book.id] + [b.id for b in related_books]
+        fallback = list(
+            Book.objects
+            .filter(is_bestseller=True)
+            .exclude(id__in=exclude_ids)
+            .order_by("-id")[:8 - len(related_books)]
+        )
+        related_books += fallback
 
     recently_viewed = _get_recently_viewed(request, exclude_id=book.id, limit=8)
 
