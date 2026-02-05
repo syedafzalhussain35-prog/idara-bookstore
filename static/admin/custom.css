@@ -1,10 +1,10 @@
 :root {
-  --admin-bg: #0f1218;
-  --admin-panel: #151a23;
-  --admin-panel-2: #1b2230;
-  --admin-border: #232b3b;
-  --admin-text: #e8ecf3;
-  --admin-muted: #a7b0c0;
+  --admin-bg: #0f1720;
+  --admin-panel: #151d29;
+  --admin-panel-2: #1e2736;
+  --admin-border: #2b3647;
+  --admin-text: #e9eef5;
+  --admin-muted: #9fb0c7;
   --admin-accent: #b0134b;
   --admin-accent-2: #f1c27a;
 }
@@ -16,11 +16,12 @@ body {
 
 #header {
   background: linear-gradient(120deg, #7b0d35, #b0134b);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 #branding h1, #branding h1 a:link, #branding h1 a:visited {
   color: #fff;
+  letter-spacing: 0.4px;
 }
 
 #user-tools {
@@ -28,18 +29,20 @@ body {
 }
 
 .breadcrumbs {
-  background: #1a2230;
+  background: #243e4e;
   border-bottom: 1px solid var(--admin-border);
+  color: #cfe6f5;
 }
 
 #content {
   background: transparent;
 }
 
-.module, .inline-group {
+.module, .inline-group, .dashboard-module {
   background: var(--admin-panel);
   border: 1px solid var(--admin-border);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  border-radius: 12px;
 }
 
 .module h2, .module caption, .inline-group h2 {
@@ -49,7 +52,7 @@ body {
 }
 
 #nav-sidebar {
-  background: #121822;
+  background: #101825;
   border-right: 1px solid var(--admin-border);
 }
 
@@ -107,7 +110,7 @@ body {
 }
 
 .results thead th {
-  background: #1b2230;
+  background: #1c2736;
   color: var(--admin-text);
   border-bottom: 1px solid var(--admin-border);
 }
@@ -121,7 +124,26 @@ body {
 }
 
 .results tbody tr:hover {
-  background: #202838;
+  background: #1f2a3c;
+}
+
+input, select, textarea {
+  background: #101621;
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--admin-accent-2);
+  box-shadow: 0 0 0 2px rgba(241, 194, 122, 0.2);
+}
+
+.help, .helptext, .readonly {
+  color: var(--admin-muted);
+}
+
+.success, .warning, .errornote {
+  border-radius: 8px;
 }
 
 #changelist-search {
@@ -155,21 +177,16 @@ body {
   color: var(--admin-text);
 }
 
-input, select, textarea {
-  background: #101621;
-  color: var(--admin-text);
-  border: 1px solid var(--admin-border);
+.dashboard-module {
+  margin-top: 16px;
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: var(--admin-accent-2);
-  box-shadow: 0 0 0 2px rgba(241, 194, 122, 0.2);
+.dashboard-module table {
+  border-collapse: collapse;
+  width: 100%;
 }
 
-.help, .helptext, .readonly {
-  color: var(--admin-muted);
-}
-
-.success, .warning, .errornote {
-  border-radius: 8px;
+.dashboard-module th, .dashboard-module td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--admin-border);
 }

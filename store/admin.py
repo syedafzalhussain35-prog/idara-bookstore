@@ -12,6 +12,7 @@ from .models import (
     OrderItem,
     Wishlist,
     Category,
+    Subject,
     SyllabusPDF,
     Review,
     Coupon,
@@ -77,7 +78,7 @@ class BookAdmin(admin.ModelAdmin):
         "is_new_arrival",
     )
 
-    list_filter = ("category", "is_bestseller", "is_new_arrival")
+    list_filter = ("category", "subjects", "is_bestseller", "is_new_arrival")
     search_fields = ("title", "author", "description")
     list_select_related = ("category",)
 
@@ -94,7 +95,7 @@ class BookAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic Information", {
-            "fields": ("category", "title", "author", "description")
+            "fields": ("category", "subjects", "title", "author", "description")
         }),
         ("Pricing", {
             "fields": ("price", "mrp_price", "discount_display")
@@ -314,6 +315,14 @@ class UserProfileAdmin(admin.ModelAdmin):
     ordering = ("-updated_at",)
 
 
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "is_active")
+    search_fields = ("name",)
+    list_filter = ("is_active",)
+    prepopulated_fields = {"slug": ("name",)}
+
+
 @admin.register(PublishWithUsSubmission)
 class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
     list_display = ("title", "author_name", "email", "phone", "created_at")
@@ -329,6 +338,7 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
 admin_site.register(Category, CategoryAdmin)
 admin_site.register(Book, BookAdmin)
 admin_site.register(Bundle, BundleAdmin)
+admin_site.register(Subject, SubjectAdmin)
 admin_site.register(Cart, CartAdmin)
 admin_site.register(Wishlist, WishlistAdmin)
 admin_site.register(Review, ReviewAdmin)

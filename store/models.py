@@ -50,6 +50,7 @@ class Book(models.Model):
     title = models.CharField(max_length=200, db_index=True)
     author = models.CharField(max_length=200, db_index=True)
     description = models.TextField(blank=True, null=True)
+    subjects = models.ManyToManyField("Subject", blank=True, related_name="books")
 
     price = models.DecimalField(
         max_digits=10,
@@ -113,6 +114,34 @@ class BookImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.book.title}"
+
+
+# ======================
+# SUBJECTS
+# ======================
+
+class Subject(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(unique=True, blank=True, db_index=True)
+    icon = models.ImageField(upload_to='subjects/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Subject.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
 
 # ======================

@@ -30,6 +30,7 @@ from .models import (
     OrderItem,
     Wishlist,
     Category,
+    Subject,
     Review,
     Coupon,
     GalleryItem,
@@ -217,6 +218,7 @@ def home(request):
     new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
     recently_viewed = _get_recently_viewed(request, limit=8)
     bundles = Bundle.objects.filter(is_active=True).order_by('-id')[:8]
+    subjects = Subject.objects.filter(is_active=True).order_by('name')[:8]
 
     wishlist_ids = []
     if request.user.is_authenticated:
@@ -229,6 +231,7 @@ def home(request):
         'new_arrivals': new_arrivals,
         'recently_viewed': recently_viewed,
         'bundles': bundles,
+        'subjects': subjects,
         'wishlist_ids': wishlist_ids,
         'is_homepage': True,
     })
@@ -285,6 +288,7 @@ def category_books(request, slug):
 def search(request):
     query = request.GET.get('q', '').strip()
     category_slug = request.GET.get('category', '').strip()
+    subject_slug = request.GET.get('subject', '').strip()
 
     books_qs = Book.objects.filter(
         Q(title__icontains=query) | Q(author__icontains=query)
@@ -292,6 +296,9 @@ def search(request):
 
     if category_slug:
         books_qs = books_qs.filter(category__slug=category_slug)
+
+    if subject_slug:
+        books_qs = books_qs.filter(subjects__slug=subject_slug)
 
     paginator = Paginator(books_qs, 12)
     books = paginator.get_page(request.GET.get('page'))
@@ -306,6 +313,7 @@ def search(request):
         'books': books,
         'query': query,
         'category_slug': category_slug,
+        'subject_slug': subject_slug,
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })

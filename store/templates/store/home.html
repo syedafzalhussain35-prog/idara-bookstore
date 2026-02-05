@@ -17,6 +17,31 @@
         height: 100%;
     }
 
+    .hero-swiper .swiper-wrapper {
+        align-items: center;
+    }
+
+    .hero-swiper .swiper-slide {
+        transform: scale(0.92);
+        opacity: 0.55;
+        transition: transform 0.35s ease, opacity 0.35s ease;
+        padding: 0 12px;
+    }
+
+    .hero-swiper .swiper-slide-active {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .hero-swiper .swiper-slide-prev,
+    .hero-swiper .swiper-slide-next {
+        opacity: 0.75;
+    }
+
+    .hero-swiper .swiper-pagination {
+        bottom: 8px !important;
+    }
+
     .banner-card {
         background: linear-gradient(135deg, #f7fbff, #eef7fb);
         border: 1px solid #e6edf5;
@@ -189,8 +214,8 @@
     }
 
     .subject-icon {
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         background: #fde3b4;
         color: var(--primary-magenta);
@@ -199,6 +224,13 @@
         justify-content: center;
         font-size: 1.2rem;
         flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .subject-icon img {
+        width: 60%;
+        height: 60%;
+        object-fit: contain;
     }
 
     .subject-label {
@@ -290,7 +322,7 @@
 
 {% if is_homepage %}
 <section class="hero-section">
-    <div class="swiper mySwiper">
+    <div class="swiper mySwiper hero-swiper">
         <div class="swiper-wrapper">
             <div class="swiper-slide">
                 <div class="banner-card">
@@ -421,12 +453,16 @@
             <a href="{% url 'home' %}" class="btn btn-brand-outline btn-sm rounded-pill px-3">View All</a>
         </div>
         <div class="subject-grid mb-5">
-            {% for cat in nav_categories|slice:":8" %}
-            <a href="{% url 'category_books' cat.slug %}" class="subject-pill">
+            {% for subject in subjects %}
+            <a href="{% url 'search' %}?subject={{ subject.slug }}" class="subject-pill">
                 <span class="subject-icon">
-                    <i class="fas fa-book-open"></i>
+                    {% if subject.icon %}
+                        <img src="{{ subject.icon.url }}" alt="{{ subject.name }}">
+                    {% else %}
+                        <i class="fas fa-book-open"></i>
+                    {% endif %}
                 </span>
-                <span class="subject-label">{{ cat.name }}</span>
+                <span class="subject-label">{{ subject.name }}</span>
             </a>
             {% endfor %}
         </div>
@@ -484,9 +520,16 @@
 <script>
     new Swiper(".mySwiper", {
         loop: true,
+        centeredSlides: true,
+        slidesPerView: 1.2,
+        spaceBetween: 18,
         autoplay: { delay: 3500, disableOnInteraction: false },
         pagination: { el: ".swiper-pagination", clickable: true },
-        navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" }
+        navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+        breakpoints: {
+            768: { slidesPerView: 1.15 },
+            992: { slidesPerView: 1.05 }
+        }
     });
 </script>
 {% endblock %}
