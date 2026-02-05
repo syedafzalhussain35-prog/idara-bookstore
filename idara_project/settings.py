@@ -73,7 +73,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
 
     # 🛒 App
-    'store',
+    'store.apps.StoreConfig',
 ]
 
 

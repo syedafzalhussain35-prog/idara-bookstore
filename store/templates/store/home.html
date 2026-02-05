@@ -212,6 +212,18 @@
             {% endfor %}
         </div>
 
+        {% if recently_viewed %}
+        <div class="d-flex justify-content-between align-items-center mt-5 mb-4">
+            <h3 class="fw-bold text-magenta">Continue Browsing</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row">
+            {% for book in recently_viewed %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
     {% else %}
         
         <div class="mb-4">

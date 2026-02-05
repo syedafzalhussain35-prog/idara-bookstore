@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, Case, When, IntegerField
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -36,6 +36,33 @@ from .models import (
 from .forms import CheckoutForm
 
 logger = logging.getLogger(__name__)
+
+RECENTLY_VIEWED_LIMIT = 10
+
+
+def _update_recently_viewed(request, book_id):
+    viewed = request.session.get("recently_viewed", [])
+    try:
+        viewed = [int(bid) for bid in viewed if str(bid).isdigit()]
+    except Exception:
+        viewed = []
+
+    if book_id in viewed:
+        viewed.remove(book_id)
+    viewed.insert(0, book_id)
+    viewed = viewed[:RECENTLY_VIEWED_LIMIT]
+    request.session["recently_viewed"] = viewed
+    request.session.modified = True
+
+
+def _get_recently_viewed(request, exclude_id=None, limit=8):
+    ids = request.session.get("recently_viewed", [])
+    if exclude_id:
+        ids = [bid for bid in ids if bid != exclude_id]
+    if not ids:
+        return []
+    preserved = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(ids)], output_field=IntegerField())
+    return list(Book.objects.filter(id__in=ids).order_by(preserved)[:limit])
 
 
 # ==================================================
@@ -150,6 +177,7 @@ def _send_via_sendgrid(to_email, subject, text_body, html_body):
 def home(request):
     bestsellers = Book.objects.filter(is_bestseller=True)[:8]
     new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
+    recently_viewed = _get_recently_viewed(request, limit=8)
 
     wishlist_ids = []
     if request.user.is_authenticated:
@@ -160,6 +188,7 @@ def home(request):
     return render(request, 'store/home.html', {
         'bestsellers': bestsellers,
         'new_arrivals': new_arrivals,
+        'recently_viewed': recently_viewed,
         'wishlist_ids': wishlist_ids,
         'is_homepage': True,
     })
@@ -243,6 +272,7 @@ def search(request):
 
 def book_detail(request, book_id):
     book = get_object_or_404(Book, id=book_id)
+    _update_recently_viewed(request, book.id)
 
     reviews = Review.objects.filter(book=book).select_related('user')
     total_reviews = reviews.count()
@@ -268,12 +298,29 @@ def book_detail(request, book_id):
         ).exists()
     )
 
+    related_books = (
+        Book.objects
+        .exclude(id=book.id)
+        .annotate(
+            score=(
+                Case(When(category=book.category, then=2), default=0, output_field=IntegerField())
+                + Case(When(author=book.author, then=2), default=0, output_field=IntegerField())
+                + Case(When(is_bestseller=True, then=1), default=0, output_field=IntegerField())
+            )
+        )
+        .order_by("-score", "-id")[:8]
+    )
+
+    recently_viewed = _get_recently_viewed(request, exclude_id=book.id, limit=8)
+
     return render(request, 'store/book_detail.html', {
         'book': book,
         'reviews': reviews,
         'avg_rating': round(avg_rating, 1),
         'rating_breakdown': rating_breakdown,
         'has_purchased': has_purchased,
+        'related_books': related_books,
+        'recently_viewed': recently_viewed,
     })
 
 
