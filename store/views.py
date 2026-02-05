@@ -34,6 +34,7 @@ from .models import (
     Coupon,
     GalleryItem,
     UserProfile,
+    PublishWithUsSubmission,
 )
 from .forms import CheckoutForm
 
@@ -705,6 +706,36 @@ def returns_policy(request): return render(request, 'store/policies/returns.html
 def publish_with_us(request):
     if request.method == "POST":
         payload = {k: request.POST.get(k, "").strip() for k in request.POST.keys()}
+        if payload.get("title") and payload.get("author_name"):
+            PublishWithUsSubmission.objects.create(
+                title=payload.get("title", ""),
+                subtitle=payload.get("subtitle", ""),
+                author_name=payload.get("author_name", ""),
+                position_affiliation=payload.get("position_affiliation", ""),
+                mailing_address=payload.get("mailing_address", ""),
+                phone=payload.get("phone", ""),
+                email=payload.get("email", ""),
+                topic_definition=payload.get("topic_definition", ""),
+                overview=payload.get("overview", ""),
+                reasons=payload.get("reasons", ""),
+                unique_features=payload.get("unique_features", ""),
+                competition=payload.get("competition", ""),
+                toc=payload.get("toc", ""),
+                pages=payload.get("pages", ""),
+                delivery_time=payload.get("delivery_time", ""),
+                text_electronic=payload.get("text_electronic", ""),
+                text_software=payload.get("text_software", ""),
+                special_features=payload.get("special_features", ""),
+                figures_computer=payload.get("figures_computer", ""),
+                figures_software=payload.get("figures_software", ""),
+                market=payload.get("market", ""),
+                societies=payload.get("societies", ""),
+                journals=payload.get("journals", ""),
+                textbook_details=payload.get("textbook_details", ""),
+                previous_works=payload.get("previous_works", ""),
+                why_better=payload.get("why_better", ""),
+                reviewers=payload.get("reviewers", ""),
+            )
         subject = f"New Book Proposal: {payload.get('title') or 'Untitled'}"
         html_body = render_to_string("emails/publish_with_us.html", {"data": payload})
         text_body = strip_tags(html_body)

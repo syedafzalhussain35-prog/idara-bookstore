@@ -139,6 +139,47 @@ class Bundle(models.Model):
 
 
 # ======================
+# PUBLISH WITH US SUBMISSIONS
+# ======================
+
+class PublishWithUsSubmission(models.Model):
+    title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=200, blank=True)
+    author_name = models.CharField(max_length=200)
+    position_affiliation = models.CharField(max_length=200, blank=True)
+    mailing_address = models.TextField(blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(blank=True)
+    topic_definition = models.TextField(blank=True)
+    overview = models.TextField(blank=True)
+    reasons = models.TextField(blank=True)
+    unique_features = models.TextField(blank=True)
+    competition = models.TextField(blank=True)
+    toc = models.TextField(blank=True)
+    pages = models.CharField(max_length=50, blank=True)
+    delivery_time = models.CharField(max_length=100, blank=True)
+    text_electronic = models.CharField(max_length=20, blank=True)
+    text_software = models.CharField(max_length=200, blank=True)
+    special_features = models.TextField(blank=True)
+    figures_computer = models.CharField(max_length=20, blank=True)
+    figures_software = models.CharField(max_length=200, blank=True)
+    market = models.TextField(blank=True)
+    societies = models.TextField(blank=True)
+    journals = models.TextField(blank=True)
+    textbook_details = models.TextField(blank=True)
+    previous_works = models.TextField(blank=True)
+    why_better = models.TextField(blank=True)
+    reviewers = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.author_name}"
+
+
+# ======================
 # USER PROFILE
 # ======================
 

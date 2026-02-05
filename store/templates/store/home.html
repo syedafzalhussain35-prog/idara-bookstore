@@ -17,10 +17,81 @@
         height: 100%;
     }
 
-    .swiper-slide img {
-        width: 100%;
+    .banner-card {
+        background: linear-gradient(135deg, #f7fbff, #eef7fb);
+        border: 1px solid #e6edf5;
+        border-radius: 18px;
         height: 100%;
-        object-fit: cover;
+        display: flex;
+        align-items: center;
+        padding: 28px 32px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .banner-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+            radial-gradient(circle at 15% 30%, rgba(189, 24, 89, 0.08), transparent 55%),
+            radial-gradient(circle at 80% 25%, rgba(254, 211, 169, 0.35), transparent 50%),
+            linear-gradient(135deg, rgba(189, 24, 89, 0.06), transparent 40%);
+        pointer-events: none;
+    }
+
+    .banner-content {
+        width: 45%;
+        z-index: 1;
+    }
+
+    .banner-content h2 {
+        font-family: 'Amiri', serif;
+        font-weight: 700;
+        color: #4c1d38;
+        line-height: 1.2;
+        margin-bottom: 12px;
+        font-size: 2rem;
+    }
+
+    .banner-content p {
+        color: #5f6470;
+        font-size: 1rem;
+        margin-bottom: 16px;
+    }
+
+    .banner-covers {
+        width: 55%;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        justify-items: center;
+        z-index: 1;
+    }
+
+    .banner-cover {
+        background: #fff;
+        border-radius: 10px;
+        border: 1px solid #e6e6e6;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+    }
+
+    .banner-cover img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    @media (max-width: 576px) {
+        .swiper-slide img {
+            object-position: center;
+        }
     }
 
     /* ================= CATEGORY GRID ================= */
@@ -94,7 +165,20 @@
 
     @media (max-width: 991px) {
         .hero-section {
-            height: 260px;
+            height: 320px;
+        }
+
+        .banner-card {
+            padding: 20px;
+        }
+
+        .banner-content {
+            width: 50%;
+        }
+
+        .banner-covers {
+            width: 50%;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
         .swiper-button-next,
@@ -105,7 +189,25 @@
 
     @media (max-width: 576px) {
         .hero-section {
-            height: 200px;
+            height: 360px;
+        }
+
+        .banner-card {
+            flex-direction: column;
+            gap: 16px;
+            padding: 18px;
+        }
+
+        .banner-content, .banner-covers {
+            width: 100%;
+        }
+
+        .banner-content h2 {
+            font-size: 1.4rem;
+        }
+
+        .banner-covers {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
         .cat-img-box {
@@ -114,6 +216,16 @@
 
         .cat-title {
             font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .hero-section {
+            height: 380px;
+        }
+
+        .banner-covers {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 </style>
@@ -125,11 +237,63 @@
 <section class="hero-section">
     <div class="swiper mySwiper">
         <div class="swiper-wrapper">
-            <div class="swiper-slide"><img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Banner 1"></div>
-            <div class="swiper-slide"><img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Banner 2"></div>
-            <div class="swiper-slide"><img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Banner 3"></div>
-            <div class="swiper-slide"><img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Banner 4"></div>
-            <div class="swiper-slide"><img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Banner 5"></div>
+            <div class="swiper-slide">
+                <div class="banner-card">
+                    <div class="banner-content">
+                        <h2>Complete your professional journey with curated sets</h2>
+                        <p>Handpicked combos designed for focused study and exam success.</p>
+                        <a href="{% url 'home' %}" class="btn btn-brand rounded-pill px-4">Browse Sets</a>
+                    </div>
+                    <div class="banner-covers">
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/ncism.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-slide">
+                <div class="banner-card">
+                    <div class="banner-content">
+                        <h2>Build your library with trusted academic titles</h2>
+                        <p>Discover bestsellers, new arrivals, and exclusive bundles.</p>
+                        <a href="{% url 'home' %}" class="btn btn-brand rounded-pill px-4">Shop Books</a>
+                    </div>
+                    <div class="banner-covers">
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/ncism.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-slide">
+                <div class="banner-card">
+                    <div class="banner-content">
+                        <h2>Exam‑ready resources for every level</h2>
+                        <p>From foundation to PG preparation, find the right titles fast.</p>
+                        <a href="{% url 'home' %}" class="btn btn-brand rounded-pill px-4">Explore Categories</a>
+                    </div>
+                    <div class="banner-covers">
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/ncism.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
+                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="swiper-button-next"></div>
         <div class="swiper-button-prev"></div>

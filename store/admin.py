@@ -18,6 +18,7 @@ from .models import (
     GalleryItem,
     UserProfile,
     Bundle,
+    PublishWithUsSubmission,
 )
 from .admin_site import IdaraAdminSite
 
@@ -313,6 +314,14 @@ class UserProfileAdmin(admin.ModelAdmin):
     ordering = ("-updated_at",)
 
 
+@admin.register(PublishWithUsSubmission)
+class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
+    list_display = ("title", "author_name", "email", "phone", "created_at")
+    search_fields = ("title", "author_name", "email", "phone")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at",)
+
+
 # ======================
 # CUSTOM ADMIN SITE
 # ======================
@@ -328,3 +337,4 @@ admin_site.register(SyllabusPDF, SyllabusPDFAdmin)
 admin_site.register(GalleryItem, GalleryItemAdmin)
 admin_site.register(UserProfile, UserProfileAdmin)
 admin_site.register(Order, OrderAdmin)
+admin_site.register(PublishWithUsSubmission, PublishWithUsSubmissionAdmin)
