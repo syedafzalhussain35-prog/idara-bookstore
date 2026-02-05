@@ -104,6 +104,12 @@
         border-radius: 0 6px 6px 0;
     }
 
+    .search-container select.form-select {
+        border: 2px solid var(--primary-magenta);
+        border-radius: 6px;
+        max-width: 180px;
+    }
+
     .user-actions {
         display: flex;
         gap: 20px;
@@ -495,14 +501,27 @@
             </a>
 
 <div class="search-container">
-    <form method="GET" action="{% url 'search' %}" class="d-flex">
-        <input class="form-control search-input"
-               name="q"
-               placeholder="Search books by title or author"
-               autocomplete="off">
-        <button class="btn search-btn">
-            <i class="fas fa-search"></i>
-        </button>
+    <form method="GET" action="{% url 'search' %}" class="d-flex gap-2 flex-wrap">
+        <select class="form-select"
+                name="category"
+                style="max-width: 180px;">
+            <option value="">All</option>
+            {% for cat in nav_categories %}
+                <option value="{{ cat.slug }}"
+                    {% if request.GET.category == cat.slug %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <div class="flex-grow-1 d-flex">
+            <input class="form-control search-input"
+                   name="q"
+                   placeholder="Search by product name"
+                   autocomplete="off">
+            <button class="btn search-btn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
     </form>
 
     <!-- LIVE SEARCH DROPDOWN -->

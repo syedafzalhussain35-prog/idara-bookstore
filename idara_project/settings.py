@@ -299,6 +299,12 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'no-reply@localhost'
 
+# Publish With Us recipients (comma-separated)
+PUBLISH_WITH_US_RECIPIENTS = os.getenv(
+    "PUBLISH_WITH_US_RECIPIENTS",
+    "publishing@cbspd.com,publicity@cbspd.com",
+)
+
 # ==================================================
 # SENDGRID (HTTP API)
 # ==================================================

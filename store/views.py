@@ -172,6 +172,41 @@ def _send_via_sendgrid(to_email, subject, text_body, html_body):
         logger.exception("SendGrid request failed: %s", exc)
 
 
+def _send_publish_with_us(subject, text_body, html_body):
+    recipients = [e.strip() for e in settings.PUBLISH_WITH_US_RECIPIENTS.split(",") if e.strip()]
+    if not recipients:
+        logger.error("Publish With Us recipients not configured.")
+        return
+
+    if settings.BREVO_API_KEY:
+        for recipient in recipients:
+            _send_via_brevo(
+                to_email=recipient,
+                subject=subject,
+                text_body=text_body,
+                html_body=html_body,
+            )
+        return
+
+    if settings.SENDGRID_API_KEY:
+        for recipient in recipients:
+            _send_via_sendgrid(
+                to_email=recipient,
+                subject=subject,
+                text_body=text_body,
+                html_body=html_body,
+            )
+        return
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        to=recipients,
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
+
+
 # ==================================================
 # HOME
 # ==================================================
@@ -248,10 +283,14 @@ def category_books(request, slug):
 
 def search(request):
     query = request.GET.get('q', '').strip()
+    category_slug = request.GET.get('category', '').strip()
 
     books_qs = Book.objects.filter(
         Q(title__icontains=query) | Q(author__icontains=query)
     ) if query else Book.objects.none()
+
+    if category_slug:
+        books_qs = books_qs.filter(category__slug=category_slug)
 
     paginator = Paginator(books_qs, 12)
     books = paginator.get_page(request.GET.get('page'))
@@ -265,6 +304,7 @@ def search(request):
     return render(request, 'store/search_results.html', {
         'books': books,
         'query': query,
+        'category_slug': category_slug,
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })
@@ -662,7 +702,20 @@ def privacy_policy(request): return render(request, 'store/policies/privacy.html
 def terms_policy(request): return render(request, 'store/policies/terms.html')
 def returns_policy(request): return render(request, 'store/policies/returns.html')
 
-def publish_with_us(request): return render(request, 'store/publish_with_us.html')
+def publish_with_us(request):
+    if request.method == "POST":
+        payload = {k: request.POST.get(k, "").strip() for k in request.POST.keys()}
+        subject = f"New Book Proposal: {payload.get('title') or 'Untitled'}"
+        html_body = render_to_string("emails/publish_with_us.html", {"data": payload})
+        text_body = strip_tags(html_body)
+        try:
+            _send_publish_with_us(subject, text_body, html_body)
+            messages.success(request, "Thank you! Your proposal has been submitted.")
+        except Exception as exc:
+            logger.exception("Publish With Us submission failed: %s", exc)
+            messages.error(request, "Something went wrong. Please try again.")
+
+    return render(request, 'store/publish_with_us.html')
 
 # ==================================================
 # 🔍 LIVE SEARCH (AJAX)

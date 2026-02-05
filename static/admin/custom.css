@@ -1,0 +1,175 @@
+:root {
+  --admin-bg: #0f1218;
+  --admin-panel: #151a23;
+  --admin-panel-2: #1b2230;
+  --admin-border: #232b3b;
+  --admin-text: #e8ecf3;
+  --admin-muted: #a7b0c0;
+  --admin-accent: #b0134b;
+  --admin-accent-2: #f1c27a;
+}
+
+body {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+#header {
+  background: linear-gradient(120deg, #7b0d35, #b0134b);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#branding h1, #branding h1 a:link, #branding h1 a:visited {
+  color: #fff;
+}
+
+#user-tools {
+  color: #f5f5f5;
+}
+
+.breadcrumbs {
+  background: #1a2230;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+#content {
+  background: transparent;
+}
+
+.module, .inline-group {
+  background: var(--admin-panel);
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.module h2, .module caption, .inline-group h2 {
+  background: var(--admin-panel-2);
+  color: var(--admin-text);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+#nav-sidebar {
+  background: #121822;
+  border-right: 1px solid var(--admin-border);
+}
+
+#nav-sidebar a {
+  color: var(--admin-muted);
+}
+
+#nav-sidebar .current-app .section:link,
+#nav-sidebar .current-app .section:visited,
+#nav-sidebar .current-model a {
+  color: #fff;
+}
+
+.object-tools a {
+  background: var(--admin-accent);
+  border: 1px solid var(--admin-accent);
+  color: #fff;
+}
+
+.object-tools a:hover {
+  background: #8f0f41;
+  border-color: #8f0f41;
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  background: var(--admin-accent);
+  border-color: var(--admin-accent);
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+  background: #8f0f41;
+  border-color: #8f0f41;
+}
+
+.changelist-filter {
+  background: var(--admin-panel-2);
+  border: 1px solid var(--admin-border);
+}
+
+.changelist-filter h2 {
+  color: var(--admin-text);
+}
+
+.changelist-filter a {
+  color: var(--admin-muted);
+}
+
+.changelist-filter a.selected {
+  color: #fff;
+}
+
+.results {
+  background: var(--admin-panel);
+  border: 1px solid var(--admin-border);
+}
+
+.results thead th {
+  background: #1b2230;
+  color: var(--admin-text);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.results tbody tr {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.results tbody tr:nth-child(odd) {
+  background: #141b27;
+}
+
+.results tbody tr:hover {
+  background: #202838;
+}
+
+#changelist-search {
+  background: var(--admin-panel-2);
+  border: 1px solid var(--admin-border);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+#changelist-search input[type="text"] {
+  background: #101621;
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+}
+
+#changelist-search input[type="submit"] {
+  background: var(--admin-accent);
+  border: 1px solid var(--admin-accent);
+  color: #fff;
+}
+
+.paginator, .paginator a, .paginator span {
+  color: var(--admin-muted);
+}
+
+.paginator a:hover {
+  color: #fff;
+}
+
+#content h1, #content h2, #content h3 {
+  color: var(--admin-text);
+}
+
+input, select, textarea {
+  background: #101621;
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--admin-accent-2);
+  box-shadow: 0 0 0 2px rgba(241, 194, 122, 0.2);
+}
+
+.help, .helptext, .readonly {
+  color: var(--admin-muted);
+}
+
+.success, .warning, .errornote {
+  border-radius: 8px;
+}

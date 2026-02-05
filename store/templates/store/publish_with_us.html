@@ -14,40 +14,140 @@
             </h5>
 
             <p class="text-muted">
-                We at CBS Publishers & Distributors welcome proposals for new publications and are happy to evaluate these before the entire material is submitted to us. It is not necessary for you to have written the whole text before approaching us. You may draft an overall plan and give us information that is necessary for evaluating the proposal from our standpoint.
+                We welcome proposals for new publications and are happy to evaluate these before the entire material is submitted. You do not need to finish the full text before approaching us. Please provide the details below so we can evaluate your proposal.
             </p>
 
-            <div class="mt-4">
-                <ol class="proposal-list">
-                    <li>Tentative book title and subtitle (if any):</li>
-                    <li>Author’s / Editor’s full name: <strong>* Required</strong></li>
-                    <li>Position and Affiliation (please enclose your curriculum vitae):</li>
-                    <li>Full Mailing addresses:</li>
-                    <li>Phone</li>
-                    <li>Email</li>
-                    <li>Definition of topic covered in the book.</li>
-                    <li>Write a short description of your book giving an overview of the contents.</li>
-                    <li>Outline your reasons for proposing a new book in this area.</li>
-                    <li>Describe the major features of your book which make it unique.</li>
-                    <li>List the competing titles, giving their broad features, and describe how your title, when published, would overcome the competition from the existing.</li>
-                    <li>Please give complete table of contents, including section and sub-section headings.</li>
-                    <li>Approximately how many pages, would you expect your book to contain? About … … pages, in size.</li>
-                    <li>How long do you estimate it will take for delivery of the completed manuscript from the time of acceptance of proposal.</li>
-                    <li>Will you be able to prepare your text electronically? Yes / No</li>
-                    <li>If yes, what software will you be using? MS Word / PageMaker / Adobe InDesign. Yes / No</li>
-                    <li>Please list any special physical features you would expect to include (tables, illustrations, problems/solutions, photographs, etc.). If you think colour would be necessary, please indicate why and consider alternatives for colour illustrations or any other accompanying material.</li>
-                    <li>Will you be able to prepare your figures on computer? Yes / No</li>
-                    <li>If yes, what software will you be using? e.g. CorelDraw … If no, then will you provide artist drawn illustrations.</li>
-                    <li><strong>THE MARKET</strong> Primary Market (those readers you feel need this book). Secondary Market (those readers with an occasional need for this book).</li>
-                    <li>Please indicate any societies, professional organisations, companies or other groups which might want to know about your book, or who may be interested in bulk purchases.</li>
-                    <li>Please list any key journals in this area and any major conferences:</li>
-                    <li><strong>TEXTBOOKS</strong> Typical student numbers per institution. Length of course: … … months / years. Is the course optional or compulsory? Would your book be for main adoption, supplementary reading or recommended reading? Can you suggest any teachers who would be particularly interested in having information about your textbook? Please give their names and addresses.</li>
-                    <li><strong>Author’s Previous Works</strong> Please list your previous works.</li>
-                    <li><strong>COMPETITION</strong> Please list key related or competing books (in order of relevance), including author/editor, publisher, year, price (if possible), and any other useful details. Mention how your book differs or adds value. Keep it at least 5 lines.</li>
-                    <li>Please outline in what ways your book is better than and differs from the titles mentioned in previous section. (3 lines for each title, or more)</li>
-                    <li><strong>REVIEWS</strong> Please give an international list of persons qualified to give an opinion on your book proposal: (10 lines or more)</li>
-                </ol>
-            </div>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="row g-3 mt-2">
+                {% csrf_token %}
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tentative Book Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Subtitle (if any)</label>
+                    <input type="text" name="subtitle" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Author / Editor Full Name *</label>
+                    <input type="text" name="author_name" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Position & Affiliation</label>
+                    <input type="text" name="position_affiliation" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Full Mailing Address</label>
+                    <textarea name="mailing_address" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Phone</label>
+                    <input type="text" name="phone" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="email" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Definition of topic covered in the book</label>
+                    <textarea name="topic_definition" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Short description / overview</label>
+                    <textarea name="overview" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Reasons for proposing this book</label>
+                    <textarea name="reasons" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Unique features of the book</label>
+                    <textarea name="unique_features" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Competing titles and how your book differs</label>
+                    <textarea name="competition" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Complete table of contents</label>
+                    <textarea name="toc" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Approx. pages</label>
+                    <input type="text" name="pages" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Estimated delivery time</label>
+                    <input type="text" name="delivery_time" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Prepare text electronically?</label>
+                    <select name="text_electronic" class="form-select">
+                        <option value="">Select</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Software (Word / InDesign / etc.)</label>
+                    <input type="text" name="text_software" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Special physical features (tables, illustrations, etc.)</label>
+                    <textarea name="special_features" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Figures on computer?</label>
+                    <select name="figures_computer" class="form-select">
+                        <option value="">Select</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Figures software / artist info</label>
+                    <input type="text" name="figures_software" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Primary / Secondary market</label>
+                    <textarea name="market" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Societies / organisations / bulk buyers</label>
+                    <textarea name="societies" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Key journals / conferences</label>
+                    <textarea name="journals" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Textbook details (students, course length, adoption type, teacher contacts)</label>
+                    <textarea name="textbook_details" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Author’s previous works</label>
+                    <textarea name="previous_works" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Why your book is better than existing titles</label>
+                    <textarea name="why_better" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Reviewers (international list)</label>
+                    <textarea name="reviewers" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-brand w-100 rounded-pill">
+                        Submit Proposal
+                    </button>
+                </div>
+            </form>
 
             <div class="mt-4 p-3 border rounded bg-light">
                 <p class="mb-1 fw-semibold">Thank you for taking the time in completing this form.</p>
