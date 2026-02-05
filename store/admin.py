@@ -147,7 +147,7 @@ class BookAdmin(admin.ModelAdmin):
 
 
 
-    @admin.action(description="Bulk update price by %")
+    @admin.action(description="Bulk update price by percent")
     def bulk_update_price(self, request, queryset):
         raw = request.POST.get("percentage")
         if raw in (None, ""):
