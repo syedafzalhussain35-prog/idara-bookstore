@@ -5,6 +5,7 @@ redis==7.1.0
 cloudinary==1.41.0
 django-cloudinary-storage==0.3.0
 dj-database-url==3.1.0
+psycopg[binary]==3.2.8
 whitenoise==6.11.0
 gunicorn==25.0.1
 uvicorn==0.40.0
