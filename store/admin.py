@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
+from django import forms
+from django.contrib.admin.helpers import ActionForm
+from django.http import HttpResponse
+import csv
+from decimal import Decimal
 
 from .models import (
     Book,
@@ -119,6 +124,21 @@ class BookAdmin(admin.ModelAdmin):
 
     ordering = ("title",)
 
+    class PriceUpdateActionForm(ActionForm):
+        percentage = forms.DecimalField(
+            required=False,
+            label="Price %",
+            help_text="Use positive or negative (e.g., 10 or -5).",
+        )
+        apply_to_mrp = forms.BooleanField(
+            required=False,
+            initial=True,
+            label="Apply to MRP too",
+        )
+
+    action_form = PriceUpdateActionForm
+    actions = ("bulk_update_price", "export_books_csv")
+
     @admin.display(description="Discount")
     def discount_display(self, obj):
         if obj.discount_percentage > 0:
@@ -126,6 +146,49 @@ class BookAdmin(admin.ModelAdmin):
         return "—"
 
 
+
+    @admin.action(description="Bulk update price by %")
+    def bulk_update_price(self, request, queryset):
+        raw = request.POST.get("percentage")
+        if raw in (None, ""):
+            self.message_user(request, "Enter a percentage value.", level="error")
+            return
+        try:
+            pct = Decimal(str(raw))
+        except Exception:
+            self.message_user(request, "Invalid percentage.", level="error")
+            return
+
+        apply_to_mrp = bool(request.POST.get("apply_to_mrp"))
+        factor = (Decimal("100") + pct) / Decimal("100")
+        updated = 0
+
+        for book in queryset:
+            book.price = (book.price * factor).quantize(Decimal("0.01"))
+            if apply_to_mrp and book.mrp_price:
+                book.mrp_price = (book.mrp_price * factor).quantize(Decimal("0.01"))
+            book.save(update_fields=["price", "mrp_price"])
+            updated += 1
+
+        self.message_user(request, f"Updated {updated} books.")
+
+    @admin.action(description="Export selected books to CSV")
+    def export_books_csv(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="books.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["ID", "Title", "Author", "Category", "Price", "MRP", "Stock"])
+        for book in queryset:
+            writer.writerow([
+                book.id,
+                book.title,
+                book.author,
+                book.category.name if book.category else "",
+                book.price,
+                book.mrp_price or "",
+                book.stock,
+            ])
+        return response
 # ======================
 # ORDER ITEM INLINE
 # ======================
@@ -160,6 +223,7 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
     ordering = ("-created_at",)
+    actions = ("export_orders_csv",)
 
     @admin.display(description="Email")
     def email_link(self, obj):
@@ -174,6 +238,32 @@ class OrderAdmin(admin.ModelAdmin):
         return f"₹{obj.total_cost}"
 
 
+
+    @admin.action(description="Export selected orders to CSV")
+    def export_orders_csv(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="orders.csv"'
+        writer = csv.writer(response)
+        writer.writerow([
+            "ID",
+            "Name",
+            "Email",
+            "City",
+            "Total",
+            "Paid",
+            "Created",
+        ])
+        for order in queryset:
+            writer.writerow([
+                order.id,
+                order.full_name,
+                order.email,
+                order.city,
+                order.total_cost,
+                "Yes" if order.is_paid else "No",
+                order.created_at,
+            ])
+        return response
 # ======================
 # CART ADMIN
 # ======================
@@ -339,17 +429,30 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ("preview", "title", "category", "order", "is_active", "focal_x", "focal_y", "mobile_height")
-    list_editable = ("order", "is_active", "focal_x", "focal_y", "mobile_height")
-    search_fields = ("title",)
+    list_display = (
+        "preview",
+        "title",
+        "category",
+        "order",
+        "is_active",
+        "focal_x",
+        "focal_y",
+        "mobile_height",
+        "tablet_height",
+    )
+    list_editable = ("order", "is_active", "focal_x", "focal_y", "mobile_height", "tablet_height")
+    search_fields = ("title", "headline", "subheadline")
     ordering = ("order", "id")
 
     fieldsets = (
         ("Banner", {
-            "fields": ("title", "image", "category", "order", "is_active")
+            "fields": ("title", "headline", "subheadline", "image", "category", "order", "is_active")
+        }),
+        ("CTA", {
+            "fields": ("cta_text", "cta_category")
         }),
         ("Mobile & Crop", {
-            "fields": ("focal_x", "focal_y", "mobile_height")
+            "fields": ("focal_x", "focal_y", "mobile_height", "tablet_height")
         }),
     )
 
@@ -360,8 +463,7 @@ class BannerAdmin(admin.ModelAdmin):
                 '<img src="{}" style="height:48px;width:86px;object-fit:cover;border-radius:6px;border:1px solid #243149;" />',
                 obj.image.url,
             )
-        return "—"
-
+        return "?"
 
 # ======================
 # CUSTOM ADMIN SITE

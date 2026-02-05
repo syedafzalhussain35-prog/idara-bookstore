@@ -263,6 +263,27 @@ def category_books(request, slug):
     if subject_slug:
         books_qs = books_qs.filter(subjects__slug=subject_slug)
 
+    min_price = request.GET.get('min_price', '').strip()
+    max_price = request.GET.get('max_price', '').strip()
+    rating = request.GET.get('rating', '').strip()
+
+    if min_price:
+        try:
+            books_qs = books_qs.filter(price__gte=Decimal(min_price))
+        except Exception:
+            pass
+    if max_price:
+        try:
+            books_qs = books_qs.filter(price__lte=Decimal(max_price))
+        except Exception:
+            pass
+    if rating:
+        try:
+            rating_val = Decimal(rating)
+            books_qs = books_qs.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating_val)
+        except Exception:
+            pass
+
     sort = request.GET.get('sort')
     if sort == 'newest':
         books_qs = books_qs.order_by('-created_at')
@@ -289,6 +310,9 @@ def category_books(request, slug):
         'books': books,
         'query': query,
         'subject_slug': subject_slug,
+        'min_price': min_price,
+        'max_price': max_price,
+        'rating': rating,
         'sort': sort,
         'subjects': subjects,
         'wishlist_ids': wishlist_ids,
@@ -304,6 +328,9 @@ def search(request):
     query = request.GET.get('q', '').strip()
     category_slug = request.GET.get('category', '').strip()
     subject_slug = request.GET.get('subject', '').strip()
+    min_price = request.GET.get('min_price', '').strip()
+    max_price = request.GET.get('max_price', '').strip()
+    rating = request.GET.get('rating', '').strip()
 
     books_qs = Book.objects.filter(
         Q(title__icontains=query) | Q(author__icontains=query)
@@ -314,6 +341,23 @@ def search(request):
 
     if subject_slug:
         books_qs = books_qs.filter(subjects__slug=subject_slug)
+
+    if min_price:
+        try:
+            books_qs = books_qs.filter(price__gte=Decimal(min_price))
+        except Exception:
+            pass
+    if max_price:
+        try:
+            books_qs = books_qs.filter(price__lte=Decimal(max_price))
+        except Exception:
+            pass
+    if rating:
+        try:
+            rating_val = Decimal(rating)
+            books_qs = books_qs.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating_val)
+        except Exception:
+            pass
 
     paginator = Paginator(books_qs, 12)
     books = paginator.get_page(request.GET.get('page'))
@@ -329,6 +373,70 @@ def search(request):
         'query': query,
         'category_slug': category_slug,
         'subject_slug': subject_slug,
+        'min_price': min_price,
+        'max_price': max_price,
+        'rating': rating,
+        'subjects': Subject.objects.filter(is_active=True).order_by('name'),
+        'wishlist_ids': wishlist_ids,
+        'is_homepage': False,
+    })
+
+
+# ==================================================
+# SUBJECT PAGE
+# ==================================================
+
+def subject_books(request, slug):
+    subject = get_object_or_404(Subject, slug=slug, is_active=True)
+    books_qs = Book.objects.filter(subjects=subject)
+
+    query = request.GET.get('q', '').strip()
+    if query:
+        books_qs = books_qs.filter(Q(title__icontains=query) | Q(author__icontains=query))
+
+    category_slug = request.GET.get('category', '').strip()
+    if category_slug:
+        books_qs = books_qs.filter(category__slug=category_slug)
+
+    min_price = request.GET.get('min_price', '').strip()
+    max_price = request.GET.get('max_price', '').strip()
+    rating = request.GET.get('rating', '').strip()
+
+    if min_price:
+        try:
+            books_qs = books_qs.filter(price__gte=Decimal(min_price))
+        except Exception:
+            pass
+    if max_price:
+        try:
+            books_qs = books_qs.filter(price__lte=Decimal(max_price))
+        except Exception:
+            pass
+    if rating:
+        try:
+            rating_val = Decimal(rating)
+            books_qs = books_qs.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating_val)
+        except Exception:
+            pass
+
+    paginator = Paginator(books_qs, 12)
+    books = paginator.get_page(request.GET.get('page'))
+
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = Wishlist.objects.filter(
+            user=request.user
+        ).values_list('book_id', flat=True)
+
+    return render(request, 'store/subject_books.html', {
+        'subject': subject,
+        'books': books,
+        'query': query,
+        'category_slug': category_slug,
+        'min_price': min_price,
+        'max_price': max_price,
+        'rating': rating,
+        'subjects': Subject.objects.filter(is_active=True).order_by('name'),
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })

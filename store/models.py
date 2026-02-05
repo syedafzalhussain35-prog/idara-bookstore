@@ -4,6 +4,9 @@ from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Sum, F, Avg
 from decimal import Decimal
+import os
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 
 # ======================
@@ -150,6 +153,16 @@ class Subject(models.Model):
 
 class Banner(models.Model):
     title = models.CharField(max_length=200, blank=True)
+    headline = models.CharField(max_length=200, blank=True)
+    subheadline = models.CharField(max_length=300, blank=True)
+    cta_text = models.CharField(max_length=50, blank=True)
+    cta_category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="banner_ctas",
+    )
     image = models.ImageField(upload_to='banners/')
     category = models.ForeignKey(
         Category,
@@ -166,6 +179,10 @@ class Banner(models.Model):
         default=240,
         help_text="Banner height in pixels for mobile screens.",
     )
+    tablet_height = models.PositiveSmallIntegerField(
+        default=300,
+        help_text="Banner height in pixels for tablet screens.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -173,6 +190,48 @@ class Banner(models.Model):
 
     def __str__(self):
         return self.title or f"Banner {self.id}"
+
+    @property
+    def webp_name(self):
+        if not self.image:
+            return ""
+        base, _ = os.path.splitext(self.image.name)
+        return f"{base}.webp"
+
+    def has_webp(self):
+        if not self.image:
+            return False
+        return self.image.storage.exists(self.webp_name)
+
+    def webp_url(self):
+        if self.has_webp():
+            return self.image.storage.url(self.webp_name)
+        return self.image.url if self.image else ""
+
+    def _ensure_webp(self):
+        if not self.image:
+            return
+        if self.image.name.lower().endswith(".webp"):
+            return
+        if self.has_webp():
+            return
+        try:
+            from PIL import Image
+        except Exception:
+            return
+
+        self.image.open()
+        img = Image.open(self.image)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        buffer = BytesIO()
+        img.save(buffer, format="WEBP", quality=82, method=6)
+        buffer.seek(0)
+        self.image.storage.save(self.webp_name, ContentFile(buffer.read()))
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._ensure_webp()
 
 # ======================
 # BUNDLES

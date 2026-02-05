@@ -1,87 +1,65 @@
 {% extends 'store/base.html' %}
-{% block title %}{{ category.name }} | Idara Kitab Ul Shifa{% endblock %}
+{% block title %}{{ subject.name }} | Subjects{% endblock %}
 
 {% block content %}
 <div class="container my-5">
 
-    <!-- 🔗 Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
                 <a href="{% url 'home' %}">Home</a>
             </li>
             <li class="breadcrumb-item active">
-                {{ category.name }}
+                {{ subject.name }}
             </li>
         </ol>
     </nav>
 
-    <!-- 🧾 Heading + Sort -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 category-header">
         <div>
-            <h2 class="fw-bold text-magenta mb-1">{{ category.name }}</h2>
+            <h2 class="fw-bold text-magenta mb-1">Subject: {{ subject.name }}</h2>
             <p class="text-muted mb-0">
                 Showing {{ books.paginator.count }} book{{ books.paginator.count|pluralize }}
             </p>
         </div>
-
-        <form method="get" class="d-flex category-sort">
-            {% for key, value in request.GET.items %}
-                {% if key != 'sort' and key != 'page' %}
-                    <input type="hidden" name="{{ key }}" value="{{ value }}">
-                {% endif %}
-            {% endfor %}
-
-            <select name="sort" class="form-select" onchange="this.form.submit()">
-                <option value="">Sort by</option>
-                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
-                <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low → High</option>
-                <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
-                <option value="bestseller" {% if sort == 'bestseller' %}selected{% endif %}>Bestsellers</option>
-            </select>
-        </form>
     </div>
 
-    <!-- 🔍 Filters -->
     <form method="get" class="row g-2 align-items-end mb-3 category-filters">
-        {% if query %}
-            <input type="hidden" name="q" value="{{ query }}">
-        {% endif %}
         <div class="col-12 col-md-4">
             <input type="text"
-                   name="author"
+                   name="q"
                    class="form-control"
-                   placeholder="Filter by author"
-                   value="{{ request.GET.author }}">
+                   placeholder="Search in subject"
+                   value="{{ query }}">
         </div>
 
         <div class="col-12 col-md-3">
-            <select name="subject" class="form-select">
-                <option value="">All Subjects</option>
-                {% for subject in subjects %}
-                <option value="{{ subject.slug }}" {% if subject_slug == subject.slug %}selected{% endif %}>
-                    {{ subject.name }}
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for cat in nav_categories %}
+                <option value="{{ cat.slug }}" {% if category_slug == cat.slug %}selected{% endif %}>
+                    {{ cat.name }}
                 </option>
                 {% endfor %}
             </select>
         </div>
 
         <div class="col-6 col-md-2">
-            <input type="number" name="min_price" class="form-control" placeholder="Min ₹"
+            <input type="number" name="min_price" class="form-control" placeholder="Min ?"
                    value="{{ min_price }}">
         </div>
 
         <div class="col-6 col-md-2">
-            <input type="number" name="max_price" class="form-control" placeholder="Max ₹"
+            <input type="number" name="max_price" class="form-control" placeholder="Max ?"
                    value="{{ max_price }}">
         </div>
 
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <select name="rating" class="form-select">
                 <option value="">Any Rating</option>
-                <option value="4" {% if rating == "4" %}selected{% endif %}>4★ & up</option>
-                <option value="3" {% if rating == "3" %}selected{% endif %}>3★ & up</option>
-                <option value="2" {% if rating == "2" %}selected{% endif %}>2★ & up</option>
+                <option value="4" {% if rating == "4" %}selected{% endif %}>4? & up</option>
+                <option value="3" {% if rating == "3" %}selected{% endif %}>3? & up</option>
+                <option value="2" {% if rating == "2" %}selected{% endif %}>2? & up</option>
             </select>
         </div>
 
@@ -90,7 +68,7 @@
         </div>
 
         <div class="col-6 col-md-2">
-            <a href="{% url 'category_books' category.slug %}"
+            <a href="{% url 'subject_books' subject.slug %}"
                class="btn btn-outline-secondary w-100">
                 Clear Filters
             </a>
@@ -99,36 +77,32 @@
 
     <div class="filter-chips mb-4">
         {% if query %}<span class="chip">Search: {{ query }}</span>{% endif %}
-        {% if request.GET.author %}<span class="chip">Author: {{ request.GET.author }}</span>{% endif %}
-        {% if subject_slug %}
-            {% for subject in subjects %}
-                {% if subject.slug == subject_slug %}
-                    <span class="chip">Subject: {{ subject.name }}</span>
+        {% if category_slug %}
+            {% for cat in nav_categories %}
+                {% if cat.slug == category_slug %}
+                    <span class="chip">Category: {{ cat.name }}</span>
                 {% endif %}
             {% endfor %}
         {% endif %}
         {% if min_price or max_price %}
-            <span class="chip">Price: {{ min_price|default:"0" }} - {{ max_price|default:"∞" }}</span>
+            <span class="chip">Price: {{ min_price|default:"0" }} - {{ max_price|default:"8" }}</span>
         {% endif %}
-        {% if rating %}<span class="chip">{{ rating }}★ & up</span>{% endif %}
+        {% if rating %}<span class="chip">{{ rating }}? & up</span>{% endif %}
     </div>
 
-    <!-- 📚 Book Grid -->
     <div class="row g-3">
         {% for book in books %}
             {% include 'store/partials/book_card.html' %}
         {% empty %}
         <div class="col-12 text-center py-5">
-            <h5 class="text-muted">No books found in this category.</h5>
+            <h5 class="text-muted">No books found for this subject.</h5>
         </div>
         {% endfor %}
     </div>
 
-    <!-- 📄 Pagination -->
     {% if books.has_other_pages %}
     <nav class="mt-4">
         <ul class="pagination justify-content-center flex-wrap">
-
             {% if books.has_previous %}
             <li class="page-item">
                 <a class="page-link"
@@ -155,7 +129,6 @@
                 </a>
             </li>
             {% endif %}
-
         </ul>
     </nav>
     {% endif %}
@@ -176,30 +149,6 @@
     padding: 6px 12px;
     border-radius: 999px;
     font-size: 0.85rem;
-}
-
-@media (max-width: 768px) {
-    .category-header {
-        align-items: flex-start;
-    }
-
-    .category-sort {
-        width: 100%;
-    }
-
-    .category-sort .form-select {
-        width: 100%;
-    }
-
-    .category-filters .form-control,
-    .category-filters .btn {
-        width: 100%;
-    }
-
-    .pagination .page-link {
-        padding: 6px 10px;
-        font-size: 0.85rem;
-    }
 }
 </style>
 {% endblock %}

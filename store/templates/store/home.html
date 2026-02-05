@@ -88,6 +88,33 @@
         display: block;
     }
 
+    .hero-overlay {
+        position: absolute;
+        left: 6%;
+        bottom: 12%;
+        max-width: 46%;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        padding: 14px 16px;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.15);
+        z-index: 2;
+    }
+
+    .hero-overlay h3 {
+        font-size: 1.25rem;
+        margin: 0 0 6px;
+        color: #2b1b27;
+        font-weight: 700;
+    }
+
+    .hero-overlay p {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        color: #4a4f5a;
+    }
+
     @media (max-width: 576px) {
         .hero-slide img {
             object-position: center;
@@ -240,6 +267,12 @@
             height: var(--banner-height-mobile, 260px);
         }
 
+        .hero-overlay {
+            position: static;
+            margin: 12px;
+            max-width: 100%;
+        }
+
         .cat-img-box {
             height: 90px;
         }
@@ -274,41 +307,64 @@
             {% if banners %}
                 {% for banner in banners %}
                 <div class="swiper-slide">
-                    <div class="hero-slide">
+                    <div class="hero-slide" style="--banner-height-mobile: {{ banner.mobile_height }}px; --banner-height-tablet: {{ banner.tablet_height }}px;">
                         {% if banner.category %}
                         <a href="{% url 'category_books' banner.category.slug %}">
-                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%; --banner-height-mobile: {{ banner.mobile_height }}px;">
+                            <picture>
+                                {% if banner.has_webp %}
+                                <source type="image/webp" srcset="{{ banner.webp_url }}">
+                                {% endif %}
+                                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                            </picture>
                         </a>
                         {% else %}
-                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%; --banner-height-mobile: {{ banner.mobile_height }}px;">
+                            <picture>
+                                {% if banner.has_webp %}
+                                <source type="image/webp" srcset="{{ banner.webp_url }}">
+                                {% endif %}
+                                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                            </picture>
+                        {% endif %}
+                        {% if banner.headline or banner.subheadline or banner.cta_text %}
+                        <div class="hero-overlay">
+                            {% if banner.headline %}
+                            <h3>{{ banner.headline }}</h3>
+                            {% endif %}
+                            {% if banner.subheadline %}
+                            <p>{{ banner.subheadline }}</p>
+                            {% endif %}
+                            {% if banner.cta_text and banner.cta_category %}
+                            <a href="{% url 'category_books' banner.cta_category.slug %}" class="btn btn-brand btn-sm rounded-pill">{{ banner.cta_text }}</a>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
             <div class="swiper-slide">
-                <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1" style="--banner-height-mobile: 240px;">
+                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                    <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2" style="--banner-height-mobile: 240px;">
+                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                    <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3" style="--banner-height-mobile: 240px;">
+                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                    <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4" style="--banner-height-mobile: 240px;">
+                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                    <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide">
-                    <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5" style="--banner-height-mobile: 240px;">
+                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                    <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
                 </div>
             </div>
             {% endif %}
@@ -386,7 +442,7 @@
             </div>
             <div class="subject-grid">
                 {% for subject in subjects %}
-                <a href="{% url 'search' %}?subject={{ subject.slug }}" class="subject-pill">
+                <a href="{% url 'subject_books' subject.slug %}" class="subject-pill">
                     <span class="subject-icon">
                         {% if subject.icon %}
                             <img src="{{ subject.icon.url }}" alt="{{ subject.name }}">

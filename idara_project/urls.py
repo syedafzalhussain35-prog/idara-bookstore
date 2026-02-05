@@ -22,6 +22,7 @@ urlpatterns = [
     # ==================================================
     path('', views.home, name='home'),
     path('category/<slug:slug>/', views.category_books, name='category_books'),
+    path('subject/<slug:slug>/', views.subject_books, name='subject_books'),
 
     # ==================================================
     # SEARCH

@@ -5,9 +5,70 @@
 {% block content %}
 <div class="container py-5">
 
-    <h4 class="mb-4">
-        Search results for “{{ query }}”
+    <h4 class="mb-3">
+        Search results for ?{{ query }}?
     </h4>
+
+    <form method="get" class="row g-2 align-items-end mb-3 category-filters">
+        <input type="hidden" name="q" value="{{ query }}">
+        {% if category_slug %}
+            <input type="hidden" name="category" value="{{ category_slug }}">
+        {% endif %}
+        <div class="col-12 col-md-4">
+            <select name="subject" class="form-select">
+                <option value="">All Subjects</option>
+                {% for subject in subjects %}
+                <option value="{{ subject.slug }}" {% if subject_slug == subject.slug %}selected{% endif %}>
+                    {{ subject.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-6 col-md-2">
+            <input type="number" name="min_price" class="form-control" placeholder="Min ?"
+                   value="{{ min_price }}">
+        </div>
+
+        <div class="col-6 col-md-2">
+            <input type="number" name="max_price" class="form-control" placeholder="Max ?"
+                   value="{{ max_price }}">
+        </div>
+
+        <div class="col-12 col-md-2">
+            <select name="rating" class="form-select">
+                <option value="">Any Rating</option>
+                <option value="4" {% if rating == "4" %}selected{% endif %}>4? & up</option>
+                <option value="3" {% if rating == "3" %}selected{% endif %}>3? & up</option>
+                <option value="2" {% if rating == "2" %}selected{% endif %}>2? & up</option>
+            </select>
+        </div>
+
+        <div class="col-6 col-md-1">
+            <button class="btn btn-custom w-100">Apply</button>
+        </div>
+
+        <div class="col-6 col-md-1">
+            <a href="{% url 'search' %}?q={{ query }}{% if category_slug %}&category={{ category_slug }}{% endif %}"
+               class="btn btn-outline-secondary w-100">
+                Clear
+            </a>
+        </div>
+    </form>
+
+    <div class="filter-chips mb-4">
+        {% if subject_slug %}
+            {% for subject in subjects %}
+                {% if subject.slug == subject_slug %}
+                    <span class="chip">Subject: {{ subject.name }}</span>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if min_price or max_price %}
+            <span class="chip">Price: {{ min_price|default:"0" }} - {{ max_price|default:"?" }}</span>
+        {% endif %}
+        {% if rating %}<span class="chip">{{ rating }}? & up</span>{% endif %}
+    </div>
 
     {% if books %}
         <div class="row g-3">
@@ -22,8 +83,23 @@
 </div>
 
 <style>
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chips .chip {
+    background: #fff;
+    border: 1px solid #f0e0e8;
+    color: #6c2a4a;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
 @media (max-width: 768px) {
-    h4.mb-4 {
+    h4.mb-3 {
         font-size: 1.1rem;
     }
 }
