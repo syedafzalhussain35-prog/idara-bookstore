@@ -163,6 +163,49 @@
         color: var(--primary-magenta);
     }
 
+    /* ================= SUBJECTWISE ================= */
+    .subject-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .subject-pill {
+        background: #fff;
+        border: 1px solid #f0e7ef;
+        border-radius: 14px;
+        padding: 14px 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: #333;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .subject-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(189, 24, 89, 0.12);
+    }
+
+    .subject-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fde3b4;
+        color: var(--primary-magenta);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .subject-label {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
     @media (max-width: 991px) {
         .hero-section {
             height: 320px;
@@ -184,6 +227,10 @@
         .swiper-button-next,
         .swiper-button-prev {
             display: none;
+        }
+
+        .subject-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
 
@@ -217,6 +264,10 @@
         .cat-title {
             font-size: 0.8rem;
         }
+
+        .subject-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 
     @media (max-width: 420px) {
@@ -226,6 +277,10 @@
 
         .banner-covers {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .subject-grid {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
         }
     }
 </style>
@@ -358,6 +413,21 @@
                 {% include 'store/partials/book_card.html' %}
             {% empty %}
                 <p class="text-center text-muted w-100">Check back later for our top picks!</p>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">Shop Subjectwise</h3>
+            <a href="{% url 'home' %}" class="btn btn-brand-outline btn-sm rounded-pill px-3">View All</a>
+        </div>
+        <div class="subject-grid mb-5">
+            {% for cat in nav_categories|slice:":8" %}
+            <a href="{% url 'category_books' cat.slug %}" class="subject-pill">
+                <span class="subject-icon">
+                    <i class="fas fa-book-open"></i>
+                </span>
+                <span class="subject-label">{{ cat.name }}</span>
+            </a>
             {% endfor %}
         </div>
 
