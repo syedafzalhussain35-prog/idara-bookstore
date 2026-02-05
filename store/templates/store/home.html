@@ -91,6 +91,31 @@
     .text-magenta {
         color: var(--primary-magenta);
     }
+
+    @media (max-width: 991px) {
+        .hero-section {
+            height: 260px;
+        }
+
+        .swiper-button-next,
+        .swiper-button-prev {
+            display: none;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .hero-section {
+            height: 200px;
+        }
+
+        .cat-img-box {
+            height: 90px;
+        }
+
+        .cat-title {
+            font-size: 0.8rem;
+        }
+    }
 </style>
 {% endblock %}
 

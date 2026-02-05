@@ -28,6 +28,11 @@
         margin: 0;
     }
 
+    img, video {
+        max-width: 100%;
+        height: auto;
+    }
+
     /* ================= TOP BAR ================= */
     .top-bar {
         background-color: var(--accent-gold);
@@ -281,12 +286,74 @@
             display: none;
         }
 
+        .top-bar {
+            height: auto;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .top-bar-center {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .main-header {
+            padding: 12px 0;
+        }
+
+        .header-logo img {
+            max-height: 50px;
+        }
+
+        .user-actions {
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .user-actions a {
+            flex: 1 1 30%;
+            min-width: 90px;
+        }
+
+        .menu-navbar .nav-link {
+            padding: 10px 14px !important;
+            font-size: 14px;
+        }
+
+        .book-card img {
+            height: 180px;
+        }
+
         /* Disable hover logic on mobile */
         .dropdown:hover > .dropdown-menu,
         .dropdown-submenu:hover > .dropdown-menu {
             display: none;
         }
     }
+
+@media (max-width: 576px) {
+    .search-container {
+        max-width: 100%;
+    }
+
+    .search-input {
+        font-size: 14px;
+    }
+
+    .user-actions a {
+        font-size: 0.8rem;
+    }
+
+    .book-card img {
+        height: 160px;
+    }
+
+    .wishlist-btn {
+        width: 32px;
+        height: 32px;
+    }
+}
 
     /* ================= MOBILE DROPDOWN FIX ================= */
 @media (max-width: 991px) {
