@@ -18,6 +18,12 @@
         overflow: visible;
     }
 
+    .hero-swiper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 18px;
+    }
+
     .hero-swiper .swiper-wrapper {
         align-items: center;
     }
@@ -27,7 +33,7 @@
         opacity: 0.55;
         transition: transform 0.35s ease, opacity 0.35s ease;
         padding: 0 12px;
-        max-width: 980px;
+        width: 100%;
     }
 
     .hero-swiper .swiper-slide-active {
@@ -265,6 +271,21 @@
 <section class="hero-section">
     <div class="swiper mySwiper hero-swiper">
         <div class="swiper-wrapper">
+            {% if banners %}
+                {% for banner in banners %}
+                <div class="swiper-slide">
+                    <div class="hero-slide">
+                        {% if banner.link %}
+                        <a href="{{ banner.link }}">
+                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                        </a>
+                        {% else %}
+                            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
             <div class="swiper-slide">
                 <div class="hero-slide">
                     <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
@@ -290,6 +311,7 @@
                     <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
                 </div>
             </div>
+            {% endif %}
         </div>
         <div class="swiper-button-next"></div>
         <div class="swiper-button-prev"></div>
@@ -432,14 +454,14 @@
     new Swiper(".mySwiper", {
         loop: true,
         centeredSlides: true,
-        slidesPerView: 1.15,
-        spaceBetween: 22,
+        slidesPerView: 1.12,
+        spaceBetween: 24,
         autoplay: { delay: 3500, disableOnInteraction: false },
         pagination: { el: ".swiper-pagination", clickable: true },
         navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
         breakpoints: {
-            576: { slidesPerView: 1.05 },
-            768: { slidesPerView: 1.12 },
+            576: { slidesPerView: 1.03 },
+            768: { slidesPerView: 1.1 },
             992: { slidesPerView: 1.18 },
             1200: { slidesPerView: 1.22 }
         }

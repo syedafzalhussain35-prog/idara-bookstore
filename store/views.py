@@ -36,6 +36,7 @@ from .models import (
     GalleryItem,
     UserProfile,
     PublishWithUsSubmission,
+    Banner,
 )
 from .forms import CheckoutForm
 
@@ -214,6 +215,7 @@ def _send_publish_with_us(subject, text_body, html_body):
 # ==================================================
 
 def home(request):
+    banners = Banner.objects.filter(is_active=True).order_by("order", "id")
     bestsellers = Book.objects.filter(is_bestseller=True)[:8]
     new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
     recently_viewed = _get_recently_viewed(request, limit=8)
@@ -227,6 +229,7 @@ def home(request):
         ).values_list('book_id', flat=True)
 
     return render(request, 'store/home.html', {
+        'banners': banners,
         'bestsellers': bestsellers,
         'new_arrivals': new_arrivals,
         'recently_viewed': recently_viewed,

@@ -20,6 +20,7 @@ from .models import (
     UserProfile,
     Bundle,
     PublishWithUsSubmission,
+    Banner,
 )
 from .admin_site import IdaraAdminSite
 
@@ -336,6 +337,14 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ("title", "order", "is_active", "focal_x", "focal_y")
+    list_editable = ("order", "is_active", "focal_x", "focal_y")
+    search_fields = ("title",)
+    ordering = ("order", "id")
+
+
 # ======================
 # CUSTOM ADMIN SITE
 # ======================
@@ -353,3 +362,4 @@ admin_site.register(GalleryItem, GalleryItemAdmin)
 admin_site.register(UserProfile, UserProfileAdmin)
 admin_site.register(Order, OrderAdmin)
 admin_site.register(PublishWithUsSubmission, PublishWithUsSubmissionAdmin)
+admin_site.register(Banner, BannerAdmin)
