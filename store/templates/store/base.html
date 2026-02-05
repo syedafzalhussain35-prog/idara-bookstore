@@ -196,6 +196,37 @@
         color: var(--primary-magenta);
     }
 
+    .btn-brand {
+        background: var(--primary-magenta);
+        color: #fff;
+        border: 2px solid var(--primary-magenta);
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-brand:hover {
+        background: #9c1248;
+        border-color: #9c1248;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(156, 18, 72, 0.25);
+    }
+
+    .btn-brand-outline {
+        background: #fff;
+        color: var(--primary-magenta);
+        border: 2px solid var(--primary-magenta);
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-brand-outline:hover {
+        background: var(--primary-magenta);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(189, 24, 89, 0.2);
+    }
+
     /* ================= BOOK CARD ================= */
     .book-card {
         transition: all 0.3s ease;
@@ -234,6 +265,39 @@
 
     .wishlist-btn:hover {
         transform: scale(1.1);
+    }
+
+    /* ================= PAGE LOADER ================= */
+    .page-loader {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 9999;
+    }
+
+    .page-loader.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .page-loader .spinner {
+        width: 52px;
+        height: 52px;
+        border: 4px solid #f1d9b4;
+        border-top-color: var(--primary-magenta);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        box-shadow: 0 6px 16px rgba(189, 24, 89, 0.15);
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 
     /* ================= LIVE SEARCH (GLOBAL) ================= */
@@ -396,6 +460,10 @@
 
 <body data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
       data-login-url="{% url 'account_login' %}?next={{ request.path }}">
+
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="spinner" aria-label="Loading"></div>
+</div>
 
 <!-- TOP BAR -->
 <div class="top-bar">
@@ -751,6 +819,28 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const loader = document.getElementById("pageLoader");
+    if (!loader) return;
+
+    const showLoader = () => loader.classList.add("active");
+    const hideLoader = () => loader.classList.remove("active");
+
+    document.querySelectorAll("a[href]").forEach(link => {
+        if (link.target === "_blank") return;
+        if (link.href.startsWith("mailto:") || link.href.startsWith("tel:")) return;
+        link.addEventListener("click", () => showLoader());
+    });
+
+    document.querySelectorAll("form").forEach(form => {
+        form.addEventListener("submit", () => showLoader());
+    });
+
+    window.addEventListener("pageshow", () => hideLoader());
 });
 </script>
 
