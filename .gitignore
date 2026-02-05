@@ -1,10 +1,17 @@
 # Django / local data
 media/
 staticfiles/
+db.sqlite3
+__pycache__/
+*.pyc
 
 # Backups / extras
 Backup/
 Extra/
+twilio_2FA_recovery_code.txt
+
+# Local gallery uploads
+static/store/gallery/
 
 # Large/binary assets
 *.mp4
