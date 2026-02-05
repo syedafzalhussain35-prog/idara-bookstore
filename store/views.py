@@ -56,7 +56,7 @@ def send_order_confirmation_email(order):
     msg.attach_alternative(html_body, "text/html")
 
     try:
-        msg.send(fail_silently=True)
+        msg.send(fail_silently=False)
     except Exception as exc:
         logger.exception("Order email failed to send: %s", exc)
 
