@@ -273,6 +273,40 @@
         transform: scale(1.1);
     }
 
+    /* ================= MOBILE STICKY CART ================= */
+    .sticky-cart {
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        z-index: 9998;
+        display: none;
+    }
+
+    .sticky-cart a {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary-magenta);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(189, 24, 89, 0.35);
+        text-decoration: none;
+        position: relative;
+    }
+
+    .sticky-cart .badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+    }
+
+    @media (max-width: 768px) {
+        .sticky-cart {
+            display: block;
+        }
+    }
     /* ================= PAGE LOADER ================= */
     .page-loader {
         position: fixed;
@@ -469,6 +503,15 @@
 
 <div class="page-loader" id="pageLoader" aria-hidden="true">
     <div class="spinner" aria-label="Loading"></div>
+</div>
+
+<div class="sticky-cart">
+    <a href="{% url 'cart_detail' %}" aria-label="Cart">
+        <i class="fas fa-shopping-cart"></i>
+        {% if cart_count > 0 %}
+        <span class="badge bg-warning text-dark">{{ cart_count }}</span>
+        {% endif %}
+    </a>
 </div>
 
 <!-- TOP BAR -->

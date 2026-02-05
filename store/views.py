@@ -252,6 +252,14 @@ def category_books(request, slug):
             Q(author__icontains=query)
         )
 
+    author = request.GET.get('author', '').strip()
+    if author:
+        books_qs = books_qs.filter(author__icontains=author)
+
+    subject_slug = request.GET.get('subject', '').strip()
+    if subject_slug:
+        books_qs = books_qs.filter(subjects__slug=subject_slug)
+
     sort = request.GET.get('sort')
     if sort == 'newest':
         books_qs = books_qs.order_by('-created_at')
@@ -271,11 +279,15 @@ def category_books(request, slug):
             user=request.user
         ).values_list('book_id', flat=True)
 
+    subjects = Subject.objects.filter(is_active=True).order_by('name')
+
     return render(request, 'store/category_books.html', {
         'category': category,
         'books': books,
         'query': query,
+        'subject_slug': subject_slug,
         'sort': sort,
+        'subjects': subjects,
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })

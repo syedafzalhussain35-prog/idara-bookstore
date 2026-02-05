@@ -1,21 +1,22 @@
 :root {
-  --admin-bg: #0f1720;
-  --admin-panel: #151d29;
-  --admin-panel-2: #1e2736;
-  --admin-border: #2b3647;
-  --admin-text: #e9eef5;
-  --admin-muted: #9fb0c7;
-  --admin-accent: #b0134b;
-  --admin-accent-2: #f1c27a;
+  --seller-bg: #0b1220;
+  --seller-panel: #0f1a2b;
+  --seller-panel-2: #142236;
+  --seller-border: #243149;
+  --seller-text: #e9eef5;
+  --seller-muted: #9fb0c7;
+  --seller-accent: #b0134b;
+  --seller-accent-dark: #8f0f41;
+  --seller-gold: #f1c27a;
 }
 
 body {
-  background: var(--admin-bg);
-  color: var(--admin-text);
+  background: var(--seller-bg);
+  color: var(--seller-text);
 }
 
 #header {
-  background: linear-gradient(120deg, #7b0d35, #b0134b);
+  background: linear-gradient(90deg, #8c1044, #b0134b);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
@@ -28,10 +29,18 @@ body {
   color: #f5f5f5;
 }
 
+#user-tools a:link, #user-tools a:visited {
+  color: #ffe6f0;
+}
+
 .breadcrumbs {
-  background: #243e4e;
-  border-bottom: 1px solid var(--admin-border);
+  background: #1a2b40;
+  border-bottom: 1px solid var(--seller-border);
   color: #cfe6f5;
+}
+
+.breadcrumbs a {
+  color: #9fd7ff;
 }
 
 #content {
@@ -39,25 +48,25 @@ body {
 }
 
 .module, .inline-group, .dashboard-module {
-  background: var(--admin-panel);
-  border: 1px solid var(--admin-border);
+  background: var(--seller-panel);
+  border: 1px solid var(--seller-border);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
   border-radius: 12px;
 }
 
 .module h2, .module caption, .inline-group h2 {
-  background: var(--admin-panel-2);
-  color: var(--admin-text);
-  border-bottom: 1px solid var(--admin-border);
+  background: var(--seller-panel-2);
+  color: var(--seller-text);
+  border-bottom: 1px solid var(--seller-border);
 }
 
 #nav-sidebar {
-  background: #101825;
-  border-right: 1px solid var(--admin-border);
+  background: #0f1929;
+  border-right: 1px solid var(--seller-border);
 }
 
 #nav-sidebar a {
-  color: var(--admin-muted);
+  color: var(--seller-muted);
 }
 
 #nav-sidebar .current-app .section:link,
@@ -66,38 +75,56 @@ body {
   color: #fff;
 }
 
+#nav-sidebar .current-app .section {
+  background: #15233a;
+  border-radius: 8px;
+}
+
+#nav-sidebar input[type="search"] {
+  background: #0b1320;
+  color: var(--seller-text);
+  border: 1px solid var(--seller-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
 .object-tools a {
-  background: var(--admin-accent);
-  border: 1px solid var(--admin-accent);
+  background: var(--seller-accent);
+  border: 1px solid var(--seller-accent);
   color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
 }
 
 .object-tools a:hover {
-  background: #8f0f41;
-  border-color: #8f0f41;
+  background: var(--seller-accent-dark);
+  border-color: var(--seller-accent-dark);
 }
 
 .button, input[type=submit], input[type=button], .submit-row input, a.button {
-  background: var(--admin-accent);
-  border-color: var(--admin-accent);
+  background: var(--seller-accent);
+  border-color: var(--seller-accent);
+  color: #fff;
+  border-radius: 999px;
 }
 
 .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
-  background: #8f0f41;
-  border-color: #8f0f41;
+  background: var(--seller-accent-dark);
+  border-color: var(--seller-accent-dark);
 }
 
 .changelist-filter {
-  background: var(--admin-panel-2);
-  border: 1px solid var(--admin-border);
+  background: var(--seller-panel-2);
+  border: 1px solid var(--seller-border);
+  border-radius: 10px;
 }
 
 .changelist-filter h2 {
-  color: var(--admin-text);
+  color: var(--seller-text);
 }
 
 .changelist-filter a {
-  color: var(--admin-muted);
+  color: var(--seller-muted);
 }
 
 .changelist-filter a.selected {
@@ -105,41 +132,43 @@ body {
 }
 
 .results {
-  background: var(--admin-panel);
-  border: 1px solid var(--admin-border);
+  background: var(--seller-panel);
+  border: 1px solid var(--seller-border);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .results thead th {
-  background: #1c2736;
-  color: var(--admin-text);
-  border-bottom: 1px solid var(--admin-border);
+  background: #182539;
+  color: var(--seller-text);
+  border-bottom: 1px solid var(--seller-border);
 }
 
 .results tbody tr {
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid var(--seller-border);
 }
 
 .results tbody tr:nth-child(odd) {
-  background: #141b27;
+  background: #101c2d;
 }
 
 .results tbody tr:hover {
-  background: #1f2a3c;
+  background: #17253a;
 }
 
 input, select, textarea {
-  background: #101621;
-  color: var(--admin-text);
-  border: 1px solid var(--admin-border);
+  background: #0b1320;
+  color: var(--seller-text);
+  border: 1px solid var(--seller-border);
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: var(--admin-accent-2);
+  border-color: var(--seller-gold);
   box-shadow: 0 0 0 2px rgba(241, 194, 122, 0.2);
 }
 
 .help, .helptext, .readonly {
-  color: var(--admin-muted);
+  color: var(--seller-muted);
 }
 
 .success, .warning, .errornote {
@@ -147,26 +176,30 @@ input:focus, select:focus, textarea:focus {
 }
 
 #changelist-search {
-  background: var(--admin-panel-2);
-  border: 1px solid var(--admin-border);
+  background: var(--seller-panel-2);
+  border: 1px solid var(--seller-border);
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 #changelist-search input[type="text"] {
-  background: #101621;
-  color: var(--admin-text);
-  border: 1px solid var(--admin-border);
+  background: #0b1320;
+  color: var(--seller-text);
+  border: 1px solid var(--seller-border);
+  border-radius: 999px;
+  padding: 8px 14px;
 }
 
 #changelist-search input[type="submit"] {
-  background: var(--admin-accent);
-  border: 1px solid var(--admin-accent);
+  background: var(--seller-accent);
+  border: 1px solid var(--seller-accent);
   color: #fff;
+  border-radius: 999px;
+  padding: 8px 16px;
 }
 
 .paginator, .paginator a, .paginator span {
-  color: var(--admin-muted);
+  color: var(--seller-muted);
 }
 
 .paginator a:hover {
@@ -174,7 +207,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 #content h1, #content h2, #content h3 {
-  color: var(--admin-text);
+  color: var(--seller-text);
 }
 
 .dashboard-module {
@@ -188,5 +221,5 @@ input:focus, select:focus, textarea:focus {
 
 .dashboard-module th, .dashboard-module td {
   padding: 10px 8px;
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid var(--seller-border);
 }

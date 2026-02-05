@@ -8,6 +8,14 @@
         </span>
         {% endif %}
 
+        {% if book.is_bestseller %}
+        <span class="badge bg-dark position-absolute top-0 start-0 mt-5 ms-2">Best Seller</span>
+        {% endif %}
+
+        {% if book.is_new_arrival %}
+        <span class="badge bg-success position-absolute top-0 start-0 mt-5 ms-2" style="margin-top: 52px;">New Arrival</span>
+        {% endif %}
+
         <!-- ❤️ WISHLIST BUTTON -->
         <button
             class="wishlist-btn position-absolute top-0 end-0 m-2"
@@ -21,7 +29,9 @@
             {% if book.main_cover %}
             <img src="{{ book.main_cover.url }}"
                  class="card-img-top p-3"
-                 alt="{{ book.title }}">
+                 alt="{{ book.title }}"
+                 loading="lazy"
+                 decoding="async">
             {% else %}
             <div class="bg-light d-flex align-items-center justify-content-center"
                  style="height: 220px;">

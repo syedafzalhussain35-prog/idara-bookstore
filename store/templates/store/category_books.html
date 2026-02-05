@@ -44,7 +44,7 @@
 
     <!-- 🔍 Filters -->
     <form method="get" class="row g-2 align-items-end mb-4 category-filters">
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-4">
             <input type="text"
                    name="author"
                    class="form-control"
@@ -52,20 +52,15 @@
                    value="{{ request.GET.author }}">
         </div>
 
-        <div class="col-6 col-md-2">
-            <input type="number"
-                   name="min_price"
-                   class="form-control"
-                   placeholder="Min ₹"
-                   value="{{ request.GET.min_price }}">
-        </div>
-
-        <div class="col-6 col-md-2">
-            <input type="number"
-                   name="max_price"
-                   class="form-control"
-                   placeholder="Max ₹"
-                   value="{{ request.GET.max_price }}">
+        <div class="col-12 col-md-4">
+            <select name="subject" class="form-select">
+                <option value="">All Subjects</option>
+                {% for subject in subjects %}
+                <option value="{{ subject.slug }}" {% if subject_slug == subject.slug %}selected{% endif %}>
+                    {{ subject.name }}
+                </option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="col-12 col-md-2">

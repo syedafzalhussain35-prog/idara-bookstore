@@ -7,14 +7,15 @@
     /* ================= HERO / SLIDER ================= */
     .hero-section {
         width: 100%;
-        height: 380px;
-        overflow: hidden;
-        background: #f5f5f5;
+        padding: 18px 0 36px;
+        overflow: visible;
+        background: linear-gradient(135deg, #f6f9ff 0%, #fdf3f8 60%, #f8fbff 100%);
     }
 
     .swiper {
         width: 100%;
         height: 100%;
+        overflow: visible;
     }
 
     .hero-swiper .swiper-wrapper {
@@ -26,6 +27,7 @@
         opacity: 0.55;
         transition: transform 0.35s ease, opacity 0.35s ease;
         padding: 0 12px;
+        max-width: 980px;
     }
 
     .hero-swiper .swiper-slide-active {
@@ -39,82 +41,49 @@
     }
 
     .hero-swiper .swiper-pagination {
-        bottom: 8px !important;
+        bottom: 4px !important;
     }
 
-    .banner-card {
-        background: linear-gradient(135deg, #f7fbff, #eef7fb);
-        border: 1px solid #e6edf5;
-        border-radius: 18px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        padding: 28px 32px;
-        position: relative;
+    .hero-swiper .swiper-pagination-bullet {
+        width: 8px;
+        height: 8px;
+        background: rgba(176, 19, 75, 0.3);
+        opacity: 1;
+    }
+
+    .hero-swiper .swiper-pagination-bullet-active {
+        width: 18px;
+        border-radius: 999px;
+        background: var(--primary-magenta);
+    }
+
+    .hero-slide {
+        background: #ffffff;
+        border-radius: 22px;
+        border: 1px solid #e7ebf4;
+        box-shadow: 0 16px 34px rgba(12, 20, 46, 0.12);
         overflow: hidden;
+        position: relative;
     }
 
-    .banner-card::after {
+    .hero-slide::after {
         content: "";
         position: absolute;
         inset: 0;
-        background-image:
-            radial-gradient(circle at 15% 30%, rgba(189, 24, 89, 0.08), transparent 55%),
-            radial-gradient(circle at 80% 25%, rgba(254, 211, 169, 0.35), transparent 50%),
-            linear-gradient(135deg, rgba(189, 24, 89, 0.06), transparent 40%);
+        background: radial-gradient(circle at 15% 20%, rgba(189, 24, 89, 0.08), transparent 55%),
+                    radial-gradient(circle at 80% 25%, rgba(254, 211, 169, 0.32), transparent 50%);
         pointer-events: none;
     }
 
-    .banner-content {
-        width: 45%;
-        z-index: 1;
-    }
-
-    .banner-content h2 {
-        font-family: 'Amiri', serif;
-        font-weight: 700;
-        color: #4c1d38;
-        line-height: 1.2;
-        margin-bottom: 12px;
-        font-size: 2rem;
-    }
-
-    .banner-content p {
-        color: #5f6470;
-        font-size: 1rem;
-        margin-bottom: 16px;
-    }
-
-    .banner-covers {
-        width: 55%;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
-        justify-items: center;
-        z-index: 1;
-    }
-
-    .banner-cover {
-        background: #fff;
-        border-radius: 10px;
-        border: 1px solid #e6e6e6;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    .hero-slide img {
         width: 100%;
-        aspect-ratio: 3 / 4;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-    }
-
-    .banner-cover img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
+        height: 360px;
+        object-fit: cover;
+        display: block;
     }
 
     @media (max-width: 576px) {
-        .swiper-slide img {
+        .hero-slide img {
             object-position: center;
         }
     }
@@ -189,6 +158,13 @@
     }
 
     /* ================= SUBJECTWISE ================= */
+    .subject-section {
+        background: linear-gradient(135deg, #fff7ed, #fff1f7);
+        border: 1px solid #f5e3ee;
+        border-radius: 18px;
+        padding: 22px 24px;
+    }
+
     .subject-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -239,21 +215,8 @@
     }
 
     @media (max-width: 991px) {
-        .hero-section {
-            height: 320px;
-        }
-
-        .banner-card {
-            padding: 20px;
-        }
-
-        .banner-content {
-            width: 50%;
-        }
-
-        .banner-covers {
-            width: 50%;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+        .hero-slide img {
+            height: 300px;
         }
 
         .swiper-button-next,
@@ -267,26 +230,8 @@
     }
 
     @media (max-width: 576px) {
-        .hero-section {
-            height: 360px;
-        }
-
-        .banner-card {
-            flex-direction: column;
-            gap: 16px;
-            padding: 18px;
-        }
-
-        .banner-content, .banner-covers {
-            width: 100%;
-        }
-
-        .banner-content h2 {
-            font-size: 1.4rem;
-        }
-
-        .banner-covers {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+        .hero-slide img {
+            height: 260px;
         }
 
         .cat-img-box {
@@ -303,12 +248,8 @@
     }
 
     @media (max-width: 420px) {
-        .hero-section {
-            height: 380px;
-        }
-
-        .banner-covers {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        .hero-slide img {
+            height: 230px;
         }
 
         .subject-grid {
@@ -325,60 +266,28 @@
     <div class="swiper mySwiper hero-swiper">
         <div class="swiper-wrapper">
             <div class="swiper-slide">
-                <div class="banner-card">
-                    <div class="banner-content">
-                        <h2>Complete your professional journey with curated sets</h2>
-                        <p>Handpicked combos designed for focused study and exam success.</p>
-                        <a href="{% url 'home' %}" class="btn btn-brand rounded-pill px-4">Browse Sets</a>
-                    </div>
-                    <div class="banner-covers">
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/ncism.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
-                    </div>
+                <div class="hero-slide">
+                    <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="banner-card">
-                    <div class="banner-content">
-                        <h2>Build your library with trusted academic titles</h2>
-                        <p>Discover bestsellers, new arrivals, and exclusive bundles.</p>
-                        <a href="{% url 'home' %}" class="btn btn-brand rounded-pill px-4">Shop Books</a>
-                    </div>
-                    <div class="banner-covers">
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/ncism.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
-                    </div>
+                <div class="hero-slide">
+                    <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="banner-card">
-                    <div class="banner-content">
-                        <h2>Exam‑ready resources for every level</h2>
-                        <p>From foundation to PG preparation, find the right titles fast.</p>
-                        <a href="{% url 'home' %}" class="btn btn-brand rounded-pill px-4">Explore Categories</a>
-                    </div>
-                    <div class="banner-covers">
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/secondprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/thirdprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/mdbooks.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/ncism.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/firstprof.jpg' %}" alt=""></div>
-                        <div class="banner-cover"><img src="{% static 'store/images/categories/aiapget.jpg' %}" alt=""></div>
-                    </div>
+                <div class="hero-slide">
+                    <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3">
+                </div>
+            </div>
+            <div class="swiper-slide">
+                <div class="hero-slide">
+                    <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4">
+                </div>
+            </div>
+            <div class="swiper-slide">
+                <div class="hero-slide">
+                    <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
                 </div>
             </div>
         </div>
@@ -448,23 +357,25 @@
             {% endfor %}
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-magenta">Shop Subjectwise</h3>
-            <a href="{% url 'home' %}" class="btn btn-brand-outline btn-sm rounded-pill px-3">View All</a>
-        </div>
-        <div class="subject-grid mb-5">
-            {% for subject in subjects %}
-            <a href="{% url 'search' %}?subject={{ subject.slug }}" class="subject-pill">
-                <span class="subject-icon">
-                    {% if subject.icon %}
-                        <img src="{{ subject.icon.url }}" alt="{{ subject.name }}">
-                    {% else %}
-                        <i class="fas fa-book-open"></i>
-                    {% endif %}
-                </span>
-                <span class="subject-label">{{ subject.name }}</span>
-            </a>
-            {% endfor %}
+        <div class="subject-section mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-magenta">Shop Subjectwise</h3>
+                <a href="{% url 'home' %}" class="btn btn-brand-outline btn-sm rounded-pill px-3">View All</a>
+            </div>
+            <div class="subject-grid">
+                {% for subject in subjects %}
+                <a href="{% url 'search' %}?subject={{ subject.slug }}" class="subject-pill">
+                    <span class="subject-icon">
+                        {% if subject.icon %}
+                            <img src="{{ subject.icon.url }}" alt="{{ subject.name }}">
+                        {% else %}
+                            <i class="fas fa-book-open"></i>
+                        {% endif %}
+                    </span>
+                    <span class="subject-label">{{ subject.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -521,14 +432,16 @@
     new Swiper(".mySwiper", {
         loop: true,
         centeredSlides: true,
-        slidesPerView: 1.2,
-        spaceBetween: 18,
+        slidesPerView: 1.15,
+        spaceBetween: 22,
         autoplay: { delay: 3500, disableOnInteraction: false },
         pagination: { el: ".swiper-pagination", clickable: true },
         navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
         breakpoints: {
-            768: { slidesPerView: 1.15 },
-            992: { slidesPerView: 1.05 }
+            576: { slidesPerView: 1.05 },
+            768: { slidesPerView: 1.12 },
+            992: { slidesPerView: 1.18 },
+            1200: { slidesPerView: 1.22 }
         }
     });
 </script>

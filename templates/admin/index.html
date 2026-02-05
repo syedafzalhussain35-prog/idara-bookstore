@@ -6,14 +6,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
     :root {
-        --dash-bg: #f6f7fb;
-        --dash-card: #ffffff;
-        --dash-border: #e6e8ef;
-        --dash-text: #1b1f2a;
-        --dash-muted: #6b7280;
-        --dash-accent: #c2185b;
-        --dash-accent-2: #f5c27a;
-        --dash-ink: #0f172a;
+        --dash-bg: #0b1220;
+        --dash-card: #0f1a2b;
+        --dash-border: #243149;
+        --dash-text: #e9eef5;
+        --dash-muted: #9fb0c7;
+        --dash-accent: #b0134b;
+        --dash-accent-2: #f1c27a;
+        --dash-ink: #f8fafc;
     }
 
     body {
@@ -21,7 +21,7 @@
     }
 
     .dash-hero {
-        background: linear-gradient(120deg, #fff, #fff6e3);
+        background: linear-gradient(120deg, rgba(176, 19, 75, 0.18), rgba(15, 23, 42, 0.7));
         border: 1px solid var(--dash-border);
         border-radius: 16px;
         padding: 18px 20px;
@@ -30,7 +30,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
     }
 
     .dash-hero h2 {
@@ -47,13 +47,14 @@
     }
 
     .dash-hero-badge {
-        background: #111827;
+        background: #0b111a;
         color: #f8fafc;
-        padding: 6px 12px;
+        padding: 6px 14px;
         border-radius: 999px;
-        font-size: 12px;
-        letter-spacing: 0.04em;
+        font-size: 11px;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .dash-grid {
@@ -67,7 +68,7 @@
         border: 1px solid var(--dash-border);
         border-radius: 14px;
         padding: 16px;
-        box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
     }
 
     .dash-card h3 {
@@ -94,9 +95,9 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: #fff4e1;
-        color: #6b4a10;
-        border: 1px solid #f1d9b4;
+        background: rgba(241, 194, 122, 0.12);
+        color: #f4c67b;
+        border: 1px solid rgba(241, 194, 122, 0.4);
         border-radius: 999px;
         padding: 4px 10px;
         font-size: 12px;
@@ -113,6 +114,7 @@
         padding: 10px 6px;
         border-bottom: 1px solid var(--dash-border);
         font-size: 13px;
+        color: var(--dash-text);
     }
 
     .dash-table th {
@@ -122,8 +124,8 @@
     }
 
     .dash-pill {
-        background: #f0f4ff;
-        color: #2d3a8c;
+        background: rgba(176, 19, 75, 0.2);
+        color: #ffd7e5;
         padding: 4px 8px;
         border-radius: 999px;
         font-size: 12px;
@@ -131,8 +133,34 @@
     }
 
     .dash-danger {
-        background: #fff1f2;
-        color: #9f1239;
+        background: rgba(239, 68, 68, 0.2);
+        color: #fecaca;
+    }
+
+    .dash-app-list table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #0f1a2b;
+    }
+
+    .dash-app-list th {
+        background: #182539;
+        color: var(--dash-muted);
+        font-weight: 600;
+    }
+
+    .dash-app-list td,
+    .dash-app-list th {
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--dash-border);
+    }
+
+    .dash-app-list a {
+        color: #8bd4ff;
+    }
+
+    .dash-app-list tr:hover {
+        background: rgba(255, 255, 255, 0.04);
     }
 
     .span-4 { grid-column: span 4; }
@@ -234,7 +262,9 @@
 
     <div class="dash-card span-12">
         <h3>Manage</h3>
-        {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+        <div class="dash-app-list">
+            {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+        </div>
     </div>
 </div>
 
