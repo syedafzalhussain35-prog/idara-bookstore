@@ -7,13 +7,48 @@
 <div class="container py-5">
     <h2 class="mb-4 fw-bold" style="color: var(--primary-magenta);">Shopping Cart <i class="fas fa-shopping-cart"></i></h2>
 
+<style>
+@media (max-width: 768px) {
+    .cart-table thead {
+        display: none;
+    }
+
+    .cart-table, .cart-table tbody, .cart-table tr, .cart-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .cart-table tr {
+        border: 1px solid #eee;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #fff;
+    }
+
+    .cart-table td {
+        padding: 8px 0;
+        text-align: right;
+        position: relative;
+    }
+
+    .cart-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        font-weight: 600;
+        color: #6b7280;
+    }
+}
+</style>
+
     {% if cart.items.all %}
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0 cart-table">
                             <thead class="bg-light">
                                 <tr>
                                     <th scope="col" class="p-3">Product</th>
@@ -26,7 +61,7 @@
                             <tbody>
                                 {% for item in cart.items.all %}
                                 <tr>
-                                    <td class="p-3">
+                                    <td class="p-3" data-label="Product">
                                         <div class="d-flex align-items-center">
                                             {% if item.book.main_cover %}
                                                 <img src="{{ item.book.main_cover.url }}" alt="{{ item.book.title }}" class="rounded me-3" style="width: 50px; height: 60px; object-fit: cover;">
@@ -41,12 +76,12 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="p-3">₹{{ item.book.price }}</td>
-                                    <td class="p-3">
+                                    <td class="p-3" data-label="Price">₹{{ item.book.price }}</td>
+                                    <td class="p-3" data-label="Quantity">
                                         <span class="badge bg-light text-dark border px-3 py-2">{{ item.quantity }}</span>
                                     </td>
-                                    <td class="p-3 fw-bold" style="color: var(--primary-magenta);">₹{{ item.total_price }}</td>
-                                    <td class="p-3 text-end">
+                                    <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ item.total_price }}</td>
+                                    <td class="p-3 text-end" data-label="Action">
                                         <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger" title="Remove Item">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>

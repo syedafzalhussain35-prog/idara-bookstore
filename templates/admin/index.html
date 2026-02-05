@@ -13,28 +13,47 @@
         --dash-muted: #6b7280;
         --dash-accent: #c2185b;
         --dash-accent-2: #f5c27a;
+        --dash-ink: #0f172a;
     }
 
     body {
         background: var(--dash-bg);
     }
 
-    .dash-header {
+    .dash-hero {
+        background: linear-gradient(120deg, #fff, #fff6e3);
+        border: 1px solid var(--dash-border);
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin: 16px 0 12px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin: 18px 0 12px;
+        justify-content: space-between;
+        gap: 16px;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
     }
 
-    .dash-title {
+    .dash-hero h2 {
         font-size: 22px;
         font-weight: 700;
-        color: var(--dash-text);
+        margin: 0 0 4px;
+        color: var(--dash-ink);
     }
 
-    .dash-subtitle {
+    .dash-hero p {
+        margin: 0;
         color: var(--dash-muted);
         font-size: 13px;
+    }
+
+    .dash-hero-badge {
+        background: #111827;
+        color: #f8fafc;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     .dash-grid {
@@ -46,15 +65,15 @@
     .dash-card {
         background: var(--dash-card);
         border: 1px solid var(--dash-border);
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 16px;
         box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
     }
 
     .dash-card h3 {
-        font-size: 14px;
+        font-size: 12px;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.1em;
         color: var(--dash-muted);
         margin: 0 0 6px;
     }
@@ -63,6 +82,12 @@
         font-size: 28px;
         font-weight: 700;
         color: var(--dash-text);
+    }
+
+    .dash-metric-sub {
+        color: var(--dash-muted);
+        font-size: 12px;
+        margin-top: 6px;
     }
 
     .dash-chip {
@@ -118,33 +143,40 @@
     @media (max-width: 1200px) {
         .span-4, .span-6, .span-8 { grid-column: span 12; }
     }
+
+    @media (max-width: 768px) {
+        .dash-hero {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dash-header">
+<div class="dash-hero">
     <div>
-        <div class="dash-title">Sales Overview</div>
-        <div class="dash-subtitle">Quick snapshot of performance and inventory health</div>
+        <h2>Seller Performance Dashboard</h2>
+        <p>Sales health, inventory alerts, and fast actions in one place.</p>
     </div>
-    <span class="dash-chip">Amazon-style seller view</span>
+    <span class="dash-hero-badge">Seller Central</span>
 </div>
 
 <div class="dash-grid">
     <div class="dash-card span-4">
         <h3>Total Sales</h3>
         <div class="dash-metric">₹{{ total_sales|floatformat:0 }}</div>
-        <div class="dash-subtitle">Paid orders total</div>
+        <div class="dash-metric-sub">Paid orders total</div>
     </div>
     <div class="dash-card span-4">
         <h3>Total Orders</h3>
         <div class="dash-metric">{{ total_orders }}</div>
-        <div class="dash-subtitle">Paid orders only</div>
+        <div class="dash-metric-sub">Paid orders only</div>
     </div>
     <div class="dash-card span-4">
         <h3>Orders Today</h3>
         <div class="dash-metric">{{ today_orders }}</div>
-        <div class="dash-subtitle">Paid orders today</div>
+        <div class="dash-metric-sub">Paid orders today</div>
     </div>
 
     <div class="dash-card span-6">

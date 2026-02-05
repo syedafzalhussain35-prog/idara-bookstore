@@ -9,3 +9,52 @@
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    :root {
+        --admin-accent: #c2185b;
+        --admin-accent-dark: #8f0f41;
+        --admin-gold: #f5c27a;
+        --admin-bg: #f6f7fb;
+    }
+
+    body {
+        background: var(--admin-bg);
+    }
+
+    #header {
+        background: linear-gradient(120deg, var(--admin-accent-dark), var(--admin-accent));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #branding h1, #branding h1 a:link, #branding h1 a:visited {
+        color: #fff;
+    }
+
+    #user-tools {
+        color: #fff;
+    }
+
+    .module h2, .module caption, .inline-group h2 {
+        background: #fff;
+        color: #1b1f2a;
+        border-bottom: 1px solid #e6e8ef;
+    }
+
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: var(--admin-accent);
+        border-color: var(--admin-accent);
+    }
+
+    .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+        background: var(--admin-accent-dark);
+        border-color: var(--admin-accent-dark);
+    }
+
+    #content-main .module table {
+        background: #fff;
+    }
+</style>
+{% endblock %}
