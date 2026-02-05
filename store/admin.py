@@ -7,6 +7,7 @@ from .models import (
     BookImage,
     Cart,
     CartItem,
+    CartBundleItem,
     Order,
     OrderItem,
     Wishlist,
@@ -16,6 +17,7 @@ from .models import (
     Coupon,
     GalleryItem,
     UserProfile,
+    Bundle,
 )
 from .admin_site import IdaraAdminSite
 
@@ -40,6 +42,20 @@ class CategoryAdmin(admin.ModelAdmin):
 class BookImageInline(admin.TabularInline):
     model = BookImage
     extra = 1
+
+
+class BundleBookInline(admin.TabularInline):
+    model = Bundle.books.through
+    extra = 1
+
+
+@admin.register(Bundle)
+class BundleAdmin(admin.ModelAdmin):
+    list_display = ("name", "bundle_price", "is_active", "created_at")
+    list_filter = ("is_active", "created_at")
+    search_fields = ("name",)
+    inlines = [BundleBookInline]
+    exclude = ("books",)
 
 
 # ======================
@@ -159,11 +175,16 @@ class CartItemInline(admin.TabularInline):
     extra = 0
 
 
+class CartBundleItemInline(admin.TabularInline):
+    model = CartBundleItem
+    extra = 0
+
+
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
     list_display = ("user", "created_at")
     search_fields = ("user__username",)
-    inlines = [CartItemInline]
+    inlines = [CartItemInline, CartBundleItemInline]
 
 
 # ======================
@@ -298,6 +319,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 admin_site.register(Category, CategoryAdmin)
 admin_site.register(Book, BookAdmin)
+admin_site.register(Bundle, BundleAdmin)
 admin_site.register(Cart, CartAdmin)
 admin_site.register(Wishlist, WishlistAdmin)
 admin_site.register(Review, ReviewAdmin)

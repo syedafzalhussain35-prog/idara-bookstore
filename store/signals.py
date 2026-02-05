@@ -1,7 +1,7 @@
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 
-from .models import Cart, CartItem
+from .models import Cart, CartItem, CartBundleItem
 
 
 @receiver(user_logged_in)
@@ -26,7 +26,18 @@ def merge_guest_cart(sender, request, user, **kwargs):
             user_item.quantity += item.quantity
             user_item.save()
 
+    for bundle_item in guest_cart.bundle_items.select_related("bundle"):
+        user_bundle, created = CartBundleItem.objects.get_or_create(
+            cart=user_cart,
+            bundle=bundle_item.bundle,
+            defaults={"quantity": bundle_item.quantity},
+        )
+        if not created:
+            user_bundle.quantity += bundle_item.quantity
+            user_bundle.save()
+
     guest_cart.items.all().delete()
+    guest_cart.bundle_items.all().delete()
     guest_cart.delete()
     request.session.pop("cart_id", None)
     request.session.modified = True

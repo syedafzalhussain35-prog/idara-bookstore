@@ -22,8 +22,10 @@ import requests
 
 from .models import (
     Book,
+    Bundle,
     Cart,
     CartItem,
+    CartBundleItem,
     Order,
     OrderItem,
     Wishlist,
@@ -178,6 +180,7 @@ def home(request):
     bestsellers = Book.objects.filter(is_bestseller=True)[:8]
     new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
     recently_viewed = _get_recently_viewed(request, limit=8)
+    bundles = Bundle.objects.filter(is_active=True).order_by('-id')[:8]
 
     wishlist_ids = []
     if request.user.is_authenticated:
@@ -189,6 +192,7 @@ def home(request):
         'bestsellers': bestsellers,
         'new_arrivals': new_arrivals,
         'recently_viewed': recently_viewed,
+        'bundles': bundles,
         'wishlist_ids': wishlist_ids,
         'is_homepage': True,
     })
@@ -502,12 +506,31 @@ def cart_detail(request):
     return render(request, 'store/cart.html', {
         'cart': cart,
         'cart_items': cart.items.select_related('book'),
+        'bundle_items': cart.bundle_items.select_related('bundle'),
     })
 
 
 def remove_from_cart(request, item_id):
     cart = _get_or_create_cart(request)
     CartItem.objects.filter(id=item_id, cart=cart).delete()
+    return redirect('cart_detail')
+
+
+def add_bundle_to_cart(request, bundle_id):
+    bundle = get_object_or_404(Bundle, id=bundle_id, is_active=True)
+    cart = _get_or_create_cart(request)
+
+    item, created = CartBundleItem.objects.get_or_create(cart=cart, bundle=bundle)
+    if not created:
+        item.quantity += 1
+        item.save()
+
+    return redirect('cart_detail')
+
+
+def remove_bundle_from_cart(request, item_id):
+    cart = _get_or_create_cart(request)
+    CartBundleItem.objects.filter(id=item_id, cart=cart).delete()
     return redirect('cart_detail')
 
 
@@ -523,7 +546,7 @@ def checkout(request):
         cart_id = request.session.get('cart_id')
         cart = Cart.objects.filter(id=cart_id, user__isnull=True).first()
     
-    if not cart or not cart.items.exists():
+    if not cart or not (cart.items.exists() or cart.bundle_items.exists()):
         return redirect('cart_detail')
 
     if request.method == "POST":
@@ -578,8 +601,25 @@ def checkout(request):
                     item.book.stock -= item.quantity
                     item.book.save()
 
+            for bundle_item in cart.bundle_items.select_related("bundle").all():
+                books = list(bundle_item.bundle.books.all())
+                if not books:
+                    continue
+                per_book_price = bundle_item.bundle.bundle_price / len(books)
+                for book in books:
+                    OrderItem.objects.create(
+                        order=order,
+                        book=book,
+                        price=per_book_price,
+                        quantity=bundle_item.quantity
+                    )
+                    if book.stock >= bundle_item.quantity:
+                        book.stock -= bundle_item.quantity
+                        book.save()
+
             # 🧹 Clear cart
             cart.items.all().delete()
+            cart.bundle_items.all().delete()
             # Clean up guest session
             if 'cart_id' in request.session:
                 del request.session['cart_id']

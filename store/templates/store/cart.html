@@ -42,7 +42,7 @@
 }
 </style>
 
-    {% if cart.items.all %}
+    {% if cart.items.all or bundle_items %}
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm border-0 mb-4">
@@ -83,6 +83,32 @@
                                     <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ item.total_price }}</td>
                                     <td class="p-3 text-end" data-label="Action">
                                         <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger" title="Remove Item">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% for bitem in bundle_items %}
+                                <tr>
+                                    <td class="p-3" data-label="Product">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                                 style="width: 50px; height: 60px;">
+                                                <i class="fas fa-boxes-stacked text-muted"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark">{{ bitem.bundle.name }}</h6>
+                                                <small class="text-muted">Bundle Pack</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-3" data-label="Price">₹{{ bitem.bundle.bundle_price }}</td>
+                                    <td class="p-3" data-label="Quantity">
+                                        <span class="badge bg-light text-dark border px-3 py-2">{{ bitem.quantity }}</span>
+                                    </td>
+                                    <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ bitem.total_price }}</td>
+                                    <td class="p-3 text-end" data-label="Action">
+                                        <a href="{% url 'remove_bundle_from_cart' bitem.id %}" class="btn btn-sm btn-outline-danger" title="Remove Bundle">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
                                     </td>

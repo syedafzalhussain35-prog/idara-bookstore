@@ -23,6 +23,8 @@ def navbar_categories(request):
             # Aggregate the sum of all item quantities in the cart
             result = cart.items.aggregate(total_qty=Sum('quantity'))
             cart_count = result.get('total_qty') or 0
+            bundle_result = cart.bundle_items.aggregate(total_qty=Sum('quantity'))
+            cart_count += bundle_result.get('total_qty') or 0
     else:
         # For guest users, check if a cart_id exists in the session
         cart_id = request.session.get('cart_id')
@@ -31,6 +33,8 @@ def navbar_categories(request):
             if cart:
                 result = cart.items.aggregate(total_qty=Sum('quantity'))
                 cart_count = result.get('total_qty') or 0
+                bundle_result = cart.bundle_items.aggregate(total_qty=Sum('quantity'))
+                cart_count += bundle_result.get('total_qty') or 0
 
     cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', '') or ''
     cloudinary_base = f"https://res.cloudinary.com/{cloud_name}" if cloud_name else ""
