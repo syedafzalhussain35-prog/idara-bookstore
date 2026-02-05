@@ -16,13 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==================================================
 # SECURITY
 # ==================================================
-SECRET_KEY = os.getenv(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-change-this-in-production'
-)
-
-# Cloudinary env (used by templates too)
-CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
@@ -40,19 +34,15 @@ render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 if render_external_host:
     if render_external_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(render_external_host)
-    # Render sits behind a proxy (https). Trust forwarded proto for CSRF/session.
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    CSRF_TRUSTED_ORIGINS = [
-        f"https://{render_external_host}",
-    ]
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
 
 # Trust Render HTTPS proxy headers and prevent CSRF issues in production
 if not DEBUG:
+    render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     CSRF_TRUSTED_ORIGINS = [
-        'https://idara-bookstore.onrender.com',
+        f"https://{render_external_host}"
+        if render_external_host
+        else 'https://idara-bookstore.onrender.com',
     ]
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -241,8 +231,9 @@ STATICFILES_DIRS = [
 # ==================================================
 # MEDIA FILES
 # ==================================================
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if DEBUG:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Django 4.2+ storage setting (preferred)
 if DEBUG and not os.getenv('CLOUDINARY_URL'):
@@ -267,15 +258,6 @@ else:
 
 # Allow serving static files from finders if collectstatic didn't run
 WHITENOISE_USE_FINDERS = True
-
-# Optional explicit Cloudinary config (fallback if CLOUDINARY_URL is mis-read)
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
-    api_key=os.getenv('CLOUDINARY_API_KEY', ''),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
-    secure=True,
-)
-
 
 # ==================================================
 # DEFAULT PRIMARY KEY
@@ -312,15 +294,27 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 10
 
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'idara.kitabulshifa@gmail.com')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-DEFAULT_FROM_EMAIL = 'Idara Kitab Ul Shifa <idara.kitabulshifa@gmail.com>'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'no-reply@localhost'
 
-# This logic checks if the password exists before choosing the backend
-if not EMAIL_HOST_PASSWORD:
-    # Prints emails to your terminal/console instead of sending them
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    # Sends real emails via Gmail
+# ==================================================
+# SENDGRID (HTTP API)
+# ==================================================
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', DEFAULT_FROM_EMAIL)
+SENDGRID_FROM_NAME = os.getenv('SENDGRID_FROM_NAME', 'Idara Kitab Ul Shifa')
+
+# ==================================================
+# BREVO (HTTP API)
+# ==================================================
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+BREVO_FROM_EMAIL = os.getenv('BREVO_FROM_EMAIL', DEFAULT_FROM_EMAIL)
+BREVO_FROM_NAME = os.getenv('BREVO_FROM_NAME', 'Idara Kitab Ul Shifa')
+
+# Use SMTP only when both values are present; otherwise print to console
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
