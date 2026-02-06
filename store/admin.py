@@ -23,13 +23,26 @@ from .models import (
     Coupon,
     GalleryItem,
     UserProfile,
+    UserAddress,
     Bundle,
     PublishWithUsSubmission,
     Banner,
+    SearchQueryLog,
+    AuditLog,
 )
 from .admin_site import IdaraAdminSite
 
 admin_site = IdaraAdminSite(name="idara_admin")
+
+def _log_audit(request, action, obj, changes):
+    AuditLog.objects.create(
+        user=request.user if request and request.user.is_authenticated else None,
+        action=action,
+        model_name=obj.__class__.__name__,
+        object_id=obj.pk or 0,
+        object_repr=str(obj)[:200],
+        changes=changes,
+    )
 
 # ======================
 # CATEGORY ADMIN
@@ -81,6 +94,7 @@ class BookAdmin(admin.ModelAdmin):
         "stock",
         "category",
         "is_bestseller",
+        "is_trending",
         "is_new_arrival",
         "is_featured",
     )
@@ -89,6 +103,7 @@ class BookAdmin(admin.ModelAdmin):
         "category",
         ("subjects", admin.RelatedOnlyFieldListFilter),
         "is_bestseller",
+        "is_trending",
         "is_new_arrival",
         "is_featured",
     )
@@ -100,6 +115,7 @@ class BookAdmin(admin.ModelAdmin):
         "mrp_price",
         "stock",
         "is_bestseller",
+        "is_trending",
         "is_new_arrival",
         "is_featured",
     )
@@ -118,7 +134,7 @@ class BookAdmin(admin.ModelAdmin):
             "fields": ("stock",)
         }),
         ("Homepage Flags", {
-            "fields": ("is_bestseller", "is_new_arrival", "is_featured")
+            "fields": ("is_bestseller", "is_trending", "is_new_arrival", "is_featured")
         }),
         ("Images", {
             "fields": ("main_cover",)
@@ -141,6 +157,31 @@ class BookAdmin(admin.ModelAdmin):
 
     action_form = PriceUpdateActionForm
     actions = ("bulk_update_price", "export_books_csv")
+
+    def save_model(self, request, obj, form, change):
+        original = None
+        if change and obj.pk:
+            original = Book.objects.filter(pk=obj.pk).first()
+
+        super().save_model(request, obj, form, change)
+
+        if not original:
+            return
+
+        if original.price != obj.price:
+            _log_audit(
+                request,
+                "book_price_change",
+                obj,
+                {"price": {"from": str(original.price), "to": str(obj.price)}},
+            )
+        if original.stock != obj.stock:
+            _log_audit(
+                request,
+                "book_stock_change",
+                obj,
+                {"stock": {"from": original.stock, "to": obj.stock}},
+            )
 
     @admin.display(description="Discount")
     def discount_display(self, obj):
@@ -167,10 +208,18 @@ class BookAdmin(admin.ModelAdmin):
         updated = 0
 
         for book in queryset:
+            original_price = book.price
             book.price = (book.price * factor).quantize(Decimal("0.01"))
             if apply_to_mrp and book.mrp_price:
                 book.mrp_price = (book.mrp_price * factor).quantize(Decimal("0.01"))
             book.save(update_fields=["price", "mrp_price"])
+            if original_price != book.price:
+                _log_audit(
+                    request,
+                    "book_price_change",
+                    book,
+                    {"price": {"from": str(original_price), "to": str(book.price)}},
+                )
             updated += 1
 
         self.message_user(request, f"Updated {updated} books.")
@@ -215,18 +264,53 @@ class OrderAdmin(admin.ModelAdmin):
         "email_link",
         "total_cost_display",
         "city",
+        "status",
         "is_paid",
         "created_at",
     )
 
-    list_filter = ("is_paid", "created_at", "city")
+    list_filter = ("status", "is_paid", "created_at", "city")
     search_fields = ("full_name", "email", "city", "user__username")
-    readonly_fields = ("user", "created_at", "total_cost")
+    readonly_fields = (
+        "user",
+        "created_at",
+        "subtotal",
+        "discount_amount",
+        "gst_rate",
+        "gst_amount",
+        "shipping_amount",
+        "total_cost",
+    )
 
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
     ordering = ("-created_at",)
     actions = ("export_orders_csv",)
+
+    def save_model(self, request, obj, form, change):
+        original = None
+        if change and obj.pk:
+            original = Order.objects.filter(pk=obj.pk).first()
+
+        super().save_model(request, obj, form, change)
+
+        if not original:
+            return
+
+        if original.is_paid != obj.is_paid:
+            _log_audit(
+                request,
+                "order_paid_change",
+                obj,
+                {"is_paid": {"from": original.is_paid, "to": obj.is_paid}},
+            )
+        if original.status != obj.status:
+            _log_audit(
+                request,
+                "order_status_change",
+                obj,
+                {"status": {"from": original.status, "to": obj.status}},
+            )
 
     @admin.display(description="Email")
     def email_link(self, obj):
@@ -414,6 +498,31 @@ class UserProfileAdmin(admin.ModelAdmin):
     ordering = ("-updated_at",)
 
 
+@admin.register(UserAddress)
+class UserAddressAdmin(admin.ModelAdmin):
+    list_display = ("user", "label", "city", "zip_code", "is_default", "created_at")
+    list_filter = ("is_default", "city")
+    search_fields = ("user__username", "user__email", "label", "address", "city", "zip_code")
+    ordering = ("-created_at",)
+
+
+@admin.register(SearchQueryLog)
+class SearchQueryLogAdmin(admin.ModelAdmin):
+    list_display = ("query", "results_count", "user", "created_at")
+    list_filter = ("results_count", "created_at")
+    search_fields = ("query", "category_slug", "subject_slug", "ip_address")
+    ordering = ("-created_at",)
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("action", "model_name", "object_id", "user", "created_at")
+    list_filter = ("action", "model_name", "created_at")
+    search_fields = ("object_repr", "user__username", "user__email")
+    readonly_fields = ("user", "action", "model_name", "object_id", "object_repr", "changes", "created_at")
+    ordering = ("-created_at",)
+
+
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "is_active")
@@ -483,6 +592,9 @@ admin_site.register(Coupon, CouponAdmin)
 admin_site.register(SyllabusPDF, SyllabusPDFAdmin)
 admin_site.register(GalleryItem, GalleryItemAdmin)
 admin_site.register(UserProfile, UserProfileAdmin)
+admin_site.register(UserAddress, UserAddressAdmin)
 admin_site.register(Order, OrderAdmin)
 admin_site.register(PublishWithUsSubmission, PublishWithUsSubmissionAdmin)
 admin_site.register(Banner, BannerAdmin)
+admin_site.register(SearchQueryLog, SearchQueryLogAdmin)
+admin_site.register(AuditLog, AuditLogAdmin)

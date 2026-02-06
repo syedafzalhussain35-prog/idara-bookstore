@@ -1,5 +1,4 @@
 from decimal import Decimal
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -12,12 +11,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
-from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+from django.core.cache import cache
 import logging
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.conf import settings
-import requests
 
 
 from .models import (
@@ -35,10 +33,13 @@ from .models import (
     Coupon,
     GalleryItem,
     UserProfile,
+    UserAddress,
     PublishWithUsSubmission,
     Banner,
+    SearchQueryLog,
 )
-from .forms import CheckoutForm
+from .email_utils import send_publish_with_us
+from .tasks import enqueue_order_confirmation
 
 logger = logging.getLogger(__name__)
 
@@ -71,143 +72,23 @@ def _get_recently_viewed(request, exclude_id=None, limit=8):
 
 
 # ==================================================
-# EMAILS
+# CACHE HELPERS
 # ==================================================
 
-def send_order_confirmation_email(order):
-    if not order.email:
-        return
-
-    subject = f"Order Confirmation #{order.id} - Idara Kitab Ul Shifa"
-    html_body = render_to_string('emails/order_confirmation.html', {'order': order})
-    text_body = strip_tags(html_body)
-
-    if settings.BREVO_API_KEY:
-        _send_via_brevo(
-            to_email=order.email,
-            subject=subject,
-            text_body=text_body,
-            html_body=html_body,
-        )
-        return
-
-    if settings.SENDGRID_API_KEY:
-        _send_via_sendgrid(
-            to_email=order.email,
-            subject=subject,
-            text_body=text_body,
-            html_body=html_body,
-        )
-        return
-
-    msg = EmailMultiAlternatives(
-        subject=subject,
-        body=text_body,
-        to=[order.email],
-    )
-    msg.attach_alternative(html_body, "text/html")
-
-    try:
-        msg.send(fail_silently=False)
-    except Exception as exc:
-        logger.exception("Order email failed to send: %s", exc)
+def _ordered_by_ids(model, ids):
+    if not ids:
+        return model.objects.none()
+    preserved = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(ids)], output_field=IntegerField())
+    return model.objects.filter(id__in=ids).order_by(preserved)
 
 
-def _send_via_brevo(to_email, subject, text_body, html_body):
-    from_email = settings.BREVO_FROM_EMAIL
-    from_name = settings.BREVO_FROM_NAME
-
-    payload = {
-        "sender": {"email": from_email, "name": from_name},
-        "to": [{"email": to_email}],
-        "subject": subject,
-        "textContent": text_body,
-        "htmlContent": html_body,
-    }
-
-    headers = {
-        "api-key": settings.BREVO_API_KEY,
-        "Content-Type": "application/json",
-    }
-
-    try:
-        resp = requests.post(
-            "https://api.brevo.com/v3/smtp/email",
-            json=payload,
-            headers=headers,
-            timeout=10,
-        )
-        if resp.status_code not in (200, 201, 202):
-            logger.error("Brevo error %s: %s", resp.status_code, resp.text)
-    except Exception as exc:
-        logger.exception("Brevo request failed: %s", exc)
-
-
-def _send_via_sendgrid(to_email, subject, text_body, html_body):
-    from_email = settings.SENDGRID_FROM_EMAIL
-    from_name = settings.SENDGRID_FROM_NAME
-
-    payload = {
-        "personalizations": [{"to": [{"email": to_email}]}],
-        "from": {"email": from_email, "name": from_name},
-        "subject": subject,
-        "content": [
-            {"type": "text/plain", "value": text_body},
-            {"type": "text/html", "value": html_body},
-        ],
-    }
-
-    headers = {
-        "Authorization": f"Bearer {settings.SENDGRID_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    try:
-        resp = requests.post(
-            "https://api.sendgrid.com/v3/mail/send",
-            json=payload,
-            headers=headers,
-            timeout=10,
-        )
-        if resp.status_code not in (200, 202):
-            logger.error("SendGrid error %s: %s", resp.status_code, resp.text)
-    except Exception as exc:
-        logger.exception("SendGrid request failed: %s", exc)
-
-
-def _send_publish_with_us(subject, text_body, html_body):
-    recipients = [e.strip() for e in settings.PUBLISH_WITH_US_RECIPIENTS.split(",") if e.strip()]
-    if not recipients:
-        logger.error("Publish With Us recipients not configured.")
-        return
-
-    if settings.BREVO_API_KEY:
-        for recipient in recipients:
-            _send_via_brevo(
-                to_email=recipient,
-                subject=subject,
-                text_body=text_body,
-                html_body=html_body,
-            )
-        return
-
-    if settings.SENDGRID_API_KEY:
-        for recipient in recipients:
-            _send_via_sendgrid(
-                to_email=recipient,
-                subject=subject,
-                text_body=text_body,
-                html_body=html_body,
-            )
-        return
-
-    msg = EmailMultiAlternatives(
-        subject=subject,
-        body=text_body,
-        to=recipients,
-    )
-    msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=False)
+def _cache_get_ids(key, queryset, ttl):
+    cached_ids = cache.get(key)
+    if cached_ids is not None:
+        return cached_ids
+    ids = list(queryset.values_list("id", flat=True))
+    cache.set(key, ids, ttl)
+    return ids
 
 
 # ==================================================
@@ -215,18 +96,63 @@ def _send_publish_with_us(subject, text_body, html_body):
 # ==================================================
 
 def home(request):
-    banners = Banner.objects.filter(is_active=True).order_by("order", "id")
-    featured_books = Book.objects.filter(is_featured=True).order_by("-id")[:8]
-    bestsellers = Book.objects.filter(is_bestseller=True)[:8]
-    new_arrivals = Book.objects.filter(is_new_arrival=True).order_by('-id')[:8]
-    recently_viewed = _get_recently_viewed(request, limit=8)
-    bundles = Bundle.objects.filter(is_active=True).order_by('-id')[:8]
-    subjects = Subject.objects.filter(is_active=True).order_by('name')[:8]
-    popular_books = (
-        Book.objects
-        .annotate(sales=Sum("orderitem__quantity"))
-        .order_by("-sales", "-id")[:8]
+    cache_ttl = getattr(settings, "HOME_CACHE_TTL", 120)
+
+    banner_ids = _cache_get_ids(
+        "home:banners",
+        Banner.objects.filter(is_active=True).order_by("order", "id"),
+        cache_ttl,
     )
+    banners = _ordered_by_ids(Banner, banner_ids)
+
+    featured_ids = _cache_get_ids(
+        "home:featured",
+        Book.objects.filter(is_featured=True).order_by("-id")[:8],
+        cache_ttl,
+    )
+    featured_books = list(_ordered_by_ids(Book, featured_ids))
+
+    bestseller_ids = _cache_get_ids(
+        "home:bestsellers",
+        Book.objects.filter(is_bestseller=True).order_by("-id")[:8],
+        cache_ttl,
+    )
+    bestsellers = list(_ordered_by_ids(Book, bestseller_ids))
+
+    trending_ids = _cache_get_ids(
+        "home:trending",
+        Book.objects.filter(is_trending=True).order_by("-id")[:8],
+        cache_ttl,
+    )
+    trending_books = list(_ordered_by_ids(Book, trending_ids))
+
+    new_ids = _cache_get_ids(
+        "home:new_arrivals",
+        Book.objects.filter(is_new_arrival=True).order_by("-id")[:8],
+        cache_ttl,
+    )
+    new_arrivals = list(_ordered_by_ids(Book, new_ids))
+    recently_viewed = _get_recently_viewed(request, limit=8)
+    bundle_ids = _cache_get_ids(
+        "home:bundles",
+        Bundle.objects.filter(is_active=True).order_by("-id")[:8],
+        cache_ttl,
+    )
+    bundles = list(_ordered_by_ids(Bundle, bundle_ids))
+
+    subject_ids = _cache_get_ids(
+        "home:subjects",
+        Subject.objects.filter(is_active=True).order_by("name")[:8],
+        cache_ttl,
+    )
+    subjects = list(_ordered_by_ids(Subject, subject_ids))
+
+    popular_ids = _cache_get_ids(
+        "home:popular",
+        Book.objects.annotate(sales=Sum("orderitem__quantity")).order_by("-sales", "-id")[:8],
+        cache_ttl,
+    )
+    popular_books = list(_ordered_by_ids(Book, popular_ids))
 
     recommended = []
     if recently_viewed:
@@ -254,6 +180,7 @@ def home(request):
         'banners': banners,
         'featured_books': featured_books,
         'bestsellers': bestsellers,
+        'trending_books': trending_books,
         'new_arrivals': new_arrivals,
         'popular_books': popular_books,
         'recommended_books': recommended,
@@ -270,6 +197,12 @@ def home(request):
 # ==================================================
 
 def category_books(request, slug):
+    if not request.user.is_authenticated:
+        cache_key = f"category:{slug}:{request.GET.urlencode() or 'all'}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
     category = get_object_or_404(Category, slug=slug)
     books_qs = Book.objects.filter(category=category)
 
@@ -330,7 +263,7 @@ def category_books(request, slug):
 
     subjects = Subject.objects.filter(is_active=True).order_by('name')
 
-    return render(request, 'store/category_books.html', {
+    response = render(request, 'store/category_books.html', {
         'category': category,
         'books': books,
         'query': query,
@@ -343,6 +276,9 @@ def category_books(request, slug):
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })
+    if not request.user.is_authenticated:
+        cache.set(cache_key, response, getattr(settings, "CATEGORY_CACHE_TTL", 120))
+    return response
 
 
 # ==================================================
@@ -384,6 +320,24 @@ def search(request):
         except Exception:
             pass
 
+    results_count = books_qs.count() if query else 0
+
+    if query:
+        ip = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+        if not ip:
+            ip = request.META.get("REMOTE_ADDR")
+        SearchQueryLog.objects.create(
+            query=query,
+            category_slug=category_slug,
+            subject_slug=subject_slug,
+            min_price=min_price,
+            max_price=max_price,
+            rating=rating,
+            results_count=results_count,
+            user=request.user if request.user.is_authenticated else None,
+            ip_address=ip or None,
+        )
+
     paginator = Paginator(books_qs, 12)
     books = paginator.get_page(request.GET.get('page'))
 
@@ -412,6 +366,12 @@ def search(request):
 # ==================================================
 
 def subject_books(request, slug):
+    if not request.user.is_authenticated:
+        cache_key = f"subject:{slug}:{request.GET.urlencode() or 'all'}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
     subject = get_object_or_404(Subject, slug=slug, is_active=True)
     books_qs = Book.objects.filter(subjects=subject)
 
@@ -453,7 +413,7 @@ def subject_books(request, slug):
             user=request.user
         ).values_list('book_id', flat=True)
 
-    return render(request, 'store/subject_books.html', {
+    response = render(request, 'store/subject_books.html', {
         'subject': subject,
         'books': books,
         'query': query,
@@ -465,6 +425,9 @@ def subject_books(request, slug):
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })
+    if not request.user.is_authenticated:
+        cache.set(cache_key, response, getattr(settings, "CATEGORY_CACHE_TTL", 120))
+    return response
 
 
 # ==================================================
@@ -520,6 +483,17 @@ def book_detail(request, book_id):
 
     recently_viewed = _get_recently_viewed(request, exclude_id=book.id, limit=8)
 
+    co_purchase = (
+        OrderItem.objects
+        .filter(order__items__book=book)
+        .exclude(book=book)
+        .values("book")
+        .annotate(count=Count("id"))
+        .order_by("-count")[:8]
+    )
+    co_ids = [row["book"] for row in co_purchase]
+    people_also_bought = list(_ordered_by_ids(Book, co_ids))
+
     return render(request, 'store/book_detail.html', {
         'book': book,
         'reviews': reviews,
@@ -528,6 +502,7 @@ def book_detail(request, book_id):
         'has_purchased': has_purchased,
         'related_books': related_books,
         'recently_viewed': recently_viewed,
+        'people_also_bought': people_also_bought,
     })
 
 
@@ -660,10 +635,64 @@ def profile_view(request):
         return redirect('profile')
 
     orders = Order.objects.filter(user=user).prefetch_related('items__book')
+    addresses = UserAddress.objects.filter(user=user)
     return render(request, 'store/profile.html', {
         'orders': orders,
         'profile': profile,
+        'addresses': addresses,
     })
+
+
+@login_required
+@require_POST
+def add_address(request):
+    label = request.POST.get("label", "Home").strip() or "Home"
+    full_name = request.POST.get("full_name", "").strip()
+    phone = request.POST.get("phone", "").strip()
+    address = request.POST.get("address", "").strip()
+    city = request.POST.get("city", "").strip()
+    zip_code = request.POST.get("zip_code", "").strip()
+    is_default = bool(request.POST.get("is_default"))
+
+    if not address or not city:
+        messages.error(request, "Address and city are required.")
+        return redirect("profile")
+
+    if is_default:
+        UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+
+    UserAddress.objects.create(
+        user=request.user,
+        label=label,
+        full_name=full_name,
+        phone=phone,
+        address=address,
+        city=city,
+        zip_code=zip_code,
+        is_default=is_default,
+    )
+    messages.success(request, "Address saved.")
+    return redirect("profile")
+
+
+@login_required
+@require_POST
+def set_default_address(request, address_id):
+    address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+    address.is_default = True
+    address.save(update_fields=["is_default"])
+    messages.success(request, "Default address updated.")
+    return redirect("profile")
+
+
+@login_required
+@require_POST
+def delete_address(request, address_id):
+    address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+    address.delete()
+    messages.success(request, "Address deleted.")
+    return redirect("profile")
 
 
 # ==================================================
@@ -748,6 +777,19 @@ def checkout(request):
     if not cart or not (cart.items.exists() or cart.bundle_items.exists()):
         return redirect('cart_detail')
 
+    addresses = []
+    default_address = None
+    if request.user.is_authenticated:
+        addresses = list(UserAddress.objects.filter(user=request.user))
+        default_address = next((addr for addr in addresses if addr.is_default), None)
+
+    subtotal = cart.get_total()
+    discount_amount = Decimal("0.00")
+    gst_rate = Decimal(str(getattr(settings, "GST_RATE", 0)))
+    shipping_amount = Decimal(str(getattr(settings, "SHIPPING_FLAT", 0)))
+    gst_amount = (subtotal - discount_amount) * gst_rate / Decimal("100") if gst_rate else Decimal("0.00")
+    total_cost = subtotal - discount_amount + gst_amount + shipping_amount
+
     if request.method == "POST":
         email = request.POST.get("email")
         full_name = request.POST.get("full_name")
@@ -784,7 +826,13 @@ def checkout(request):
                 address=request.POST.get("address"),
                 city=request.POST.get("city"),
                 zip_code=request.POST.get("zip_code"),
-                total_cost=cart.get_total(), 
+                subtotal=subtotal,
+                discount_amount=discount_amount,
+                gst_rate=gst_rate,
+                gst_amount=gst_amount,
+                shipping_amount=shipping_amount,
+                total_cost=total_cost,
+                status="Processing",
                 is_paid=False,
             )
 
@@ -823,12 +871,40 @@ def checkout(request):
             if 'cart_id' in request.session:
                 del request.session['cart_id']
 
+        if request.user.is_authenticated and request.POST.get("save_address"):
+            label = request.POST.get("address_label", "Checkout").strip() or "Checkout"
+            is_default = bool(request.POST.get("set_default"))
+            if is_default:
+                UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+            UserAddress.objects.create(
+                user=request.user,
+                label=label,
+                full_name=full_name,
+                phone=request.POST.get("mobile"),
+                address=request.POST.get("address"),
+                city=request.POST.get("city"),
+                zip_code=request.POST.get("zip_code"),
+                is_default=is_default,
+            )
+
         # Send confirmation email (best-effort)
-        send_order_confirmation_email(order)
+        enqueue_order_confirmation(order.id)
 
-        return render(request, 'store/order_success.html', {'order': order})
+        return render(request, 'store/order_success.html', {
+            'order': order,
+        })
 
-    return render(request, "store/checkout.html", {'cart': cart})
+    return render(request, "store/checkout.html", {
+        'cart': cart,
+        'subtotal': subtotal,
+        'discount_amount': discount_amount,
+        'gst_rate': gst_rate,
+        'gst_amount': gst_amount,
+        'shipping_amount': shipping_amount,
+        'total_cost': total_cost,
+        'addresses': addresses,
+        'default_address': default_address,
+    })
 # ==================================================
 # STATIC & POLICY PAGES
 # ==================================================
@@ -896,7 +972,7 @@ def publish_with_us(request):
         html_body = render_to_string("emails/publish_with_us.html", {"data": payload})
         text_body = strip_tags(html_body)
         try:
-            _send_publish_with_us(subject, text_body, html_body)
+            send_publish_with_us(subject, text_body, html_body)
             messages.success(request, "Thank you! Your proposal has been submitted.")
         except Exception as exc:
             logger.exception("Publish With Us submission failed: %s", exc)

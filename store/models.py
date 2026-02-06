@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Sum, F, Avg
+from django.conf import settings
 from decimal import Decimal
 import os
 from io import BytesIO
@@ -77,8 +78,10 @@ class Book(models.Model):
     )
 
     is_bestseller = models.BooleanField(default=False)
+    is_trending = models.BooleanField(default=False)
     is_new_arrival = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
+    is_watermarked = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -107,6 +110,20 @@ class Book(models.Model):
     def __str__(self):
         return self.title
 
+    def _apply_watermark_if_needed(self):
+        if not self.main_cover or self.is_watermarked:
+            return
+        if not getattr(settings, "BOOK_WATERMARK_ENABLED", True):
+            return
+        text = getattr(settings, "BOOK_WATERMARK_TEXT", "Idara")
+        if _apply_text_watermark(self.main_cover, text):
+            self.is_watermarked = True
+            super().save(update_fields=["is_watermarked"])
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._apply_watermark_if_needed()
+
 
 class BookImage(models.Model):
     book = models.ForeignKey(
@@ -115,9 +132,24 @@ class BookImage(models.Model):
         on_delete=models.CASCADE
     )
     image = models.ImageField(upload_to='books/gallery/')
+    is_watermarked = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Image for {self.book.title}"
+
+    def _apply_watermark_if_needed(self):
+        if not self.image or self.is_watermarked:
+            return
+        if not getattr(settings, "BOOK_WATERMARK_ENABLED", True):
+            return
+        text = getattr(settings, "BOOK_WATERMARK_TEXT", "Idara")
+        if _apply_text_watermark(self.image, text):
+            self.is_watermarked = True
+            super().save(update_fields=["is_watermarked"])
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._apply_watermark_if_needed()
 
 
 # ======================
@@ -315,6 +347,24 @@ class UserProfile(models.Model):
         return f"Profile: {self.user.username}"
 
 
+class UserAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="addresses")
+    label = models.CharField(max_length=100, default="Home")
+    full_name = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    address = models.TextField()
+    city = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=10)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_default", "-created_at"]
+
+    def __str__(self):
+        return f"{self.label} - {self.address[:30]}"
+
+
 # ======================
 # GALLERY (EVENT MEDIA)
 # ======================
@@ -498,6 +548,7 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Processing', 'Processing'),
+        ('Packed', 'Packed'),
         ('Shipped', 'Shipped'),
         ('Delivered', 'Delivered'),
         ('Cancelled', 'Cancelled'),
@@ -513,6 +564,11 @@ class Order(models.Model):
     zip_code = models.CharField(max_length=10)
 
     # Pricing
+    subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
     total_cost = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -527,6 +583,21 @@ class Order(models.Model):
     )
 
     discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    gst_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+    gst_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    shipping_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0
@@ -563,6 +634,29 @@ class OrderItem(models.Model):
 # ======================
 # WISHLIST ❤️
 # ======================
+
+class SearchQueryLog(models.Model):
+    query = models.CharField(max_length=255, db_index=True)
+    category_slug = models.CharField(max_length=120, blank=True)
+    subject_slug = models.CharField(max_length=120, blank=True)
+    min_price = models.CharField(max_length=30, blank=True)
+    max_price = models.CharField(max_length=30, blank=True)
+    rating = models.CharField(max_length=30, blank=True)
+    results_count = models.PositiveIntegerField(default=0)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["results_count"]),
+        ]
+
+    def __str__(self):
+        return f"{self.query} ({self.results_count})"
+
 
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -610,3 +704,95 @@ class SyllabusPDF(models.Model):
 
     def __str__(self):
         return f"{self.category} - {self.title}"
+
+
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ("book_price_change", "Book price change"),
+        ("book_stock_change", "Book stock change"),
+        ("order_paid_change", "Order paid change"),
+        ("order_status_change", "Order status change"),
+        ("order_update", "Order update"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    model_name = models.CharField(max_length=50)
+    object_id = models.PositiveIntegerField()
+    object_repr = models.CharField(max_length=200, blank=True)
+    changes = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["action"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.model_name} #{self.object_id} - {self.action}"
+
+
+def _apply_text_watermark(image_field, text):
+    if not image_field or not text:
+        return False
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except Exception:
+        return False
+
+    try:
+        image_field.open()
+        img = Image.open(image_field)
+    except Exception:
+        return False
+
+    if img.mode not in ("RGBA", "RGB"):
+        img = img.convert("RGB")
+
+    draw = ImageDraw.Draw(img)
+    width, height = img.size
+    font_size = max(12, int(min(width, height) * 0.06))
+
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except Exception:
+        font = ImageFont.load_default()
+
+    try:
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+    except Exception:
+        text_width, text_height = draw.textsize(text, font=font)
+
+    margin = max(10, int(min(width, height) * 0.03))
+    x = max(margin, width - text_width - margin)
+    y = max(margin, height - text_height - margin)
+
+    fill = (255, 255, 255, 180) if img.mode == "RGBA" else (255, 255, 255)
+    shadow = (0, 0, 0, 120) if img.mode == "RGBA" else (0, 0, 0)
+
+    draw.text((x + 1, y + 1), text, font=font, fill=shadow)
+    draw.text((x, y), text, font=font, fill=fill)
+
+    buffer = BytesIO()
+    ext = os.path.splitext(image_field.name)[1].lower()
+    if ext in (".png", ".webp"):
+        fmt = "PNG" if ext == ".png" else "WEBP"
+    else:
+        fmt = "JPEG"
+    img.save(buffer, format=fmt, quality=88)
+    buffer.seek(0)
+
+    storage = image_field.storage
+    name = image_field.name
+    try:
+        if storage.exists(name):
+            storage.delete(name)
+    except Exception:
+        pass
+    storage.save(name, ContentFile(buffer.read()))
+    image_field.name = name
+    return True

@@ -30,6 +30,26 @@
         gap: 8px;
     }
 }
+
+.status-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.status-step {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    border: 1px solid #e5e5e5;
+    color: #777;
+}
+
+.status-step.active {
+    background: var(--primary-magenta);
+    border-color: var(--primary-magenta);
+    color: #fff;
+}
 </style>
 
         <!-- ================= LEFT PROFILE CARD ================= -->
@@ -145,6 +165,86 @@
                 </div>
             </div>
 
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h4 class="fw-bold text-magenta mb-0">Saved Addresses</h4>
+                    <p class="text-muted small mb-0">Use one-click checkout next time</p>
+                </div>
+                <div class="card-body">
+                    {% if addresses %}
+                        <div class="row g-3 mb-3">
+                            {% for addr in addresses %}
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-semibold">{{ addr.label }}</div>
+                                            <div class="small text-muted">{{ addr.full_name }}</div>
+                                            <div class="small">{{ addr.address }}</div>
+                                            <div class="small">{{ addr.city }} - {{ addr.zip_code }}</div>
+                                            {% if addr.phone %}
+                                            <div class="small text-muted">{{ addr.phone }}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% if addr.is_default %}
+                                            <span class="badge bg-success">Default</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex gap-2 mt-3">
+                                        <form method="post" action="{% url 'set_default_address' addr.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                Make Default
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'delete_address' addr.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No saved addresses yet.</p>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'add_address' %}" class="row g-2">
+                        {% csrf_token %}
+                        <div class="col-md-6">
+                            <input type="text" name="label" class="form-control" placeholder="Label (Home, Clinic)">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="full_name" class="form-control" placeholder="Full name">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="phone" class="form-control" placeholder="Phone">
+                        </div>
+                        <div class="col-12">
+                            <textarea name="address" class="form-control" rows="2" placeholder="Address" required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="city" class="form-control" placeholder="City" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="zip_code" class="form-control" placeholder="Zip code">
+                        </div>
+                        <div class="col-12 d-flex align-items-center gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_default" id="addrDefault">
+                                <label class="form-check-label" for="addrDefault">
+                                    Set as default
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-brand">Save Address</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <h4 class="fw-bold mb-3 text-magenta">Order History</h4>
 
             {% if orders %}
@@ -167,6 +267,15 @@
                                         ">
                                             {% if order.is_paid %}Paid{% else %}Cash on Delivery{% endif %}
                                         </span>
+                                    </div>
+                                    <div class="status-steps mt-2">
+                                        <span class="status-step {% if order.status == 'Pending' or order.status == 'Processing' or order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Processing</span>
+                                        <span class="status-step {% if order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Packed</span>
+                                        <span class="status-step {% if order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Shipped</span>
+                                        <span class="status-step {% if order.status == 'Delivered' %}active{% endif %}">Delivered</span>
+                                        {% if order.status == 'Cancelled' %}
+                                            <span class="status-step active">Cancelled</span>
+                                        {% endif %}
                                     </div>
 
                                     <div class="mt-3">

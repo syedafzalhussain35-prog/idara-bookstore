@@ -80,10 +80,32 @@
                     <form method="post">
                         {% csrf_token %}
 
+                        {% if user.is_authenticated and addresses %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Saved Addresses</label>
+                            <select class="form-select" id="addressSelect">
+                                <option value="">Select saved address</option>
+                                {% for addr in addresses %}
+                                <option value="{{ addr.id }}"
+                                        data-full-name="{{ addr.full_name }}"
+                                        data-phone="{{ addr.phone }}"
+                                        data-address="{{ addr.address }}"
+                                        data-city="{{ addr.city }}"
+                                        data-zip="{{ addr.zip_code }}"
+                                        {% if addr.is_default %}selected{% endif %}>
+                                    {{ addr.label }} - {{ addr.city }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Full Name</label>
                             <input type="text" name="full_name" class="form-control"
-                                   placeholder="Enter your full name" required>
+                                   placeholder="Enter your full name"
+                                   value="{% if default_address %}{{ default_address.full_name }}{% endif %}"
+                                   required>
                         </div>
 
                         <div class="mb-3">
@@ -97,27 +119,58 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Mobile Number</label>
                             <input type="text" name="mobile" class="form-control"
-                                   placeholder="e.g. 9876543210" required>
+                                   placeholder="e.g. 9876543210"
+                                   value="{% if default_address %}{{ default_address.phone }}{% endif %}"
+                                   required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Address</label>
                             <textarea name="address" class="form-control" rows="3"
-                                      placeholder="Street address, Apartment, etc." required></textarea>
+                                      placeholder="Street address, Apartment, etc." required>{% if default_address %}{{ default_address.address }}{% endif %}</textarea>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">City</label>
                                 <input type="text" name="city" class="form-control"
-                                       placeholder="City" required>
+                                       placeholder="City"
+                                       value="{% if default_address %}{{ default_address.city }}{% endif %}"
+                                       required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Zip Code</label>
                                 <input type="text" name="zip_code" class="form-control"
-                                       placeholder="PIN Code" required>
+                                       placeholder="PIN Code"
+                                       value="{% if default_address %}{{ default_address.zip_code }}{% endif %}"
+                                       required>
                             </div>
                         </div>
+
+                        {% if user.is_authenticated %}
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="save_address" id="saveAddress">
+                                <label class="form-check-label fw-semibold" for="saveAddress">
+                                    Save this address for next time
+                                </label>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <input type="text" name="address_label" class="form-control"
+                                           placeholder="Label (e.g. Home, Clinic)">
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="set_default" id="setDefault">
+                                        <label class="form-check-label" for="setDefault">
+                                            Set as default
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
 
                         <hr class="my-4">
 
@@ -136,6 +189,7 @@
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="d-flex flex-wrap gap-2 align-items-center mb-3 text-muted small">
                             <span class="badge text-bg-light border">Secure Checkout</span>
@@ -235,12 +289,22 @@
 
                     <div class="d-flex justify-content-between mb-2 text-muted">
                         <span>Subtotal</span>
-                        <span id="subtotal">₹0.00</span>
+                        <span>₹{{ subtotal }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Discount</span>
+                        <span>- ₹{{ discount_amount }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>GST ({{ gst_rate }}%)</span>
+                        <span>₹{{ gst_amount }}</span>
                     </div>
 
                     <div class="d-flex justify-content-between mb-2 text-success">
                         <span>Shipping</span>
-                        <span>Free</span>
+                        <span>₹{{ shipping_amount }}</span>
                     </div>
 
                     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
@@ -248,7 +312,7 @@
                         <span class="h5 fw-bold"
                               style="color: var(--primary-magenta);"
                               id="grandTotal">
-                            ₹0.00
+                            ₹{{ total_cost }}
                         </span>
                     </div>
                 </div>
@@ -260,12 +324,28 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    let total = 0;
-    document.querySelectorAll('.item-price').forEach(function (el) {
-        total += parseFloat(el.dataset.price);
-    });
-    document.getElementById('subtotal').innerText = "₹" + total.toFixed(2);
-    document.getElementById('grandTotal').innerText = "₹" + total.toFixed(2);
+    const select = document.getElementById("addressSelect");
+    if (!select) return;
+
+    const fill = () => {
+        const option = select.options[select.selectedIndex];
+        if (!option || !option.dataset) return;
+
+        const setValue = (name, value) => {
+            const field = document.querySelector(`[name="${name}"]`);
+            if (field && value !== undefined) field.value = value;
+        };
+
+        setValue("full_name", option.dataset.fullName || "");
+        setValue("mobile", option.dataset.phone || "");
+        setValue("address", option.dataset.address || "");
+        setValue("city", option.dataset.city || "");
+        setValue("zip_code", option.dataset.zip || "");
+    };
+
+    select.addEventListener("change", fill);
+    fill();
 });
 </script>
+
 {% endblock %}

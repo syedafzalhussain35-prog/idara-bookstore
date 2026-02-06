@@ -3,6 +3,7 @@ Django settings for idara_project
 """
 
 from pathlib import Path
+from decimal import Decimal
 import os
 import dj_database_url
 import cloudinary
@@ -258,6 +259,54 @@ else:
 
 # Allow serving static files from finders if collectstatic didn't run
 WHITENOISE_USE_FINDERS = True
+
+# ==================================================
+# CACHE
+# ==================================================
+REDIS_URL = os.getenv("REDIS_URL", "")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "idara-cache",
+        }
+    }
+
+HOME_CACHE_TTL = int(os.getenv("HOME_CACHE_TTL", "180"))
+CATEGORY_CACHE_TTL = int(os.getenv("CATEGORY_CACHE_TTL", "180"))
+
+# ==================================================
+# CHECKOUT PRICING
+# ==================================================
+GST_RATE = Decimal(os.getenv("GST_RATE", "0"))
+SHIPPING_FLAT = Decimal(os.getenv("SHIPPING_FLAT", "0"))
+
+# ==================================================
+# BOOK WATERMARK
+# ==================================================
+BOOK_WATERMARK_ENABLED = os.getenv("BOOK_WATERMARK_ENABLED", "true").lower() == "true"
+BOOK_WATERMARK_TEXT = os.getenv("BOOK_WATERMARK_TEXT", "Idara")
+
+# ==================================================
+# AUTO FLAGS
+# ==================================================
+BESTSELLER_MIN_SALES = int(os.getenv("BESTSELLER_MIN_SALES", "15"))
+TRENDING_DAYS = int(os.getenv("TRENDING_DAYS", "7"))
+
+# ==================================================
+# BACKGROUND TASKS
+# ==================================================
+ASYNC_TASKS_ENABLED = os.getenv("ASYNC_TASKS_ENABLED", "false").lower() == "true"
 
 # ==================================================
 # DEFAULT PRIMARY KEY

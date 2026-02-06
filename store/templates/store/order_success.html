@@ -19,6 +19,29 @@
             <p class="mb-1 text-muted">Shipping to:</p>
             <p class="fw-bold mb-3">{{ order.city }}, {{ order.zip_code }}</p>
             <hr>
+            <div class="text-start small">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Subtotal</span>
+                    <span>₹{{ order.subtotal }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Discount</span>
+                    <span>- ₹{{ order.discount_amount }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">GST ({{ order.gst_rate }}%)</span>
+                    <span>₹{{ order.gst_amount }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shipping</span>
+                    <span>₹{{ order.shipping_amount }}</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Total</span>
+                    <span>₹{{ order.total_cost }}</span>
+                </div>
+            </div>
+            <hr>
             <p class="mb-0 small text-muted">A confirmation email has been sent to you.</p>
         </div>
     </div>

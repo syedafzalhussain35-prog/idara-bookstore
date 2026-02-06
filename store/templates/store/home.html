@@ -447,6 +447,18 @@
             {% endfor %}
         </div>
 
+        {% if trending_books %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">Trending This Week</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row mb-5">
+            {% for book in trending_books %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div class="subject-section mb-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold text-magenta">Shop Subjectwise</h3>

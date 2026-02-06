@@ -38,7 +38,6 @@ def navbar_categories(request):
 
     cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', '') or ''
     cloudinary_base = f"https://res.cloudinary.com/{cloud_name}" if cloud_name else ""
-
     recently_viewed_books = []
     recent_ids = request.session.get("recently_viewed", [])[:5]
     if recent_ids:

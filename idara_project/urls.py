@@ -51,6 +51,9 @@ urlpatterns = [
     # USER
     # ==================================================
     path('profile/', views.profile_view, name='profile'),
+    path('profile/address/add/', views.add_address, name='add_address'),
+    path('profile/address/<int:address_id>/default/', views.set_default_address, name='set_default_address'),
+    path('profile/address/<int:address_id>/delete/', views.delete_address, name='delete_address'),
 
     # ==================================================
     # BOOKS & REVIEWS

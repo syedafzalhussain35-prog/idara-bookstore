@@ -1,7 +1,7 @@
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 
-from .models import Cart, CartItem, CartBundleItem
+from .models import Cart, CartItem, CartBundleItem, Order
 
 
 @receiver(user_logged_in)
@@ -41,3 +41,6 @@ def merge_guest_cart(sender, request, user, **kwargs):
     guest_cart.delete()
     request.session.pop("cart_id", None)
     request.session.modified = True
+
+    if user.email:
+        Order.objects.filter(user__isnull=True, email__iexact=user.email).update(user=user)

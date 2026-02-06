@@ -212,6 +212,20 @@
     </div>
     {% endif %}
 
+    {% if people_also_bought %}
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">People Also Bought</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row g-3">
+            {% for book in people_also_bought %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% if recently_viewed %}
     <div class="mt-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
