@@ -29,14 +29,21 @@ else:
         '127.0.0.1',
         'localhost',
         'syedafzalhussain35.pythonanywhere.com',
-        'idarakitabulshifa.com',
-        'www.idarakitabulshifa.com',
     ]
 
 render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 if render_external_host:
     if render_external_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(render_external_host)
+
+# Ensure custom domains are always allowed, even when ALLOWED_HOSTS env is set
+for host in [
+    'idarakitabulshifa.com',
+    'www.idarakitabulshifa.com',
+    'idara-bookstore.onrender.com',
+]:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
 # Trust Render HTTPS proxy headers and prevent CSRF issues in production
 if not DEBUG:
