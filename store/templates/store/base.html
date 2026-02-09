@@ -703,7 +703,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll("a[href]").forEach(link => {
         if (link.target === "_blank") return;
-        if (link.href.startsWith("mailto:") || link.href.startsWith("tel:")) return;
+        const href = link.getAttribute("href") || "";
+        if (href === "#" || href.startsWith("#")) return;
+        if (link.getAttribute("data-bs-toggle") === "dropdown") return;
+        if (href.startsWith("mailto:") || href.startsWith("tel:")) return;
         link.addEventListener("click", () => showLoader());
     });
 
