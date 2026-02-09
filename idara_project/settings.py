@@ -29,6 +29,8 @@ else:
         '127.0.0.1',
         'localhost',
         'syedafzalhussain35.pythonanywhere.com',
+        'idarakitabulshifa.com',
+        'www.idarakitabulshifa.com',
     ]
 
 render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
@@ -41,10 +43,13 @@ if not DEBUG:
     render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     CSRF_TRUSTED_ORIGINS = [
-        f"https://{render_external_host}"
-        if render_external_host
-        else 'https://idara-bookstore.onrender.com',
+        'https://idarakitabulshifa.com',
+        'https://www.idarakitabulshifa.com',
     ]
+    if render_external_host:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{render_external_host}")
+    else:
+        CSRF_TRUSTED_ORIGINS.append('https://idara-bookstore.onrender.com')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 # ==================================================
