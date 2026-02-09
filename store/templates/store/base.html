@@ -83,28 +83,28 @@
                 <img src="{% static 'store/images/logo.png' %}" alt="Idara Kitab Ul Shifa">
             </a>
 
-<div class="search-container">
-    <form method="GET" action="{% url 'search' %}" class="d-flex gap-2 flex-wrap">
-        <div class="flex-grow-1 d-flex">
-            <input class="form-control search-input"
-                   name="q"
-                   placeholder="Search by product name"
-                   autocomplete="off">
-            <button class="btn search-btn">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
-    </form>
+<div class="header-right">
+    <div class="search-container">
+        <form method="GET" action="{% url 'search' %}" class="d-flex gap-2 flex-wrap">
+            <div class="flex-grow-1 d-flex">
+                <input class="form-control search-input"
+                       name="q"
+                       placeholder="Search by product name"
+                       autocomplete="off">
+                <button class="btn search-btn" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
 
-    <!-- LIVE SEARCH DROPDOWN -->
-    <div id="liveSearchResults" class="list-group"></div>
-</div>
+        <!-- LIVE SEARCH DROPDOWN -->
+        <div id="liveSearchResults" class="list-group"></div>
+    </div>
 
-
-<div class="user-actions">
+    <div class="user-actions">
     {% if user.is_authenticated %}
         <div class="dropdown">
-            <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-heart"></i>Wishlist
             </a>
         <div class="dropdown-menu preview-dropdown">
@@ -141,7 +141,7 @@
         </div>
         
         <div class="dropdown">
-            <a class="dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-shopping-cart"></i>Cart
                 {% if cart_count > 0 %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
@@ -184,7 +184,7 @@
 
         {% if recently_viewed_books %}
         <div class="dropdown">
-            <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-clock"></i>Recent
             </a>
             <div class="dropdown-menu preview-dropdown">
@@ -217,7 +217,7 @@
         <a href="{% url 'profile' %}"><i class="fas fa-user-circle"></i>{{ user.username }}</a>
     {% else %}
         <div class="dropdown">
-            <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-user-circle"></i>Login
             </a>
             <div class="dropdown-menu preview-dropdown">
@@ -238,7 +238,7 @@
         </div>
 
         <div class="dropdown">
-            <a class="dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-shopping-cart"></i>Cart
                 {% if cart_count > 0 %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
@@ -279,6 +279,7 @@
             </div>
         </div>
     {% endif %}
+    </div>
 </div>
         </div>
     </div>
