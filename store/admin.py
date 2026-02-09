@@ -2,10 +2,15 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 from django import forms
+from django.contrib import messages
+from django.urls import path
+from django.shortcuts import render
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
+import re
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponse
 import csv
-from decimal import Decimal
 
 from .models import (
     Book,
@@ -124,6 +129,8 @@ class BookAdmin(admin.ModelAdmin):
     readonly_fields = ("discount_display",)
     inlines = [BookImageInline]
 
+    change_list_template = "admin/store/book/change_list.html"
+
     fieldsets = (
         ("Basic Information", {
             "fields": ("category", "subjects", "title", "author", "description")
@@ -164,6 +171,21 @@ class BookAdmin(admin.ModelAdmin):
 
     action_form = PriceUpdateActionForm
     actions = ("bulk_update_price", "export_books_csv")
+
+    class ImportBooksForm(forms.Form):
+        file = forms.FileField(help_text="Upload XLSX file.")
+        dry_run = forms.BooleanField(required=False, initial=False, help_text="Validate only.")
+
+    class ImportImagesForm(forms.Form):
+        root_path = forms.CharField(
+            help_text="Server path containing folders named 'Title (Author)'."
+        )
+        replace_existing = forms.BooleanField(
+            required=False,
+            initial=False,
+            help_text="Replace existing images for matched books.",
+        )
+        dry_run = forms.BooleanField(required=False, initial=False, help_text="Validate only.")
 
     def save_model(self, request, obj, form, change):
         original = None
@@ -248,6 +270,195 @@ class BookAdmin(admin.ModelAdmin):
                 book.stock,
             ])
         return response
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "import-books/",
+                self.admin_site.admin_view(self.import_books_view),
+                name="store_book_import_books",
+            ),
+            path(
+                "import-images/",
+                self.admin_site.admin_view(self.import_images_view),
+                name="store_book_import_images",
+            ),
+        ]
+        return custom_urls + urls
+
+    def _normalize_header(self, val):
+        return str(val or "").strip().lower()
+
+    def _split_subjects(self, raw):
+        if not raw:
+            return []
+        parts = re.split(r"[\/,|]+", str(raw))
+        return [p.strip() for p in parts if p.strip()]
+
+    def import_books_view(self, request):
+        form = self.ImportBooksForm(request.POST or None, request.FILES or None)
+        if request.method == "POST" and form.is_valid():
+            try:
+                from openpyxl import load_workbook
+            except Exception:
+                messages.error(request, "openpyxl is not installed. Add it to requirements and deploy.")
+                return render(request, "admin/store/book/import_books.html", {"form": form})
+
+            file = form.cleaned_data["file"]
+            dry_run = form.cleaned_data["dry_run"]
+
+            wb = load_workbook(file, data_only=True)
+            ws = wb.active
+            rows = list(ws.iter_rows(values_only=True))
+            if not rows:
+                messages.error(request, "The file appears to be empty.")
+                return render(request, "admin/store/book/import_books.html", {"form": form})
+
+            headers = [self._normalize_header(h) for h in rows[0]]
+            header_map = {h: idx for idx, h in enumerate(headers)}
+
+            def get_val(row, key):
+                idx = header_map.get(key)
+                return row[idx] if idx is not None else None
+
+            created = 0
+            updated = 0
+            errors = 0
+
+            with transaction.atomic():
+                for row in rows[1:]:
+                    title = (get_val(row, "book title") or get_val(row, "title") or "").strip()
+                    author = (get_val(row, "author") or "").strip()
+                    if not title or not author:
+                        errors += 1
+                        continue
+
+                    category_name = (get_val(row, "category") or "").strip()
+                    subject_raw = get_val(row, "subject") or get_val(row, "subjects")
+                    isbn = (get_val(row, "isbn") or "").strip()
+                    price_raw = get_val(row, "rate") or get_val(row, "price")
+
+                    book, is_created = Book.objects.get_or_create(
+                        title=title,
+                        author=author,
+                        defaults={"isbn": isbn or "", "price": Decimal("0.00")},
+                    )
+
+                    if category_name:
+                        category, _ = Category.objects.get_or_create(name=category_name)
+                        book.category = category
+
+                    if isbn:
+                        book.isbn = isbn
+
+                    if price_raw not in (None, ""):
+                        try:
+                            book.price = Decimal(str(price_raw))
+                        except (InvalidOperation, ValueError):
+                            pass
+
+                    if not dry_run:
+                        book.save()
+
+                    subjects = self._split_subjects(subject_raw)
+                    if subjects and not dry_run:
+                        subject_objs = []
+                        for s in subjects:
+                            obj, _ = Subject.objects.get_or_create(name=s)
+                            subject_objs.append(obj)
+                        book.subjects.set(subject_objs)
+
+                    if is_created:
+                        created += 1
+                    else:
+                        updated += 1
+
+                if dry_run:
+                    transaction.set_rollback(True)
+
+            messages.success(
+                request,
+                f"Import completed. Created: {created}, Updated: {updated}, Errors: {errors}"
+                + (" (dry run)" if dry_run else ""),
+            )
+
+        return render(request, "admin/store/book/import_books.html", {"form": form})
+
+    def import_images_view(self, request):
+        form = self.ImportImagesForm(request.POST or None)
+        if request.method == "POST" and form.is_valid():
+            root_path = form.cleaned_data["root_path"].strip()
+            replace_existing = form.cleaned_data["replace_existing"]
+            dry_run = form.cleaned_data["dry_run"]
+
+            from pathlib import Path
+            from django.core.files import File
+
+            root = Path(root_path)
+            if not root.exists() or not root.is_dir():
+                messages.error(request, "Root path does not exist or is not a directory.")
+                return render(request, "admin/store/book/import_images.html", {"form": form})
+
+            created = 0
+            skipped = 0
+            errors = 0
+
+            with transaction.atomic():
+                for folder in root.iterdir():
+                    if not folder.is_dir():
+                        continue
+                    match = re.match(r"^(.*)\((.*)\)$", folder.name)
+                    if not match:
+                        skipped += 1
+                        continue
+                    title = match.group(1).strip()
+                    author = match.group(2).strip()
+                    if not title or not author:
+                        skipped += 1
+                        continue
+
+                    book = Book.objects.filter(title=title, author=author).first()
+                    if not book:
+                        skipped += 1
+                        continue
+
+                    if replace_existing and not dry_run:
+                        if book.main_cover:
+                            book.main_cover.delete(save=False)
+                        book.images.all().delete()
+
+                    image_files = sorted(
+                        [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}],
+                        key=lambda p: p.stem,
+                    )
+
+                    if not image_files:
+                        skipped += 1
+                        continue
+
+                    if not dry_run:
+                        # 1.jpg as main cover
+                        main = image_files[0]
+                        with main.open("rb") as fh:
+                            book.main_cover.save(main.name, File(fh), save=True)
+
+                        for extra in image_files[1:]:
+                            with extra.open("rb") as fh:
+                                BookImage.objects.create(book=book, image=File(fh, name=extra.name))
+
+                    created += 1
+
+                if dry_run:
+                    transaction.set_rollback(True)
+
+            messages.success(
+                request,
+                f"Image import completed. Updated: {created}, Skipped: {skipped}, Errors: {errors}"
+                + (" (dry run)" if dry_run else ""),
+            )
+
+        return render(request, "admin/store/book/import_images.html", {"form": form})
 # ======================
 # ORDER ITEM INLINE
 # ======================

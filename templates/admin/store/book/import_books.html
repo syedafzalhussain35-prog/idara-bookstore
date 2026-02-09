@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content">
+    <h1>Import Books (XLSX)</h1>
+    <p>Expected columns: <strong>Book Title</strong>, <strong>Author</strong>, <strong>Category</strong>, <strong>Subject</strong>, <strong>Rate</strong>, <strong>ISBN</strong>.</p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            {{ form.as_p }}
+        </fieldset>
+        <div class="submit-row">
+            <input type="submit" class="default" value="Import">
+            <a href="{% url 'admin:store_book_changelist' %}" class="button">Back</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
