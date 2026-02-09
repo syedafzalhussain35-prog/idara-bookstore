@@ -58,11 +58,11 @@
         </div>
     </div>
 
-    <div class="mt-5">
-        <a href="{% url 'home' %}" class="btn btn-lg px-5 rounded-pill shadow-sm text-white fw-bold" style="background-color: var(--primary-magenta);">
+    <div class="mt-5 d-flex flex-column align-items-center gap-2">
+        <a href="{% url 'home' %}" class="btn btn-lg px-5 rounded-pill shadow-sm text-white fw-bold w-100" style="max-width: 320px; background-color: var(--primary-magenta);">
             Return to Shop
         </a>
-        <a href="{% url 'invoice' order.id %}?token={{ invoice_token }}" class="btn btn-lg btn-brand-outline rounded-pill px-4 ms-2">
+        <a href="{% url 'invoice' order.id %}?token={{ invoice_token }}" class="btn btn-lg btn-brand-outline rounded-pill px-4 w-100" style="max-width: 320px;">
             Download Invoice
         </a>
     </div>

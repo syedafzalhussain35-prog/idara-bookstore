@@ -61,7 +61,13 @@
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">Discount</span>
-                        <span>₹{{ order.discount_amount }}</span>
+                        <span>
+                            {% if order.discount_amount > 0 %}
+                                ₹{{ order.discount_amount }}
+                            {% else %}
+                                ₹0
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">GST ({{ order.gst_rate }}%)</span>
@@ -69,7 +75,13 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Shipping</span>
-                        <span>₹{{ order.shipping_amount }}</span>
+                        <span>
+                            {% if order.shipping_amount > 0 %}
+                                ₹{{ order.shipping_amount }}
+                            {% else %}
+                                ₹0
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="d-flex justify-content-between fw-bold">
                         <span>Total</span>

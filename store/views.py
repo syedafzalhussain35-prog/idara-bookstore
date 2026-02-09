@@ -17,6 +17,7 @@ from django.core.cache import cache
 import logging
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+import re
 
 
 from .models import (
@@ -823,8 +824,32 @@ def checkout(request):
 
     subtotal = cart.get_total()
     discount_amount = Decimal("0.00")
+    # Calculate item-level discounts (MRP - Price)
+    for item in cart.items.select_related("book").all():
+        if item.book.mrp_price and item.book.mrp_price > item.book.price:
+            discount_amount += (item.book.mrp_price - item.book.price) * item.quantity
+    # Bundle discount if bundle_price is lower than sum of book prices
+    for bitem in cart.bundle_items.select_related("bundle").all():
+        original_total = bitem.bundle.original_total
+        if original_total and original_total > bitem.bundle.bundle_price:
+            discount_amount += (original_total - bitem.bundle.bundle_price) * bitem.quantity
+
+    # Shipping by weight (uses Book.weight text, if present)
+    shipping_base = Decimal(str(getattr(settings, "SHIPPING_FLAT", 0)))
+    shipping_per_kg = Decimal(str(getattr(settings, "SHIPPING_PER_KG", 0)))
+    total_weight = Decimal("0.00")
+    for item in cart.items.select_related("book").all():
+        raw = (item.book.weight or "").strip()
+        if raw:
+            match = re.search(r"(\d+(?:\.\d+)?)", raw)
+            if match:
+                try:
+                    total_weight += Decimal(match.group(1)) * item.quantity
+                except Exception:
+                    pass
+    shipping_amount = shipping_base + (total_weight * shipping_per_kg)
+
     gst_rate = Decimal(str(getattr(settings, "GST_RATE", 0)))
-    shipping_amount = Decimal(str(getattr(settings, "SHIPPING_FLAT", 0)))
     gst_amount = (subtotal - discount_amount) * gst_rate / Decimal("100") if gst_rate else Decimal("0.00")
     total_cost = subtotal - discount_amount + gst_amount + shipping_amount
 
