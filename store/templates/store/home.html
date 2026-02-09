@@ -70,6 +70,10 @@
         box-shadow: 0 16px 34px rgba(12, 20, 46, 0.12);
         overflow: hidden;
         position: relative;
+        --banner-height: 420px;
+        --banner-height-tablet: 420px;
+        --banner-height-mobile: 360px;
+        --banner-height-small: 320px;
     }
 
     .hero-slide::after {
@@ -83,7 +87,7 @@
 
     .hero-slide img {
         width: 100%;
-        height: var(--banner-height, 360px);
+        height: var(--banner-height, 420px);
         object-fit: cover;
         display: block;
     }
@@ -121,7 +125,7 @@
         }
 
         .hero-slide img {
-            height: min(var(--banner-height-mobile, 240px), 60vh);
+            height: min(var(--banner-height-mobile, 360px), 70vh);
             object-position: center;
         }
     }
@@ -254,7 +258,7 @@
 
     @media (max-width: 991px) {
         .hero-slide img {
-            height: var(--banner-height-tablet, 300px);
+            height: var(--banner-height-tablet, 420px);
         }
 
         .swiper-button-next,
@@ -289,7 +293,7 @@
 
     @media (max-width: 420px) {
         .hero-slide img {
-            height: min(var(--banner-height-small, 220px), 55vh);
+            height: min(var(--banner-height-small, 320px), 70vh);
         }
 
         .subject-grid {
@@ -344,27 +348,27 @@
                 {% endfor %}
             {% else %}
             <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
                     <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
                     <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
                     <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
                     <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4">
                 </div>
             </div>
             <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 240px; --banner-height-tablet: 300px;">
+                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
                     <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
                 </div>
             </div>

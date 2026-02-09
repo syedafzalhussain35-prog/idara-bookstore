@@ -54,6 +54,12 @@ class Book(models.Model):
     title = models.CharField(max_length=200, db_index=True)
     author = models.CharField(max_length=200, db_index=True)
     description = models.TextField(blank=True, null=True)
+    isbn = models.CharField(max_length=20, blank=True)
+    published_year = models.CharField(max_length=10, blank=True)
+    binding = models.CharField(max_length=50, blank=True)
+    pages = models.CharField(max_length=20, blank=True)
+    weight = models.CharField(max_length=20, blank=True)
+    readership = models.TextField(blank=True)
     subjects = models.ManyToManyField("Subject", blank=True, related_name="books")
 
     price = models.DecimalField(
@@ -76,6 +82,9 @@ class Book(models.Model):
         blank=True,
         null=True
     )
+
+    toc_pdf = models.FileField(upload_to='books/pdfs/', blank=True, null=True)
+    sample_pdf = models.FileField(upload_to='books/pdfs/', blank=True, null=True)
 
     is_bestseller = models.BooleanField(default=False)
     is_trending = models.BooleanField(default=False)
@@ -209,11 +218,11 @@ class Banner(models.Model):
     focal_x = models.PositiveSmallIntegerField(default=50)
     focal_y = models.PositiveSmallIntegerField(default=50)
     mobile_height = models.PositiveSmallIntegerField(
-        default=240,
+        default=360,
         help_text="Banner height in pixels for mobile screens.",
     )
     tablet_height = models.PositiveSmallIntegerField(
-        default=300,
+        default=420,
         help_text="Banner height in pixels for tablet screens.",
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -732,6 +741,23 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.model_name} #{self.object_id} - {self.action}"
+
+
+# ======================
+# SITE SETTINGS
+# ======================
+
+class SiteSettings(models.Model):
+    background_image = models.ImageField(upload_to="site/", blank=True, null=True)
+    loader_logo = models.ImageField(upload_to="site/", blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Site Settings #{self.id}"
 
 
 def _apply_text_watermark(image_field, text):

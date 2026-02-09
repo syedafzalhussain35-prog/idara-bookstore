@@ -30,8 +30,8 @@
                 <div class="p-4 d-flex align-items-center justify-content-center book-media-area">
                     {% if book.main_cover %}
                         <img id="mainImage"
+                             class="img-fluid book-main-image"
                              src="{{ book.main_cover.url }}"
-                             class="img-fluid"
                              style="max-height: 100%; object-fit: contain; transition: opacity 0.3s;"
                              alt="{{ book.title }}">
                     {% else %}
@@ -121,12 +121,6 @@
                 {% endif %}
             </div>
 
-            {% if book.description %}
-            <div class="mb-4 text-secondary" style="line-height: 1.7; font-size: 1.05rem;">
-                {{ book.description|linebreaks }}
-            </div>
-            {% endif %}
-
             <div class="d-flex flex-wrap gap-3 mt-4 action-row">
                 {% if book.stock > 0 %}
                 <a href="{% url 'add_to_cart' book.id %}" class="btn btn-brand btn-lg rounded-pill px-5 shadow">
@@ -143,8 +137,148 @@
                     </button>
                 </form>
             </div>
+
+            <div class="book-tabs mt-4">
+                <ul class="nav nav-tabs" id="bookTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="desc-tab" data-bs-toggle="tab"
+                                data-bs-target="#desc" type="button" role="tab"
+                                aria-controls="desc" aria-selected="true">
+                            Description
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="spec-tab" data-bs-toggle="tab"
+                                data-bs-target="#spec" type="button" role="tab"
+                                aria-controls="spec" aria-selected="false">
+                            Specifications
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content p-4 bg-white shadow-sm rounded-bottom">
+                    <div class="tab-pane fade show active" id="desc" role="tabpanel" aria-labelledby="desc-tab">
+                        {% if book.description %}
+                        <div class="desc-text text-secondary">
+                            {{ book.description|linebreaks }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted mb-0">No description available yet.</p>
+                        {% endif %}
+
+                        {% if book.toc_pdf or book.sample_pdf %}
+                        <div class="doc-tiles mt-4">
+                            {% if book.toc_pdf %}
+                            <a class="doc-tile" href="{{ book.toc_pdf.url }}" target="_blank" rel="noopener">
+                                <span class="doc-badge">PDF</span>
+                                <span class="doc-icon"><i class="fas fa-file-pdf"></i></span>
+                                <span class="doc-label">TOC</span>
+                            </a>
+                            {% endif %}
+                            {% if book.sample_pdf %}
+                            <a class="doc-tile" href="{{ book.sample_pdf.url }}" target="_blank" rel="noopener">
+                                <span class="doc-badge">PDF</span>
+                                <span class="doc-icon"><i class="fas fa-file-pdf"></i></span>
+                                <span class="doc-label">Sample Pages</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="tab-pane fade" id="spec" role="tabpanel" aria-labelledby="spec-tab">
+                        <div class="table-responsive">
+                            <table class="table table-sm specs-table mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th>ISBN</th>
+                                        <td>{% if book.isbn %}{{ book.isbn }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Published Year</th>
+                                        <td>{% if book.published_year %}{{ book.published_year }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Binding</th>
+                                        <td>{% if book.binding %}{{ book.binding }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Category</th>
+                                        <td>{% if book.category %}{{ book.category.name }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Subjects</th>
+                                        <td>
+                                            {% if book.subjects.all %}
+                                                {% for s in book.subjects.all %}
+                                                    {{ s.name }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Pages</th>
+                                        <td>{% if book.pages %}{{ book.pages }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Weight</th>
+                                        <td>{% if book.weight %}{{ book.weight }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Readership</th>
+                                        <td>{% if book.readership %}{{ book.readership|linebreaks }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    {% if related_books %}
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">Related Books</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row g-3">
+            {% for book in related_books %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if people_also_bought %}
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">People Also Bought</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row g-3">
+            {% for book in people_also_bought %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recently_viewed %}
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-magenta">You Viewed These</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row g-3">
+            {% for book in recently_viewed %}
+                {% include 'store/partials/book_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="row mt-5">
         <div class="col-lg-8">
@@ -197,48 +331,6 @@
             {% endif %}
         </div>
     </div>
-
-    {% if related_books %}
-    <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-magenta">Related Books</h3>
-            <hr class="flex-grow-1 ms-3 d-none d-md-block">
-        </div>
-        <div class="row g-3">
-            {% for book in related_books %}
-                {% include 'store/partials/book_card.html' %}
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if people_also_bought %}
-    <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-magenta">People Also Bought</h3>
-            <hr class="flex-grow-1 ms-3 d-none d-md-block">
-        </div>
-        <div class="row g-3">
-            {% for book in people_also_bought %}
-                {% include 'store/partials/book_card.html' %}
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if recently_viewed %}
-    <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-magenta">You Viewed These</h3>
-            <hr class="flex-grow-1 ms-3 d-none d-md-block">
-        </div>
-        <div class="row g-3">
-            {% for book in recently_viewed %}
-                {% include 'store/partials/book_card.html' %}
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <style>
@@ -255,6 +347,20 @@
     }
     .thumbnail:hover, .active-thumbnail { border-color: var(--primary-magenta); transform: translateY(-3px); }
 
+    .book-main-image {
+        transform: perspective(900px) rotateY(-6deg);
+        box-shadow: 18px 20px 28px rgba(0,0,0,0.2);
+        border-radius: 10px;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        background: #fff;
+        padding: 6px;
+    }
+
+    .book-media-card:hover .book-main-image {
+        transform: perspective(900px) rotateY(0deg);
+        box-shadow: 14px 16px 24px rgba(0,0,0,0.16);
+    }
+
     .badge-sale { background-color: var(--primary-magenta); color: white; padding: 6px 14px; border-radius: 50px; font-weight: bold; font-size: 0.85rem; }
 
     .rating-stars { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
@@ -267,6 +373,105 @@
     
     .custom-scrollbar::-webkit-scrollbar { height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+    .book-tabs .nav-tabs {
+        border-bottom: none;
+    }
+
+    .book-tabs .nav-link {
+        border: none;
+        background: #f4f4f6;
+        color: #555;
+        font-weight: 600;
+        border-radius: 10px 10px 0 0;
+        padding: 10px 18px;
+        margin-right: 6px;
+    }
+
+    .book-tabs .nav-link.active {
+        background: var(--primary-magenta);
+        color: #fff;
+    }
+
+    .book-tabs .tab-content {
+        border: 1px solid #eee;
+        border-top: none;
+    }
+
+    .book-tabs .desc-text {
+        line-height: 1.7;
+        font-size: 1.02rem;
+        font-family: 'Amiri', serif;
+    }
+
+    .specs-table th {
+        width: 40%;
+        color: #444;
+        font-weight: 600;
+    }
+
+    .specs-table td {
+        color: #555;
+    }
+
+    .doc-tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        max-width: 420px;
+    }
+
+    .doc-tile {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #ececec;
+        border-radius: 16px;
+        padding: 18px 16px;
+        text-align: center;
+        text-decoration: none;
+        color: #2d2d2d;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .doc-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 26px rgba(0,0,0,0.12);
+        border-color: #e2c3d2;
+        color: #2d2d2d;
+    }
+
+    .doc-icon {
+        width: 64px;
+        height: 64px;
+        margin: 6px auto 10px;
+        border-radius: 14px;
+        background: #f7eef2;
+        color: var(--primary-magenta);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .doc-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: var(--primary-magenta);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.6px;
+    }
+
+    .doc-label {
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.3px;
+    }
 
     @media (max-width: 991px) {
         .book-media-area {
@@ -313,6 +518,11 @@
 
         .rating-breakdown {
             padding: 12px;
+        }
+
+        .book-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 0.9rem;
         }
     }
 </style>

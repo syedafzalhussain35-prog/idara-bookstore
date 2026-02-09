@@ -28,6 +28,12 @@
         margin: 0;
     }
 
+    body.site-bg {
+        background-repeat: repeat;
+        background-size: 420px auto;
+        background-attachment: fixed;
+    }
+
     img, video {
         max-width: 100%;
         height: auto;
@@ -108,6 +114,7 @@
     .user-actions {
         display: flex;
         gap: 20px;
+        flex-wrap: nowrap;
     }
 
     .user-actions a {
@@ -154,15 +161,19 @@
     }
 
     .navbar-toggler.menu-toggler {
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        color: #fff;
+        border: 1px solid #e7e7e7;
+        color: #444;
+        background: #f6f7fb;
+        font-weight: 600;
+        letter-spacing: 0.2px;
     }
 
     .navbar-toggler.categories-toggler {
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        background: var(--accent-gold);
-        color: #5a1331;
-        font-weight: 700;
+        border: 1px solid #e7e7e7;
+        background: #f6f7fb;
+        color: #444;
+        font-weight: 600;
+        letter-spacing: 0.2px;
     }
 
     .mobile-categories {
@@ -270,6 +281,31 @@
         box-shadow: 0 6px 14px rgba(189, 24, 89, 0.2);
     }
 
+    /* ================= BREADCRUMB ================= */
+    .breadcrumb {
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px 14px;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #6a1a45;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .breadcrumb-item a:hover {
+        color: var(--primary-magenta);
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #444;
+        font-weight: 600;
+    }
+
     /* ================= BOOK CARD ================= */
     .book-card {
         transition: all 0.3s ease;
@@ -284,6 +320,16 @@
     .book-card img {
         height: 220px;
         object-fit: contain;
+        transform: perspective(700px) rotateY(-8deg);
+        box-shadow: 10px 12px 18px rgba(0,0,0,0.18);
+        border-radius: 8px;
+        background: #fff;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .book-card:hover img {
+        transform: perspective(700px) rotateY(0deg);
+        box-shadow: 8px 10px 16px rgba(0,0,0,0.14);
     }
 
     /* ❤️ Wishlist Button */
@@ -317,6 +363,79 @@
 
     .wishlist-btn.is-pulse {
         animation: wishlistPulse 0.4s ease;
+    }
+
+    .preview-dropdown {
+        min-width: 280px;
+        padding: 10px;
+    }
+
+    .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 6px 6px 10px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 6px;
+    }
+
+    .preview-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 6px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .preview-item:hover {
+        background: #f6f6f6;
+        color: #333;
+    }
+
+    .preview-thumb {
+        width: 44px;
+        height: 58px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #f2f2f2;
+        flex-shrink: 0;
+    }
+
+    .preview-meta {
+        min-width: 0;
+    }
+
+    .preview-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .preview-sub {
+        font-size: 0.78rem;
+        color: #777;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .preview-empty {
+        text-align: center;
+        padding: 12px 6px;
+        color: #777;
+        font-size: 0.85rem;
+    }
+
+    .preview-footer {
+        padding: 8px 6px 2px;
+        border-top: 1px solid #eee;
+        margin-top: 6px;
     }
 
     @keyframes wishlistPulse {
@@ -378,14 +497,49 @@
         pointer-events: all;
     }
 
-    .page-loader .spinner {
-        width: 52px;
-        height: 52px;
-        border: 4px solid #f1d9b4;
-        border-top-color: var(--primary-magenta);
+    .page-loader .loader-card {
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 18px;
+        padding: 26px 28px;
+        box-shadow: 0 18px 36px rgba(0,0,0,0.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        min-width: 220px;
+    }
+
+    .page-loader .loader-logo img {
+        width: 120px;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 6px 10px rgba(0,0,0,0.12));
+    }
+
+    .loader-dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loader-dots span {
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        animation: spin 0.9s linear infinite;
-        box-shadow: 0 6px 16px rgba(189, 24, 89, 0.15);
+        background: var(--primary-magenta);
+        opacity: 0.25;
+        animation: dotBounce 1s infinite ease-in-out;
+    }
+
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    .loader-text {
+        font-size: 0.85rem;
+        color: #6b6b6b;
+        letter-spacing: 0.3px;
+        font-weight: 600;
     }
 
     body.js-infinite .pagination-container {
@@ -394,6 +548,11 @@
 
     @keyframes spin {
         to { transform: rotate(360deg); }
+    }
+
+    @keyframes dotBounce {
+        0%, 100% { transform: translateY(0); opacity: 0.25; }
+        50% { transform: translateY(-6px); opacity: 1; }
     }
 
     /* ================= LIVE SEARCH (GLOBAL) ================= */
@@ -431,6 +590,33 @@
 
     /* ================= MOBILE ================= */
     @media (max-width: 991px) {
+        .menu-navbar .container {
+            position: relative;
+        }
+
+        .navbar-toggle-row {
+            background: #fff;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .navbar-toggle-row .navbar-toggler {
+            flex: 1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            padding: 8px 10px;
+        }
+
+        .navbar-toggler.menu-toggler.active,
+        .navbar-toggler.categories-toggler.active {
+            background: #ffffff;
+            color: var(--primary-magenta);
+            border-color: #f0dbe4;
+            box-shadow: inset 0 0 0 1px rgba(189, 24, 89, 0.12);
+        }
+
         .header-flex {
             flex-direction: column;
             text-align: center;
@@ -470,20 +656,30 @@
         }
 
         .user-actions {
-            gap: 12px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            row-gap: 8px;
             margin-bottom: 6px;
         }
 
         .user-actions a,
         .user-actions .dropdown {
-            flex: 1 1 30%;
-            min-width: 90px;
+            min-width: 0;
         }
 
         .user-actions .dropdown-toggle {
             width: 100%;
             justify-content: center;
+        }
+
+        .user-actions a,
+        .user-actions .dropdown-toggle {
+            font-size: 0.78rem;
+        }
+
+        .user-actions i {
+            font-size: 1.1rem;
         }
 
         .menu-navbar .nav-link {
@@ -522,6 +718,12 @@
     .wishlist-btn {
         width: 32px;
         height: 32px;
+    }
+}
+
+@media (max-width: 420px) {
+    .user-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -612,11 +814,25 @@
 
 
 
-<body data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
+<body class="{% if site_background_url %}site-bg{% endif %}"
+      style="{% if site_background_url %}background-image: url('{{ site_background_url }}');{% endif %}"
+      data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
       data-login-url="{% url 'account_login' %}?next={{ request.path }}">
 
 <div class="page-loader" id="pageLoader" aria-hidden="true">
-    <div class="spinner" aria-label="Loading"></div>
+    <div class="loader-card" aria-label="Loading">
+        <div class="loader-logo">
+            {% if site_loader_logo %}
+                <img src="{{ site_loader_logo }}" alt="Loading">
+            {% else %}
+                <img src="{% static 'store/images/logo.png' %}" alt="Loading">
+            {% endif %}
+        </div>
+        <div class="loader-dots">
+            <span></span><span></span><span></span>
+        </div>
+        <div class="loader-text">Loading...</div>
+    </div>
 </div>
 
 <div class="sticky-cart">
@@ -633,7 +849,7 @@
 <!-- TOP BAR -->
 <div class="top-bar">
     <div class="top-bar-center">
-        <span><i class="fas fa-phone-alt"></i> +91 9312273887</span>
+        <span><i class="fas fa-phone-alt"></i> +91 8376996940</span>
         <span>|</span>
         <span><i class="fas fa-envelope"></i> idara.kitabulshifa@gmail.com</span>
     </div>
@@ -679,39 +895,99 @@
 
 <div class="user-actions">
     {% if user.is_authenticated %}
-        <a href="{% url 'wishlist' %}"><i class="fas fa-heart"></i>Wishlist</a>
+        <div class="dropdown">
+            <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-heart"></i>Wishlist
+            </a>
+            <div class="dropdown-menu preview-dropdown">
+                <div class="preview-header">
+                    <span>{{ wishlist_count }} items</span>
+                    <a href="{% url 'wishlist' %}" class="text-magenta text-decoration-none">View</a>
+                </div>
+                {% if wishlist_preview_items %}
+                    {% for item in wishlist_preview_items %}
+                    <a class="preview-item" href="{% url 'book_detail' item.book.id %}">
+                        {% if item.book.main_cover %}
+                            <img class="preview-thumb" src="{{ item.book.main_cover.url }}" alt="{{ item.book.title }}">
+                        {% else %}
+                            <div class="preview-thumb"></div>
+                        {% endif %}
+                        <div class="preview-meta">
+                            <div class="preview-title">{{ item.book.title }}</div>
+                            <div class="preview-sub">{{ item.book.author }}</div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="preview-empty">No items in wishlist.</div>
+                {% endif %}
+                <div class="preview-footer">
+                    <a href="{% url 'wishlist' %}" class="btn btn-sm btn-brand w-100 rounded-pill">Open Wishlist</a>
+                </div>
+            </div>
+        </div>
         
-        <a href="{% url 'cart_detail' %}" class="position-relative">
-            <i class="fas fa-shopping-cart"></i>Cart
-            {% if cart_count > 0 %}
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                    {{ cart_count }}
-                </span>
-            {% endif %}
-        </a>
+        <div class="dropdown">
+            <a class="dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-shopping-cart"></i>Cart
+                {% if cart_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                        {{ cart_count }}
+                    </span>
+                {% endif %}
+            </a>
+            <div class="dropdown-menu preview-dropdown">
+                <div class="preview-header">
+                    <span>{{ cart_count }} items</span>
+                    <a href="{% url 'cart_detail' %}" class="text-magenta text-decoration-none">View Cart</a>
+                </div>
+                {% if cart_preview_items %}
+                    {% for item in cart_preview_items %}
+                    <a class="preview-item" href="{% url 'book_detail' item.book.id %}">
+                        {% if item.book.main_cover %}
+                            <img class="preview-thumb" src="{{ item.book.main_cover.url }}" alt="{{ item.book.title }}">
+                        {% else %}
+                            <div class="preview-thumb"></div>
+                        {% endif %}
+                        <div class="preview-meta">
+                            <div class="preview-title">{{ item.book.title }}</div>
+                            <div class="preview-sub">Qty: {{ item.quantity }}</div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="preview-empty">No products in the cart.</div>
+                {% endif %}
+                <div class="preview-footer">
+                    <a href="{% url 'cart_detail' %}" class="btn btn-sm btn-brand w-100 rounded-pill">Proceed to Cart</a>
+                </div>
+            </div>
+        </div>
 
         {% if recently_viewed_books %}
         <div class="dropdown">
             <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-clock"></i>Recent
             </a>
-            <ul class="dropdown-menu p-2" style="min-width: 260px;">
+            <div class="dropdown-menu preview-dropdown">
+                <div class="preview-header">
+                    <span>Recently Viewed</span>
+                    <a href="{% url 'home' %}" class="text-magenta text-decoration-none">Browse</a>
+                </div>
                 {% for book in recently_viewed_books %}
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'book_detail' book.id %}">
-                        {% if book.main_cover %}
-                            <img src="{{ book.main_cover.url }}" alt="{{ book.title }}" style="width:36px;height:48px;object-fit:cover;border-radius:6px;">
-                        {% else %}
-                            <div class="bg-light" style="width:36px;height:48px;border-radius:6px;"></div>
-                        {% endif %}
-                        <div class="small">
-                            <div class="fw-semibold text-truncate" style="max-width: 160px;">{{ book.title }}</div>
-                            <div class="text-muted text-truncate" style="max-width: 160px;">{{ book.author }}</div>
-                        </div>
-                    </a>
-                </li>
+                <a class="preview-item" href="{% url 'book_detail' book.id %}">
+                    {% if book.main_cover %}
+                        <img class="preview-thumb" src="{{ book.main_cover.url }}" alt="{{ book.title }}">
+                    {% else %}
+                        <div class="preview-thumb"></div>
+                    {% endif %}
+                    <div class="preview-meta">
+                        <div class="preview-title">{{ book.title }}</div>
+                        <div class="preview-sub">{{ book.author }}</div>
+                    </div>
+                </a>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
         {% endif %}
 
@@ -725,14 +1001,42 @@
             <i class="fas fa-user-plus"></i>Signup
         </a>
 
-        <a href="{% url 'cart_detail' %}" class="position-relative">
-            <i class="fas fa-shopping-cart"></i>Cart
-            {% if cart_count > 0 %}
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                    {{ cart_count }}
-                </span>
-            {% endif %}
-        </a>
+        <div class="dropdown">
+            <a class="dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-shopping-cart"></i>Cart
+                {% if cart_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                        {{ cart_count }}
+                    </span>
+                {% endif %}
+            </a>
+            <div class="dropdown-menu preview-dropdown">
+                <div class="preview-header">
+                    <span>{{ cart_count }} items</span>
+                    <a href="{% url 'cart_detail' %}" class="text-magenta text-decoration-none">View Cart</a>
+                </div>
+                {% if cart_preview_items %}
+                    {% for item in cart_preview_items %}
+                    <a class="preview-item" href="{% url 'book_detail' item.book.id %}">
+                        {% if item.book.main_cover %}
+                            <img class="preview-thumb" src="{{ item.book.main_cover.url }}" alt="{{ item.book.title }}">
+                        {% else %}
+                            <div class="preview-thumb"></div>
+                        {% endif %}
+                        <div class="preview-meta">
+                            <div class="preview-title">{{ item.book.title }}</div>
+                            <div class="preview-sub">Qty: {{ item.quantity }}</div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="preview-empty">No products in the cart.</div>
+                {% endif %}
+                <div class="preview-footer">
+                    <a href="{% url 'cart_detail' %}" class="btn btn-sm btn-brand w-100 rounded-pill">Proceed to Cart</a>
+                </div>
+            </div>
+        </div>
     {% endif %}
 </div>
         </div>
@@ -948,14 +1252,26 @@ document.addEventListener("DOMContentLoaded", function () {
     ============================ */
     const mainMenu = document.getElementById("mainMenu");
     const categoryMenu = document.getElementById("categoryMenu");
+    const menuToggler = document.querySelector(".menu-toggler");
+    const categoriesToggler = document.querySelector(".categories-toggler");
     if (mainMenu && categoryMenu && typeof bootstrap !== "undefined") {
         mainMenu.addEventListener("show.bs.collapse", () => {
             const cat = bootstrap.Collapse.getOrCreateInstance(categoryMenu, { toggle: false });
             cat.hide();
+            if (menuToggler) menuToggler.classList.add("active");
+            if (categoriesToggler) categoriesToggler.classList.remove("active");
+        });
+        mainMenu.addEventListener("hide.bs.collapse", () => {
+            if (menuToggler) menuToggler.classList.remove("active");
         });
         categoryMenu.addEventListener("show.bs.collapse", () => {
             const main = bootstrap.Collapse.getOrCreateInstance(mainMenu, { toggle: false });
             main.hide();
+            if (categoriesToggler) categoriesToggler.classList.add("active");
+            if (menuToggler) menuToggler.classList.remove("active");
+        });
+        categoryMenu.addEventListener("hide.bs.collapse", () => {
+            if (categoriesToggler) categoriesToggler.classList.remove("active");
         });
     }
 

@@ -29,6 +29,7 @@ from .models import (
     Banner,
     SearchQueryLog,
     AuditLog,
+    SiteSettings,
 )
 from .admin_site import IdaraAdminSite
 
@@ -127,6 +128,9 @@ class BookAdmin(admin.ModelAdmin):
         ("Basic Information", {
             "fields": ("category", "subjects", "title", "author", "description")
         }),
+        ("Specifications", {
+            "fields": ("isbn", "published_year", "binding", "pages", "weight", "readership")
+        }),
         ("Pricing", {
             "fields": ("price", "mrp_price", "discount_display")
         }),
@@ -138,6 +142,9 @@ class BookAdmin(admin.ModelAdmin):
         }),
         ("Images", {
             "fields": ("main_cover",)
+        }),
+        ("Book Files", {
+            "fields": ("toc_pdf", "sample_pdf")
         }),
     )
 
@@ -521,6 +528,21 @@ class AuditLogAdmin(admin.ModelAdmin):
     search_fields = ("object_repr", "user__username", "user__email")
     readonly_fields = ("user", "action", "model_name", "object_id", "object_repr", "changes", "created_at")
     ordering = ("-created_at",)
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ("id", "is_active", "created_at")
+    list_filter = ("is_active", "created_at")
+    ordering = ("-created_at",)
+    fieldsets = (
+        ("Branding", {
+            "fields": ("background_image", "loader_logo")
+        }),
+        ("Status", {
+            "fields": ("is_active",)
+        }),
+    )
 
 
 @admin.register(Subject)
