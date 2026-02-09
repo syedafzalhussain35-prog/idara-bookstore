@@ -27,27 +27,39 @@
     }
 
     .cart-table td {
-        padding: 8px 0 8px 110px;
-        text-align: right;
-        position: relative;
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
     }
 
     .cart-table td::before {
         content: attr(data-label);
-        position: absolute;
-        left: 0;
-        top: 8px;
-        width: 96px;
+        flex: 0 0 auto;
         font-weight: 600;
         color: #6b7280;
     }
 
     .cart-table td[data-label="Product"] {
-        text-align: left;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
     }
 
     .cart-table td[data-label="Product"] .d-flex {
-        align-items: flex-start;
+        align-items: center;
+    }
+
+    .cart-table td[data-label="Product"] img {
+        width: 60px;
+        height: 76px;
+        object-fit: cover;
+    }
+
+    .cart-table td[data-label="Action"] {
+        justify-content: flex-end;
     }
 }
 

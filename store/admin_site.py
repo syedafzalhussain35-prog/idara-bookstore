@@ -48,20 +48,23 @@ class IdaraAdminSite(AdminSite):
         month_totals = {row["month"].date(): float(row["total"] or 0) for row in sales_by_month_qs}
         month_series = [month_totals.get(d, 0) for d in month_labels]
 
-        best_sellers = (
+        best_sellers_qs = (
             OrderItem.objects.filter(order__is_paid=True)
             .values("book__title")
             .annotate(qty=Sum("quantity"))
             .order_by("-qty")[:8]
         )
+        best_sellers = list(best_sellers_qs)
 
         low_stock = Book.objects.filter(stock__lte=5).order_by("stock", "title")[:10]
+        low_stock_total = Book.objects.filter(stock__lte=5).count()
 
         total_sales = (
             Order.objects.filter(is_paid=True).aggregate(total=Sum("total_cost"))["total"] or 0
         )
-        total_orders = Order.objects.filter(is_paid=True).count()
-        today_orders = Order.objects.filter(is_paid=True, created_at__date=today).count()
+        total_orders_all = Order.objects.count()
+        paid_orders = Order.objects.filter(is_paid=True).count()
+        today_orders = Order.objects.filter(created_at__date=today).count()
 
         extra_context.update({
             "day_labels": json.dumps([d.strftime("%b %d") for d in day_labels]),
@@ -69,9 +72,12 @@ class IdaraAdminSite(AdminSite):
             "month_labels": json.dumps([d.strftime("%b %Y") for d in month_labels]),
             "month_series": json.dumps(month_series),
             "best_sellers": best_sellers,
+            "best_sellers_count": len(best_sellers),
             "low_stock": low_stock,
+            "low_stock_total": low_stock_total,
             "total_sales": total_sales,
-            "total_orders": total_orders,
+            "total_orders_all": total_orders_all,
+            "paid_orders": paid_orders,
             "today_orders": today_orders,
         })
 

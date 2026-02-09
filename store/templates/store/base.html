@@ -113,36 +113,49 @@
 
     .user-actions {
         display: flex;
-        gap: 20px;
+        gap: 16px;
+        align-items: center;
         flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
     }
 
-    .user-actions a {
-        color: #555;
-        text-decoration: none;
-        font-size: 0.85rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .user-actions::-webkit-scrollbar {
+        display: none;
     }
 
+    .user-actions a,
     .user-actions .dropdown-toggle {
-        color: #555;
+        color: #5c3345;
         text-decoration: none;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
+        font-weight: 600;
         display: flex;
         flex-direction: column;
         align-items: center;
+        gap: 4px;
+        padding: 6px 10px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #f0dfe7;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+        min-width: 70px;
+    }
+
+    .user-actions a:hover,
+    .user-actions .dropdown-toggle:hover {
+        background: #fff6fa;
+        border-color: #f1c9dd;
     }
 
     .user-actions .dropdown-menu {
         box-shadow: 0 12px 24px rgba(0,0,0,0.18);
-        border-radius: 10px;
+        border-radius: 12px;
         z-index: 2000;
     }
 
     .user-actions i {
-        font-size: 1.3rem;
+        font-size: 1.15rem;
         color: var(--primary-magenta);
     }
 
@@ -358,9 +371,12 @@
     }
 
     .preview-dropdown {
-        min-width: 260px;
-        padding: 8px;
-        border-radius: 12px;
+        min-width: 280px;
+        padding: 10px;
+        border-radius: 16px;
+        border: 1px solid #f1d2df;
+        box-shadow: 0 16px 32px rgba(28, 16, 20, 0.2);
+        background: #fff;
     }
 
     .preview-header {
@@ -368,10 +384,31 @@
         align-items: center;
         justify-content: space-between;
         font-weight: 700;
-        font-size: 0.88rem;
-        padding: 6px 8px 8px;
-        border-bottom: 1px solid #eee;
+        font-size: 0.9rem;
+        padding: 6px 8px 10px;
+        border-bottom: 1px solid #f0dfe7;
         margin-bottom: 6px;
+    }
+
+    .preview-title-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .preview-title-group small {
+        font-size: 0.75rem;
+        color: #8a6a78;
+        font-weight: 600;
+    }
+
+    .preview-note {
+        background: #fff5f9;
+        color: #8f4663;
+        font-size: 0.78rem;
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin: 6px 6px 8px;
     }
 
     .preview-item {
@@ -390,12 +427,13 @@
     }
 
     .preview-thumb {
-        width: 40px;
-        height: 54px;
-        border-radius: 6px;
+        width: 46px;
+        height: 62px;
+        border-radius: 8px;
         object-fit: cover;
-        background: #f2f2f2;
+        background: #f4f1f3;
         flex-shrink: 0;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.12);
     }
 
     .preview-meta {
@@ -418,6 +456,12 @@
         text-overflow: ellipsis;
     }
 
+    .preview-price {
+        font-size: 0.78rem;
+        color: #b0134b;
+        font-weight: 700;
+    }
+
     .preview-empty {
         text-align: center;
         padding: 12px 6px;
@@ -426,13 +470,13 @@
     }
 
     .preview-footer {
-        padding: 8px;
-        border-top: 1px solid #eee;
+        padding: 10px 8px 4px;
+        border-top: 1px solid #f0dfe7;
         margin-top: 6px;
     }
 
     .preview-footer .btn {
-        border-radius: 8px;
+        border-radius: 10px;
     }
 
     @keyframes wishlistPulse {
@@ -720,7 +764,8 @@
 
 @media (max-width: 420px) {
     .user-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        column-gap: 8px;
     }
 }
 
@@ -898,9 +943,13 @@
             </a>
         <div class="dropdown-menu preview-dropdown">
                 <div class="preview-header">
-                    <span>{{ wishlist_count }} items</span>
+                    <div class="preview-title-group">
+                        <span>Wishlist</span>
+                        <small>{{ wishlist_count }} saved</small>
+                    </div>
                     <a href="{% url 'wishlist' %}" class="text-magenta text-decoration-none">View</a>
                 </div>
+                <div class="preview-note">Keep track of favorites for quick checkout.</div>
                 {% if wishlist_preview_items %}
                     {% for item in wishlist_preview_items %}
                     <a class="preview-item" href="{% url 'book_detail' item.book.id %}">
@@ -912,6 +961,7 @@
                         <div class="preview-meta">
                             <div class="preview-title">{{ item.book.title }}</div>
                             <div class="preview-sub">{{ item.book.author }}</div>
+                            <div class="preview-price">₹{{ item.book.price }}</div>
                         </div>
                     </a>
                     {% endfor %}
@@ -935,9 +985,13 @@
             </a>
             <div class="dropdown-menu preview-dropdown">
                 <div class="preview-header">
-                    <span>{{ cart_count }} items</span>
+                    <div class="preview-title-group">
+                        <span>Cart</span>
+                        <small>{{ cart_count }} items</small>
+                    </div>
                     <a href="{% url 'cart_detail' %}" class="text-magenta text-decoration-none">View Cart</a>
                 </div>
+                <div class="preview-note">Subtotal: ₹{{ cart_preview_total|floatformat:2 }}</div>
                 {% if cart_preview_items %}
                     {% for item in cart_preview_items %}
                     <a class="preview-item" href="{% url 'book_detail' item.book.id %}">
@@ -949,6 +1003,7 @@
                         <div class="preview-meta">
                             <div class="preview-title">{{ item.book.title }}</div>
                             <div class="preview-sub">Qty: {{ item.quantity }}</div>
+                            <div class="preview-price">₹{{ item.book.price }}</div>
                         </div>
                     </a>
                     {% endfor %}
@@ -968,9 +1023,13 @@
             </a>
             <div class="dropdown-menu preview-dropdown">
                 <div class="preview-header">
-                    <span>Recently Viewed</span>
+                    <div class="preview-title-group">
+                        <span>Recently Viewed</span>
+                        <small>{{ recently_viewed_books|length }} items</small>
+                    </div>
                     <a href="{% url 'home' %}" class="text-magenta text-decoration-none">Browse</a>
                 </div>
+                <div class="preview-note">Jump back into the books you checked last.</div>
                 {% for book in recently_viewed_books %}
                 <a class="preview-item" href="{% url 'book_detail' book.id %}">
                     {% if book.main_cover %}
@@ -981,6 +1040,7 @@
                     <div class="preview-meta">
                         <div class="preview-title">{{ book.title }}</div>
                         <div class="preview-sub">{{ book.author }}</div>
+                        <div class="preview-price">₹{{ book.price }}</div>
                     </div>
                 </a>
                 {% endfor %}
@@ -990,13 +1050,26 @@
 
         <a href="{% url 'profile' %}"><i class="fas fa-user-circle"></i>{{ user.username }}</a>
     {% else %}
-        <a href="{% url 'account_login' %}?next={{ request.path }}">
-            <i class="fas fa-sign-in-alt"></i>Login
-        </a>
-
-        <a href="{% url 'account_signup' %}?next={{ request.path }}">
-            <i class="fas fa-user-plus"></i>Signup
-        </a>
+        <div class="dropdown">
+            <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user-circle"></i>Login
+            </a>
+            <div class="dropdown-menu preview-dropdown">
+                <div class="preview-header">
+                    <div class="preview-title-group">
+                        <span>Account</span>
+                        <small>Guest</small>
+                    </div>
+                </div>
+                <div class="preview-note">Sign in to track orders, wishlist, and invoices.</div>
+                <div class="preview-footer">
+                    <a href="{% url 'account_login' %}?next={{ request.path }}"
+                       class="btn btn-sm btn-brand w-100">Login</a>
+                    <a href="{% url 'account_signup' %}?next={{ request.path }}"
+                       class="btn btn-sm btn-brand-outline w-100 mt-2">Sign up</a>
+                </div>
+            </div>
+        </div>
 
         <div class="dropdown">
             <a class="dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" aria-expanded="false">
@@ -1009,9 +1082,13 @@
             </a>
             <div class="dropdown-menu preview-dropdown">
                 <div class="preview-header">
-                    <span>{{ cart_count }} items</span>
+                    <div class="preview-title-group">
+                        <span>Cart</span>
+                        <small>{{ cart_count }} items</small>
+                    </div>
                     <a href="{% url 'cart_detail' %}" class="text-magenta text-decoration-none">View Cart</a>
                 </div>
+                <div class="preview-note">Subtotal: ₹{{ cart_preview_total|floatformat:2 }}</div>
                 {% if cart_preview_items %}
                     {% for item in cart_preview_items %}
                     <a class="preview-item" href="{% url 'book_detail' item.book.id %}">
@@ -1023,6 +1100,7 @@
                         <div class="preview-meta">
                             <div class="preview-title">{{ item.book.title }}</div>
                             <div class="preview-sub">Qty: {{ item.quantity }}</div>
+                            <div class="preview-price">₹{{ item.book.price }}</div>
                         </div>
                     </a>
                     {% endfor %}

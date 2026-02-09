@@ -24,7 +24,10 @@
         </div>
     </div>
 
-    <form method="get" class="row g-2 align-items-end mb-3 category-filters">
+    <details class="filter-accordion mb-3" {% if query or category_slug or min_price or max_price or rating %}open{% endif %}>
+        <summary class="filter-summary">Filters & Sort</summary>
+        <div class="filter-body">
+    <form method="get" class="row g-2 align-items-end category-filters">
         <div class="col-12 col-md-4">
             <input type="text"
                    name="q"
@@ -74,6 +77,8 @@
             </a>
         </div>
     </form>
+        </div>
+    </details>
 
     <div class="filter-chips mb-4">
         {% if query %}<span class="chip">Search: {{ query }}</span>{% endif %}
@@ -141,6 +146,39 @@
 </div>
 
 <style>
+.filter-accordion {
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    background: #fff;
+    padding: 6px 10px 10px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.filter-summary {
+    list-style: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c2a4a;
+    padding: 8px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-summary::after {
+    content: "▾";
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.filter-accordion[open] .filter-summary::after {
+    content: "▴";
+}
+
+.filter-body {
+    padding: 6px 2px 2px;
+}
+
 .filter-chips {
     display: flex;
     flex-wrap: wrap;

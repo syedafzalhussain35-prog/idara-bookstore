@@ -6,264 +6,405 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
     :root {
-        --dash-bg: #0b1220;
-        --dash-card: #0f1a2b;
-        --dash-border: #243149;
-        --dash-text: #e9eef5;
-        --dash-muted: #9fb0c7;
-        --dash-accent: #b0134b;
-        --dash-accent-2: #f1c27a;
-        --dash-ink: #f8fafc;
+        --sc-bg: #f4f6fb;
+        --sc-card: #ffffff;
+        --sc-border: #e2e8f0;
+        --sc-text: #0f172a;
+        --sc-muted: #64748b;
+        --sc-teal: #0f766e;
+        --sc-blue: #2563eb;
+        --sc-amber: #f59e0b;
+        --sc-rose: #e11d48;
+        --sc-green: #16a34a;
+        --sc-violet: #7c3aed;
     }
 
     body {
-        background: var(--dash-bg);
+        background: var(--sc-bg);
+        color: var(--sc-text);
     }
 
-    .dash-hero {
-        background: linear-gradient(120deg, rgba(176, 19, 75, 0.18), rgba(15, 23, 42, 0.7));
-        border: 1px solid var(--dash-border);
-        border-radius: 16px;
-        padding: 18px 20px;
-        margin: 16px 0 12px;
+    .sc-page {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .sc-hero {
+        background: linear-gradient(90deg, rgba(15, 118, 110, 0.95), rgba(37, 99, 235, 0.9));
+        color: #ffffff;
+        border-radius: 18px;
+        padding: 18px 22px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
     }
 
-    .dash-hero h2 {
-        font-size: 22px;
+    .sc-hero h2 {
+        font-size: 20px;
+        margin: 0 0 6px;
         font-weight: 700;
-        margin: 0 0 4px;
-        color: var(--dash-ink);
     }
 
-    .dash-hero p {
+    .sc-hero p {
         margin: 0;
-        color: var(--dash-muted);
         font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
     }
 
-    .dash-hero-badge {
-        background: #0b111a;
-        color: #f8fafc;
+    .sc-badge {
+        background: rgba(255, 255, 255, 0.18);
         padding: 6px 14px;
         border-radius: 999px;
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.35);
     }
 
-    .dash-grid {
+    .sc-grid {
         display: grid;
-        grid-template-columns: repeat(12, 1fr);
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .sc-stack {
+        display: grid;
         gap: 16px;
     }
 
-    .dash-card {
-        background: var(--dash-card);
-        border: 1px solid var(--dash-border);
+    .sc-card {
+        background: var(--sc-card);
+        border: 1px solid var(--sc-border);
         border-radius: 14px;
         padding: 16px;
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
     }
 
-    .dash-card h3 {
-        font-size: 12px;
+    .sc-card-title {
+        font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: var(--dash-muted);
-        margin: 0 0 6px;
+        color: var(--sc-muted);
+        margin-bottom: 10px;
     }
 
-    .dash-metric {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--dash-text);
+    .sc-card--info {
+        border-left: 4px solid var(--sc-blue);
     }
 
-    .dash-metric-sub {
-        color: var(--dash-muted);
+    .sc-card--success {
+        border-left: 4px solid var(--sc-green);
+    }
+
+    .sc-card--warning {
+        border-left: 4px solid var(--sc-amber);
+    }
+
+    .sc-card--alert {
+        border-left: 4px solid var(--sc-rose);
+    }
+
+    .sc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+    }
+
+    .sc-list a {
+        color: var(--sc-blue);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .sc-list span {
+        color: var(--sc-muted);
         font-size: 12px;
-        margin-top: 6px;
     }
 
-    .dash-chip {
-        display: inline-flex;
+    .sc-section {
+        display: grid;
+        gap: 14px;
+    }
+
+    .sc-section-header {
+        display: flex;
         align-items: center;
-        gap: 6px;
-        background: rgba(241, 194, 122, 0.12);
-        color: #f4c67b;
-        border: 1px solid rgba(241, 194, 122, 0.4);
-        border-radius: 999px;
+        justify-content: space-between;
+    }
+
+    .sc-section-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .sc-pill {
+        background: #e2e8f0;
+        color: #475569;
         padding: 4px 10px;
-        font-size: 12px;
-        margin-top: 8px;
-    }
-
-    .dash-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .dash-table th,
-    .dash-table td {
-        padding: 10px 6px;
-        border-bottom: 1px solid var(--dash-border);
-        font-size: 13px;
-        color: var(--dash-text);
-    }
-
-    .dash-table th {
-        text-align: left;
-        color: var(--dash-muted);
-        font-weight: 600;
-    }
-
-    .dash-pill {
-        background: rgba(176, 19, 75, 0.2);
-        color: #ffd7e5;
-        padding: 4px 8px;
         border-radius: 999px;
         font-size: 12px;
-        font-weight: 600;
     }
 
-    .dash-danger {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fecaca;
+    .sc-metric-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
     }
 
-    .dash-app-list table {
+    .sc-metric {
+        grid-column: span 4;
+        background: #ffffff;
+        border: 1px solid var(--sc-border);
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: grid;
+        gap: 6px;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .sc-metric h4 {
+        margin: 0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--sc-muted);
+    }
+
+    .sc-metric strong {
+        font-size: 22px;
+        color: var(--sc-text);
+    }
+
+    .sc-metric small {
+        color: var(--sc-muted);
+        font-size: 12px;
+    }
+
+    .sc-metric--blue { border-top: 3px solid var(--sc-blue); }
+    .sc-metric--teal { border-top: 3px solid var(--sc-teal); }
+    .sc-metric--green { border-top: 3px solid var(--sc-green); }
+    .sc-metric--amber { border-top: 3px solid var(--sc-amber); }
+    .sc-metric--rose { border-top: 3px solid var(--sc-rose); }
+    .sc-metric--violet { border-top: 3px solid var(--sc-violet); }
+
+    .sc-chart-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+    }
+
+    .sc-chart {
+        grid-column: span 6;
+    }
+
+    .sc-table {
         width: 100%;
         border-collapse: collapse;
-        background: #0f1a2b;
+        font-size: 13px;
     }
 
-    .dash-app-list th {
-        background: #182539;
-        color: var(--dash-muted);
+    .sc-table th,
+    .sc-table td {
+        padding: 8px 6px;
+        border-bottom: 1px solid var(--sc-border);
+        text-align: left;
+    }
+
+    .sc-table th {
+        color: var(--sc-muted);
         font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
     }
 
-    .dash-app-list td,
-    .dash-app-list th {
+    .sc-tag {
+        background: #fef3c7;
+        color: #92400e;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+    }
+
+    .sc-tag--danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .sc-app-list table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .sc-app-list th,
+    .sc-app-list td {
         padding: 10px 8px;
-        border-bottom: 1px solid var(--dash-border);
+        border-bottom: 1px solid var(--sc-border);
     }
 
-    .dash-app-list a {
-        color: #8bd4ff;
+    .sc-app-list th {
+        color: var(--sc-muted);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.06em;
     }
-
-    .dash-app-list tr:hover {
-        background: rgba(255, 255, 255, 0.04);
-    }
-
-    .span-4 { grid-column: span 4; }
-    .span-6 { grid-column: span 6; }
-    .span-8 { grid-column: span 8; }
-    .span-12 { grid-column: span 12; }
 
     @media (max-width: 1200px) {
-        .span-4, .span-6, .span-8 { grid-column: span 12; }
+        .sc-grid { grid-template-columns: 1fr; }
+        .sc-metric { grid-column: span 6; }
+        .sc-chart { grid-column: span 12; }
     }
 
     @media (max-width: 768px) {
-        .dash-hero {
-            flex-direction: column;
-            align-items: flex-start;
-        }
+        .sc-metric { grid-column: span 12; }
+        .sc-hero { flex-direction: column; align-items: flex-start; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dash-hero">
-    <div>
-        <h2>Seller Performance Dashboard</h2>
-        <p>Sales health, inventory alerts, and fast actions in one place.</p>
-    </div>
-    <span class="dash-hero-badge">Seller Central</span>
-</div>
-
-<div class="dash-grid">
-    <div class="dash-card span-4">
-        <h3>Total Sales</h3>
-        <div class="dash-metric">₹{{ total_sales|floatformat:0 }}</div>
-        <div class="dash-metric-sub">Paid orders total</div>
-    </div>
-    <div class="dash-card span-4">
-        <h3>Total Orders</h3>
-        <div class="dash-metric">{{ total_orders }}</div>
-        <div class="dash-metric-sub">Paid orders only</div>
-    </div>
-    <div class="dash-card span-4">
-        <h3>Orders Today</h3>
-        <div class="dash-metric">{{ today_orders }}</div>
-        <div class="dash-metric-sub">Paid orders today</div>
+<div class="sc-page">
+    <div class="sc-hero">
+        <div>
+            <h2>Good evening, your account health is <strong>Healthy</strong></h2>
+            <p>Monitor sales, orders, and inventory with quick actions and insights.</p>
+        </div>
+        <span class="sc-badge">Seller Central</span>
     </div>
 
-    <div class="dash-card span-6">
-        <h3>Sales Last 14 Days</h3>
-        <canvas id="salesDailyChart" height="120"></canvas>
-    </div>
-    <div class="dash-card span-6">
-        <h3>Sales Last 12 Months</h3>
-        <canvas id="salesMonthlyChart" height="120"></canvas>
-    </div>
+    <div class="sc-grid">
+        <div class="sc-stack">
+            <div class="sc-card sc-card--info">
+                <div class="sc-card-title">Actions</div>
+                <ul class="sc-list">
+                    <li><a href="{% url 'admin:store_book_add' %}">Add Book</a> <span>Publish a new title</span></li>
+                    <li><a href="{% url 'admin:store_banner_add' %}">Add Banner</a> <span>Refresh homepage</span></li>
+                    <li><a href="{% url 'admin:store_order_changelist' %}">View Orders</a> <span>Track recent activity</span></li>
+                </ul>
+            </div>
+            <div class="sc-card sc-card--success">
+                <div class="sc-card-title">Communications</div>
+                <p>Stay on top of customer questions and order updates.</p>
+                <ul class="sc-list">
+                    <li><a href="{% url 'admin:store_review_changelist' %}">Reviews</a> <span>Respond to feedback</span></li>
+                    <li><a href="{% url 'admin:store_auditlog_changelist' %}">Audit Logs</a> <span>Track admin changes</span></li>
+                </ul>
+            </div>
+            <div class="sc-card sc-card--warning">
+                <div class="sc-card-title">Inventory Alerts</div>
+                <p>{{ low_stock_total }} items are low on stock.</p>
+                <a href="{% url 'admin:store_book_changelist' %}" class="button">Review Stock</a>
+            </div>
+        </div>
 
-    <div class="dash-card span-6">
-        <h3>Best Selling Books</h3>
-        <table class="dash-table">
-            <thead>
-                <tr>
-                    <th>Book</th>
-                    <th>Units</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in best_sellers %}
-                <tr>
-                    <td>{{ row.book__title }}</td>
-                    <td><span class="dash-pill">{{ row.qty }}</span></td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="2">No sales yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <div class="sc-section">
+            <div class="sc-card">
+                <div class="sc-section-header">
+                    <h3>Global Snapshot</h3>
+                    <span class="sc-pill">Last 30 days</span>
+                </div>
+                <div class="sc-metric-grid">
+                    <div class="sc-metric sc-metric--teal">
+                        <h4>Sales</h4>
+                        <strong>&#8377;{{ total_sales|floatformat:0 }}</strong>
+                        <small>Paid orders total</small>
+                    </div>
+                    <div class="sc-metric sc-metric--blue">
+                        <h4>Total Orders</h4>
+                        <strong>{{ total_orders_all }}</strong>
+                        <small>All orders</small>
+                    </div>
+                    <div class="sc-metric sc-metric--green">
+                        <h4>Paid Orders</h4>
+                        <strong>{{ paid_orders }}</strong>
+                        <small>Payments received</small>
+                    </div>
+                    <div class="sc-metric sc-metric--amber">
+                        <h4>Orders Today</h4>
+                        <strong>{{ today_orders }}</strong>
+                        <small>Created today</small>
+                    </div>
+                    <div class="sc-metric sc-metric--violet">
+                        <h4>Best Sellers</h4>
+                        <strong>{{ best_sellers_count }}</strong>
+                        <small>Titles selling fast</small>
+                    </div>
+                    <div class="sc-metric sc-metric--rose">
+                        <h4>Low Stock</h4>
+                        <strong>{{ low_stock_total }}</strong>
+                        <small>Needs attention</small>
+                    </div>
+                </div>
+            </div>
 
-    <div class="dash-card span-6">
-        <h3>Low Stock Alerts</h3>
-        <table class="dash-table">
-            <thead>
-                <tr>
-                    <th>Book</th>
-                    <th>Stock</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for book in low_stock %}
-                <tr>
-                    <td>{{ book.title }}</td>
-                    <td><span class="dash-pill dash-danger">{{ book.stock }}</span></td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="2">Stock levels look good.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            <div class="sc-chart-grid">
+                <div class="sc-card sc-chart">
+                    <div class="sc-card-title">Sales Last 14 Days</div>
+                    <canvas id="salesDailyChart" height="120"></canvas>
+                </div>
+                <div class="sc-card sc-chart">
+                    <div class="sc-card-title">Sales Last 12 Months</div>
+                    <canvas id="salesMonthlyChart" height="120"></canvas>
+                </div>
+            </div>
 
-    <div class="dash-card span-12">
-        <h3>Manage</h3>
-        <div class="dash-app-list">
-            {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+            <div class="sc-chart-grid">
+                <div class="sc-card sc-chart">
+                    <div class="sc-card-title">Best Selling Books</div>
+                    <table class="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Units</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in best_sellers %}
+                            <tr>
+                                <td>{{ row.book__title }}</td>
+                                <td><span class="sc-tag">{{ row.qty }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2">No sales yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="sc-card sc-chart">
+                    <div class="sc-card-title">Low Stock Alerts</div>
+                    <table class="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in low_stock %}
+                            <tr>
+                                <td>{{ book.title }}</td>
+                                <td><span class="sc-tag sc-tag--danger">{{ book.stock }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2">Stock levels look good.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="sc-card">
+                <div class="sc-card-title">Manage</div>
+                <div class="sc-app-list">
+                    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -274,47 +415,53 @@
     const monthlyLabels = {{ month_labels|safe }};
     const monthlyData = {{ month_series|safe }};
 
-    new Chart(document.getElementById("salesDailyChart"), {
-        type: "line",
-        data: {
-            labels: dailyLabels,
-            datasets: [{
-                label: "Sales",
-                data: dailyData,
-                borderColor: "#c2185b",
-                backgroundColor: "rgba(194, 24, 91, 0.12)",
-                tension: 0.35,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { ticks: { callback: (v) => "₹" + v } }
+    const dailyCanvas = document.getElementById("salesDailyChart");
+    if (dailyCanvas) {
+        new Chart(dailyCanvas, {
+            type: "line",
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    label: "Sales",
+                    data: dailyData,
+                    borderColor: "#0f766e",
+                    backgroundColor: "rgba(15, 118, 110, 0.12)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { ticks: { callback: (v) => "\u20B9" + v } }
+                }
             }
-        }
-    });
+        });
+    }
 
-    new Chart(document.getElementById("salesMonthlyChart"), {
-        type: "bar",
-        data: {
-            labels: monthlyLabels,
-            datasets: [{
-                label: "Sales",
-                data: monthlyData,
-                backgroundColor: "#f5c27a",
-                borderColor: "#c2185b",
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { ticks: { callback: (v) => "₹" + v } }
+    const monthlyCanvas = document.getElementById("salesMonthlyChart");
+    if (monthlyCanvas) {
+        new Chart(monthlyCanvas, {
+            type: "bar",
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: "Sales",
+                    data: monthlyData,
+                    backgroundColor: "rgba(37, 99, 235, 0.18)",
+                    borderColor: "#2563eb",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { ticks: { callback: (v) => "\u20B9" + v } }
+                }
             }
-        }
-    });
+        });
+    }
 </script>
 {% endblock %}
