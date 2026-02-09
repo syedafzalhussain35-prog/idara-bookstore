@@ -116,7 +116,12 @@
     }
 
     @media (max-width: 576px) {
+        .hero-swiper {
+            padding: 0 8px;
+        }
+
         .hero-slide img {
+            height: min(var(--banner-height-mobile, 240px), 60vh);
             object-position: center;
         }
     }
@@ -263,10 +268,6 @@
     }
 
     @media (max-width: 576px) {
-        .hero-slide img {
-            height: var(--banner-height-mobile, 260px);
-        }
-
         .hero-overlay {
             position: static;
             margin: 12px;
@@ -288,7 +289,7 @@
 
     @media (max-width: 420px) {
         .hero-slide img {
-            height: var(--banner-height-small, 230px);
+            height: min(var(--banner-height-small, 220px), 55vh);
         }
 
         .subject-grid {

@@ -18,7 +18,7 @@
 
         <!-- ❤️ WISHLIST BUTTON -->
         <button
-            class="wishlist-btn position-absolute top-0 end-0 m-2"
+            class="wishlist-btn position-absolute top-0 end-0 m-2 {% if book.id in wishlist_ids %}is-active{% endif %}"
             data-book-id="{{ book.id }}"
             aria-label="Wishlist">
             <i class="{% if book.id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>

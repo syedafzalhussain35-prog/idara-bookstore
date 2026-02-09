@@ -104,11 +104,6 @@
         border-radius: 0 6px 6px 0;
     }
 
-    .search-container select.form-select {
-        border: 2px solid var(--primary-magenta);
-        border-radius: 6px;
-        max-width: 180px;
-    }
 
     .user-actions {
         display: flex;
@@ -136,6 +131,7 @@
     .user-actions .dropdown-menu {
         box-shadow: 0 12px 24px rgba(0,0,0,0.18);
         border-radius: 10px;
+        z-index: 2000;
     }
 
     .user-actions i {
@@ -146,6 +142,33 @@
     /* ================= NAVBAR ================= */
     .menu-navbar {
         background-color: var(--primary-magenta);
+        z-index: 1020;
+    }
+
+    .navbar-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .navbar-toggler.menu-toggler {
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        color: #fff;
+    }
+
+    .navbar-toggler.categories-toggler {
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: var(--accent-gold);
+        color: #5a1331;
+        font-weight: 700;
+    }
+
+    .mobile-categories {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 6px;
+        margin-top: 6px;
     }
 
     .menu-navbar .nav-link {
@@ -287,6 +310,21 @@
         transform: scale(1.1);
     }
 
+    .wishlist-btn.is-active {
+        background: #ffe6f0;
+        box-shadow: 0 4px 10px rgba(189, 24, 89, 0.2);
+    }
+
+    .wishlist-btn.is-pulse {
+        animation: wishlistPulse 0.4s ease;
+    }
+
+    @keyframes wishlistPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+
     /* ================= MOBILE STICKY CART ================= */
     .sticky-cart {
         position: fixed;
@@ -396,6 +434,7 @@
         .header-flex {
             flex-direction: column;
             text-align: center;
+            row-gap: 12px;
         }
 
         .search-container,
@@ -422,6 +461,8 @@
 
         .main-header {
             padding: 12px 0;
+            position: relative;
+            z-index: 1030;
         }
 
         .header-logo img {
@@ -431,11 +472,18 @@
         .user-actions {
             gap: 12px;
             flex-wrap: wrap;
+            margin-bottom: 6px;
         }
 
-        .user-actions a {
+        .user-actions a,
+        .user-actions .dropdown {
             flex: 1 1 30%;
             min-width: 90px;
+        }
+
+        .user-actions .dropdown-toggle {
+            width: 100%;
+            justify-content: center;
         }
 
         .menu-navbar .nav-link {
@@ -498,6 +546,10 @@
         margin-left: 10px;
     }
 
+    .dropdown-submenu.show > .dropdown-menu {
+        display: block;
+    }
+
     /* Make submenu toggles look clickable */
     .dropdown-submenu > a {
         font-weight: 600;
@@ -510,6 +562,50 @@
     }
 }
 
+    /* ================= TOASTS ================= */
+    .toast-container {
+        position: fixed;
+        top: 92px;
+        right: 18px;
+        z-index: 1055;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toast-message {
+        background: #fff;
+        border-left: 4px solid var(--primary-magenta);
+        border-radius: 10px;
+        padding: 10px 14px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+        font-size: 0.9rem;
+        color: #333;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        min-width: 220px;
+    }
+
+    .toast-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    @media (max-width: 576px) {
+        .toast-container {
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+            top: 84px;
+            width: calc(100% - 32px);
+        }
+
+        .toast-message {
+            width: 100%;
+            min-width: 0;
+        }
+    }
 </style>
 
 </head>
@@ -531,6 +627,8 @@
         {% endif %}
     </a>
 </div>
+
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
 <!-- TOP BAR -->
 <div class="top-bar">
@@ -563,17 +661,6 @@
 
 <div class="search-container">
     <form method="GET" action="{% url 'search' %}" class="d-flex gap-2 flex-wrap">
-        <select class="form-select"
-                name="category"
-                style="max-width: 180px;">
-            <option value="">All</option>
-            {% for cat in nav_categories %}
-                <option value="{{ cat.slug }}"
-                    {% if request.GET.category == cat.slug %}selected{% endif %}>
-                    {{ cat.name }}
-                </option>
-            {% endfor %}
-        </select>
         <div class="flex-grow-1 d-flex">
             <input class="form-control search-input"
                    name="q"
@@ -655,13 +742,34 @@
 <!-- ================= NAVBAR ================= -->
 <nav class="navbar navbar-expand-lg menu-navbar sticky-top">
     <div class="container">
-<button class="navbar-toggler text-white"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#mainMenu"
-        aria-controls="mainMenu"
-        aria-expanded="false"
-        aria-label="Toggle navigation">
+        <div class="navbar-toggle-row d-lg-none">
+            <button class="navbar-toggler menu-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainMenu"
+                    aria-controls="mainMenu"
+                    aria-expanded="false"
+                    aria-label="Toggle menu">
+                <i class="fas fa-bars"></i> Menu
+            </button>
+            <button class="navbar-toggler categories-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#categoryMenu"
+                    aria-controls="categoryMenu"
+                    aria-expanded="false"
+                    aria-label="Toggle categories">
+                <i class="fas fa-list"></i> Categories
+            </button>
+        </div>
+
+        <button class="navbar-toggler menu-toggler d-none d-lg-inline-flex"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#mainMenu"
+                aria-controls="mainMenu"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
             <i class="fas fa-bars"></i> Menu
         </button>
 
@@ -671,10 +779,11 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown d-none d-lg-block">
                     <button class="nav-link dropdown-toggle btn btn-link text-white"
                             type="button"
                             data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
                             aria-expanded="false">
                         Categories
                     </button>
@@ -699,6 +808,7 @@
     <button class="nav-link dropdown-toggle btn btn-link text-white"
             type="button"
             data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
             aria-expanded="false">
         Catalogue
     </button>
@@ -751,6 +861,23 @@
 
             </ul>
         </div>
+
+        <div class="collapse d-lg-none" id="categoryMenu">
+            <ul class="navbar-nav mobile-categories">
+                {% if not nav_categories %}
+                <li class="nav-item">
+                    <span class="nav-link text-white-50">No categories yet</span>
+                </li>
+                {% endif %}
+                {% for cat in nav_categories %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'category_books' cat.slug %}">
+                        {{ cat.name }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </nav>
 
@@ -775,12 +902,62 @@ document.addEventListener("DOMContentLoaded", function () {
         link.addEventListener("click", function (e) {
             if (window.innerWidth < 992) {
                 e.preventDefault();
-                const submenu = this.nextElementSibling;
-                submenu.style.display =
-                    submenu.style.display === "block" ? "none" : "block";
+                const parent = this.closest(".dropdown-submenu");
+                if (!parent) return;
+                const isOpen = parent.classList.contains("show");
+                document.querySelectorAll(".dropdown-submenu.show").forEach(openItem => {
+                    openItem.classList.remove("show");
+                });
+                if (!isOpen) {
+                    parent.classList.add("show");
+                }
             }
         });
     });
+
+    /* ============================
+       MOBILE DROPDOWN TOGGLE
+    ============================ */
+    document.querySelectorAll(".menu-navbar .dropdown > .dropdown-toggle").forEach(toggle => {
+        toggle.addEventListener("click", function (e) {
+            if (window.innerWidth >= 992) return;
+            e.preventDefault();
+            const parent = this.closest(".dropdown");
+            if (!parent) return;
+            const menu = parent.querySelector(".dropdown-menu");
+            const isOpen = parent.classList.contains("show");
+
+            document.querySelectorAll(".menu-navbar .dropdown.show").forEach(openItem => {
+                openItem.classList.remove("show");
+                const openMenu = openItem.querySelector(".dropdown-menu");
+                const openToggle = openItem.querySelector(".dropdown-toggle");
+                if (openMenu) openMenu.classList.remove("show");
+                if (openToggle) openToggle.setAttribute("aria-expanded", "false");
+            });
+
+            if (!isOpen) {
+                parent.classList.add("show");
+                if (menu) menu.classList.add("show");
+                this.setAttribute("aria-expanded", "true");
+            }
+        });
+    });
+
+    /* ============================
+       MOBILE COLLAPSE SYNC
+    ============================ */
+    const mainMenu = document.getElementById("mainMenu");
+    const categoryMenu = document.getElementById("categoryMenu");
+    if (mainMenu && categoryMenu && typeof bootstrap !== "undefined") {
+        mainMenu.addEventListener("show.bs.collapse", () => {
+            const cat = bootstrap.Collapse.getOrCreateInstance(categoryMenu, { toggle: false });
+            cat.hide();
+        });
+        categoryMenu.addEventListener("show.bs.collapse", () => {
+            const main = bootstrap.Collapse.getOrCreateInstance(mainMenu, { toggle: false });
+            main.hide();
+        });
+    }
 
     /* ============================
        LIVE SEARCH (AUTOCOMPLETE)
@@ -881,6 +1058,20 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ============================
        WISHLIST TOGGLE
     ============================ */
+    const toastContainer = document.getElementById("toastContainer");
+    const showToast = (message) => {
+        if (!toastContainer) return;
+        const toast = document.createElement("div");
+        toast.className = "toast-message";
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("show"));
+        setTimeout(() => {
+            toast.classList.remove("show");
+            setTimeout(() => toast.remove(), 250);
+        }, 1800);
+    };
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
@@ -924,10 +1115,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.status === "added") {
                     icon.classList.remove("far");
                     icon.classList.add("fas");
+                    this.classList.add("is-active");
+                    this.classList.add("is-pulse");
+                    showToast("Added to wishlist");
                 } else if (data.status === "removed") {
                     icon.classList.remove("fas");
                     icon.classList.add("far");
+                    this.classList.remove("is-active");
+                    this.classList.add("is-pulse");
+                    showToast("Removed from wishlist");
                 }
+                setTimeout(() => this.classList.remove("is-pulse"), 450);
             })
             .catch(() => {});
         });
