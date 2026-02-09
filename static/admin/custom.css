@@ -1,13 +1,14 @@
 :root {
-  --seller-bg: #0b1220;
-  --seller-panel: #0f1a2b;
-  --seller-panel-2: #142236;
-  --seller-border: #243149;
-  --seller-text: #e9eef5;
-  --seller-muted: #9fb0c7;
+  --seller-bg: #f6f7fb;
+  --seller-panel: #ffffff;
+  --seller-panel-2: #f1f3f9;
+  --seller-border: #e3e7f1;
+  --seller-text: #1f2937;
+  --seller-muted: #6b7280;
   --seller-accent: #b0134b;
   --seller-accent-dark: #8f0f41;
   --seller-gold: #f1c27a;
+  --seller-blue: #2b6cb0;
 }
 
 body {
@@ -16,31 +17,32 @@ body {
 }
 
 #header {
-  background: linear-gradient(90deg, #8c1044, #b0134b);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(90deg, #ffffff, #f7ecf2);
+  border-bottom: 1px solid var(--seller-border);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
 #branding h1, #branding h1 a:link, #branding h1 a:visited {
-  color: #fff;
+  color: #2b2b2b;
   letter-spacing: 0.4px;
 }
 
 #user-tools {
-  color: #f5f5f5;
+  color: var(--seller-muted);
 }
 
 #user-tools a:link, #user-tools a:visited {
-  color: #ffe6f0;
+  color: var(--seller-blue);
 }
 
 .breadcrumbs {
-  background: #1a2b40;
+  background: #ffffff;
   border-bottom: 1px solid var(--seller-border);
-  color: #cfe6f5;
+  color: var(--seller-muted);
 }
 
 .breadcrumbs a {
-  color: #9fd7ff;
+  color: var(--seller-blue);
 }
 
 #content {
@@ -50,23 +52,23 @@ body {
 .module, .inline-group, .dashboard-module {
   background: var(--seller-panel);
   border: 1px solid var(--seller-border);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08);
   border-radius: 12px;
 }
 
 .module h2, .module caption, .inline-group h2 {
   background: var(--seller-panel-2);
-  color: var(--seller-text);
+  color: #2b2b2b;
   border-bottom: 1px solid var(--seller-border);
 }
 
 #nav-sidebar {
-  background: #0f1929;
+  background: #ffffff;
   border-right: 1px solid var(--seller-border);
 }
 
 #nav-sidebar a {
-  color: var(--seller-muted);
+  color: #4b5563;
 }
 
 #nav-sidebar .current-app .section:link,
@@ -76,12 +78,12 @@ body {
 }
 
 #nav-sidebar .current-app .section {
-  background: #15233a;
+  background: #f2f6ff;
   border-radius: 8px;
 }
 
 #nav-sidebar input[type="search"] {
-  background: #0b1320;
+  background: #ffffff;
   color: var(--seller-text);
   border: 1px solid var(--seller-border);
   border-radius: 999px;
@@ -149,15 +151,15 @@ body {
 }
 
 .results tbody tr:nth-child(odd) {
-  background: #101c2d;
+  background: #f8fafc;
 }
 
 .results tbody tr:hover {
-  background: #17253a;
+  background: #eef2ff;
 }
 
 input, select, textarea {
-  background: #0b1320;
+  background: #ffffff;
   color: var(--seller-text);
   border: 1px solid var(--seller-border);
 }
@@ -176,14 +178,14 @@ input:focus, select:focus, textarea:focus {
 }
 
 #changelist-search {
-  background: var(--seller-panel-2);
+  background: #ffffff;
   border: 1px solid var(--seller-border);
   padding: 10px;
   border-radius: 12px;
 }
 
 #changelist-search input[type="text"] {
-  background: #0b1320;
+  background: #ffffff;
   color: var(--seller-text);
   border: 1px solid var(--seller-border);
   border-radius: 999px;

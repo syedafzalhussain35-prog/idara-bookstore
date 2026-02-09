@@ -481,6 +481,7 @@ class OrderAdmin(admin.ModelAdmin):
         "full_name",
         "email_link",
         "total_cost_display",
+        "invoice_link",
         "city",
         "status",
         "is_paid",
@@ -541,6 +542,13 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description="Total Cost")
     def total_cost_display(self, obj):
         return f"₹{obj.total_cost}"
+
+    @admin.display(description="Invoice")
+    def invoice_link(self, obj):
+        return format_html(
+            '<a href="/invoice/{}/" target="_blank">View</a>',
+            obj.id,
+        )
 
 
 

@@ -292,7 +292,12 @@
                                             <span class="text-muted me-2">Total:</span>
                                             <span class="h5 fw-bold text-magenta">₹{{ order.total_cost }}</span>
                                         </div>
-                                        <small class="text-muted">Status: {{ order.status }}</small>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">Status: {{ order.status }}</small>
+                                            <a href="{% url 'invoice' order.id %}" class="btn btn-sm btn-outline-dark">
+                                                Invoice
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

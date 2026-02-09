@@ -77,7 +77,10 @@ urlpatterns = [
     path('cart/', views.cart_detail, name='cart_detail'),
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('cart/remove-bundle/<int:item_id>/', views.remove_bundle_from_cart, name='remove_bundle_from_cart'),
+    path('cart/item/<int:item_id>/<str:action>/', views.update_cart_item, name='update_cart_item'),
+    path('cart/bundle/<int:item_id>/<str:action>/', views.update_bundle_item, name='update_bundle_item'),
     path('checkout/', views.checkout, name='checkout'),
+    path('invoice/<int:order_id>/', views.invoice_view, name='invoice'),
 ]
 
 # ==================================================

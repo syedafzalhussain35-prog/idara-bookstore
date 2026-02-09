@@ -416,6 +416,42 @@
 
     {% if is_homepage %}
 
+        {% if coupons %}
+        <div class="d-flex justify-content-between align-items-center mb-4" id="offers">
+            <h3 class="fw-bold text-magenta">Offers & Coupons</h3>
+            <hr class="flex-grow-1 ms-3 d-none d-md-block">
+        </div>
+        <div class="row mb-5">
+            {% for coupon in coupons %}
+            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                {{ coupon.discount_type|title }}
+                            </span>
+                            {% if coupon.expiry_date %}
+                            <small class="text-muted">Valid till {{ coupon.expiry_date }}</small>
+                            {% endif %}
+                        </div>
+                        <h5 class="fw-bold text-magenta mb-1">{{ coupon.code }}</h5>
+                        <p class="text-muted small mb-3">
+                            Save
+                            {% if coupon.discount_type == 'percent' %}
+                                {{ coupon.value }}%
+                            {% else %}
+                                ₹{{ coupon.value }}
+                            {% endif %}
+                            on your order.
+                        </p>
+                        <span class="small text-muted">Apply at checkout</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if bundles %}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold text-magenta">Combo Packs</h3>

@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core import signing
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
@@ -176,6 +177,8 @@ def home(request):
             user=request.user
         ).values_list('book_id', flat=True)
 
+    coupons = [c for c in Coupon.objects.filter(active=True).order_by("-created_at")[:6] if c.is_valid()]
+
     return render(request, 'store/home.html', {
         'banners': banners,
         'featured_books': featured_books,
@@ -188,6 +191,7 @@ def home(request):
         'bundles': bundles,
         'subjects': subjects,
         'wishlist_ids': wishlist_ids,
+        'coupons': coupons,
         'is_homepage': True,
     })
 
@@ -738,6 +742,35 @@ def cart_detail(request):
     })
 
 
+def update_cart_item(request, item_id, action):
+    cart = _get_or_create_cart(request)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    if action == "plus":
+        item.quantity += 1
+        item.save(update_fields=["quantity"])
+    elif action == "minus":
+        if item.quantity > 1:
+            item.quantity -= 1
+            item.save(update_fields=["quantity"])
+        else:
+            item.delete()
+    return redirect("cart_detail")
+
+
+def update_bundle_item(request, item_id, action):
+    cart = _get_or_create_cart(request)
+    item = get_object_or_404(CartBundleItem, id=item_id, cart=cart)
+    if action == "plus":
+        item.quantity += 1
+        item.save(update_fields=["quantity"])
+    elif action == "minus":
+        if item.quantity > 1:
+            item.quantity -= 1
+            item.save(update_fields=["quantity"])
+        else:
+            item.delete()
+    return redirect("cart_detail")
+
 def remove_from_cart(request, item_id):
     cart = _get_or_create_cart(request)
     CartItem.objects.filter(id=item_id, cart=cart).delete()
@@ -891,8 +924,10 @@ def checkout(request):
         enqueue_order_confirmation(order.id)
         enqueue_order_alert(order.id)
 
+        token = signing.dumps({"order_id": order.id, "email": order.email})
         return render(request, 'store/order_success.html', {
             'order': order,
+            'invoice_token': token,
         })
 
     return render(request, "store/checkout.html", {
@@ -980,6 +1015,26 @@ def publish_with_us(request):
             messages.error(request, "Something went wrong. Please try again.")
 
     return render(request, 'store/publish_with_us.html')
+
+
+def invoice_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    token = request.GET.get("token")
+
+    if request.user.is_authenticated:
+        if not (request.user.is_staff or order.user_id == request.user.id):
+            return redirect("home")
+    else:
+        if not token:
+            return redirect("home")
+        try:
+            data = signing.loads(token, max_age=60 * 60 * 24 * 7)
+        except Exception:
+            return redirect("home")
+        if data.get("order_id") != order.id or data.get("email") != order.email:
+            return redirect("home")
+
+    return render(request, "store/invoice.html", {"order": order})
 
 # ==================================================
 # 🔍 LIVE SEARCH (AJAX)

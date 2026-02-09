@@ -50,6 +50,42 @@
         align-items: flex-start;
     }
 }
+
+.qty-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e5e5e5;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: #fff;
+}
+
+.qty-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #444;
+    font-weight: 700;
+}
+
+.qty-btn:hover {
+    background: var(--primary-magenta);
+    color: #fff;
+    border-color: var(--primary-magenta);
+}
+
+.qty-value {
+    min-width: 18px;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+}
 </style>
 
     {% if has_cart_items %}
@@ -88,7 +124,11 @@
                                     </td>
                                     <td class="p-3" data-label="Price">₹{{ item.book.price }}</td>
                                     <td class="p-3" data-label="Quantity">
-                                        <span class="badge bg-light text-dark border px-3 py-2">{{ item.quantity }}</span>
+                                        <div class="qty-controls">
+                                            <a class="qty-btn" href="{% url 'update_cart_item' item.id 'minus' %}">-</a>
+                                            <span class="qty-value">{{ item.quantity }}</span>
+                                            <a class="qty-btn" href="{% url 'update_cart_item' item.id 'plus' %}">+</a>
+                                        </div>
                                     </td>
                                     <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ item.total_price }}</td>
                                     <td class="p-3 text-end" data-label="Action">
@@ -114,7 +154,11 @@
                                     </td>
                                     <td class="p-3" data-label="Price">₹{{ bitem.bundle.bundle_price }}</td>
                                     <td class="p-3" data-label="Quantity">
-                                        <span class="badge bg-light text-dark border px-3 py-2">{{ bitem.quantity }}</span>
+                                        <div class="qty-controls">
+                                            <a class="qty-btn" href="{% url 'update_bundle_item' bitem.id 'minus' %}">-</a>
+                                            <span class="qty-value">{{ bitem.quantity }}</span>
+                                            <a class="qty-btn" href="{% url 'update_bundle_item' bitem.id 'plus' %}">+</a>
+                                        </div>
                                     </td>
                                     <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ bitem.total_price }}</td>
                                     <td class="p-3 text-end" data-label="Action">
