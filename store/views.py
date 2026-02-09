@@ -196,6 +196,11 @@ def home(request):
     })
 
 
+def offers_view(request):
+    coupons = [c for c in Coupon.objects.filter(active=True).order_by("-created_at") if c.is_valid()]
+    return render(request, "store/offers.html", {"coupons": coupons})
+
+
 # ==================================================
 # CATEGORY PAGE
 # ==================================================

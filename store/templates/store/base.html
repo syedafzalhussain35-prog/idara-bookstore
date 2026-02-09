@@ -320,17 +320,8 @@
     .book-card img {
         height: 220px;
         object-fit: contain;
-        transform: perspective(700px) rotateY(-8deg);
-        transform-origin: left center;
-        box-shadow: 10px 12px 18px rgba(0,0,0,0.18);
         border-radius: 8px;
         background: #fff;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
-
-    .book-card:hover img {
-        transform: perspective(700px) rotateY(0deg);
-        box-shadow: 8px 10px 16px rgba(0,0,0,0.14);
     }
 
     /* ❤️ Wishlist Button */
@@ -367,8 +358,9 @@
     }
 
     .preview-dropdown {
-        min-width: 280px;
-        padding: 10px;
+        min-width: 260px;
+        padding: 8px;
+        border-radius: 12px;
     }
 
     .preview-header {
@@ -376,8 +368,8 @@
         align-items: center;
         justify-content: space-between;
         font-weight: 700;
-        font-size: 0.9rem;
-        padding: 6px 6px 10px;
+        font-size: 0.88rem;
+        padding: 6px 8px 8px;
         border-bottom: 1px solid #eee;
         margin-bottom: 6px;
     }
@@ -386,21 +378,21 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 6px;
+        padding: 8px;
         border-radius: 8px;
         text-decoration: none;
         color: #333;
     }
 
     .preview-item:hover {
-        background: #f6f6f6;
+        background: #f7f7f7;
         color: #333;
     }
 
     .preview-thumb {
-        width: 44px;
-        height: 58px;
-        border-radius: 8px;
+        width: 40px;
+        height: 54px;
+        border-radius: 6px;
         object-fit: cover;
         background: #f2f2f2;
         flex-shrink: 0;
@@ -434,9 +426,13 @@
     }
 
     .preview-footer {
-        padding: 8px 6px 2px;
+        padding: 8px;
         border-top: 1px solid #eee;
         margin-top: 6px;
+    }
+
+    .preview-footer .btn {
+        border-radius: 8px;
     }
 
     @keyframes wishlistPulse {
@@ -900,7 +896,7 @@
             <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-heart"></i>Wishlist
             </a>
-            <div class="dropdown-menu preview-dropdown">
+        <div class="dropdown-menu preview-dropdown">
                 <div class="preview-header">
                     <span>{{ wishlist_count }} items</span>
                     <a href="{% url 'wishlist' %}" class="text-magenta text-decoration-none">View</a>
@@ -923,7 +919,7 @@
                     <div class="preview-empty">No items in wishlist.</div>
                 {% endif %}
                 <div class="preview-footer">
-                    <a href="{% url 'wishlist' %}" class="btn btn-sm btn-brand w-100 rounded-pill">Open Wishlist</a>
+                    <a href="{% url 'wishlist' %}" class="btn btn-sm btn-brand w-100">Open Wishlist</a>
                 </div>
             </div>
         </div>
@@ -960,7 +956,7 @@
                     <div class="preview-empty">No products in the cart.</div>
                 {% endif %}
                 <div class="preview-footer">
-                    <a href="{% url 'cart_detail' %}" class="btn btn-sm btn-brand w-100 rounded-pill">Proceed to Cart</a>
+                    <a href="{% url 'cart_detail' %}" class="btn btn-sm btn-brand w-100">Proceed to Cart</a>
                 </div>
             </div>
         </div>
@@ -1034,7 +1030,7 @@
                     <div class="preview-empty">No products in the cart.</div>
                 {% endif %}
                 <div class="preview-footer">
-                    <a href="{% url 'cart_detail' %}" class="btn btn-sm btn-brand w-100 rounded-pill">Proceed to Cart</a>
+                    <a href="{% url 'cart_detail' %}" class="btn btn-sm btn-brand w-100">Proceed to Cart</a>
                 </div>
             </div>
         </div>
@@ -1068,7 +1064,7 @@
             </button>
         </div>
 
-        <button class="navbar-toggler menu-toggler d-none d-lg-inline-flex"
+        <button class="navbar-toggler menu-toggler d-none"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#mainMenu"
@@ -1160,7 +1156,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#offers">Offers</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'offers' %}">Offers</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'gallery' %}">Gallery</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'publish_with_us' %}">Publish With Us</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>

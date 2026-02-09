@@ -1,0 +1,47 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Offers | Idara Kitab Ul Shifa{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-magenta mb-0">Offers & Coupons</h2>
+        <span class="text-muted small">Apply at checkout</span>
+    </div>
+
+    {% if coupons %}
+    <div class="row">
+        {% for coupon in coupons %}
+        <div class="col-12 col-md-6 col-lg-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                            {{ coupon.discount_type|title }}
+                        </span>
+                        {% if coupon.expiry_date %}
+                        <small class="text-muted">Valid till {{ coupon.expiry_date }}</small>
+                        {% endif %}
+                    </div>
+                    <h5 class="fw-bold text-magenta mb-1">{{ coupon.code }}</h5>
+                    <p class="text-muted small mb-3">
+                        Save
+                        {% if coupon.discount_type == 'percent' %}
+                            {{ coupon.value }}%
+                        {% else %}
+                            ₹{{ coupon.value }}
+                        {% endif %}
+                        on your order.
+                    </p>
+                    <span class="small text-muted">Use this code at checkout</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <div class="alert alert-light border text-center">No offers available right now.</div>
+    {% endif %}
+</div>
+{% endblock %}

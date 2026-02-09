@@ -36,6 +36,7 @@ urlpatterns = [
     path('about/', views.about_view, name='about'),
     path('contact/', views.contact_view, name='contact'),
     path('gallery/', views.gallery_view, name='gallery'),
+    path('offers/', views.offers_view, name='offers'),
 
     # ==================================================
     # POLICY PAGES

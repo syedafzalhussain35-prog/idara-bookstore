@@ -82,25 +82,10 @@
                 <span class="badge bg-light text-dark border fw-normal">
                     {{ avg_rating|floatformat:1 }} / 5.0
                 </span>
-                <small class="text-muted ms-2">({{ reviews.count }} Verified Reviews)</small>
             </div>
 
-            <div class="rating-breakdown mb-4 p-3 bg-white rounded shadow-sm rating-box">
-                {% for item in rating_breakdown %}
-                <div class="d-flex align-items-center mb-2 small">
-                    <div class="me-2 fw-semibold text-nowrap" style="width: 50px;">
-                        {{ item.stars }} Star
-                    </div>
-                    <div class="progress flex-grow-1" style="height: 10px;">
-                        <div class="progress-bar bg-warning" role="progressbar" 
-                             style="width: {{ item.percent }}%" aria-valuenow="{{ item.percent }}" 
-                             aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <div class="ms-2 text-muted text-end" style="width: 40px;">
-                        {{ item.percent }}%
-                    </div>
-                </div>
-                {% endfor %}
+            <div class="mb-3 text-muted small">
+                {{ reviews.count }} Verified Reviews
             </div>
 
             <div class="mb-4 d-flex align-items-center gap-3 flex-wrap">
@@ -348,17 +333,14 @@
     .thumbnail:hover, .active-thumbnail { border-color: var(--primary-magenta); transform: translateY(-3px); }
 
     .book-main-image {
-        transform: perspective(900px) rotateY(-6deg);
-        box-shadow: 18px 20px 28px rgba(0,0,0,0.2);
         border-radius: 10px;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        transition: transform 0.25s ease;
         background: #fff;
         padding: 6px;
     }
 
     .book-media-card:hover .book-main-image {
-        transform: perspective(900px) rotateY(0deg);
-        box-shadow: 14px 16px 24px rgba(0,0,0,0.16);
+        transform: scale(1.05);
     }
 
     .badge-sale { background-color: var(--primary-magenta); color: white; padding: 6px 14px; border-radius: 50px; font-weight: bold; font-size: 0.85rem; }

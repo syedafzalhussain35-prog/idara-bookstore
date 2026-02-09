@@ -131,6 +131,12 @@
     }
 
     /* ================= CATEGORY GRID ================= */
+    .category-section {
+        background: linear-gradient(135deg, #f0f7ff, #fef1f7);
+        border: 1px solid #e6eef9;
+        border-radius: 18px;
+        padding: 22px 24px;
+    }
     .category-card {
         transition: transform 0.3s, box-shadow 0.3s;
         border: 1px solid #eee;
@@ -388,7 +394,8 @@
         <p class="text-muted">Select your course to find relevant books quickly</p>
     </div>
 
-    <div class="row g-3 justify-content-center mb-5">
+    <div class="category-section mb-5">
+    <div class="row g-3 justify-content-center">
         {% for cat in nav_categories|slice:":6" %}
         <div class="col-6 col-md-4 col-lg-2">
             <a href="{% url 'category_books' cat.slug %}" class="card category-card text-center h-100">
@@ -412,6 +419,7 @@
                 <div class="card-body py-2"><p class="cat-title mb-0" style="color: var(--primary-magenta);">View All</p></div>
             </a>
         </div>
+    </div>
     </div>
 
     {% if is_homepage %}
