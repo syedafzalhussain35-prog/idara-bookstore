@@ -1,0 +1,2030 @@
+/* source: d:/Idara_Bookstore/store/templates/store/base.html */
+:root {
+        --primary-magenta: #BD1859;
+        --accent-gold: #FED3A9;
+        --text-dark: #333;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f8f9fa;
+        margin: 0;
+    }
+
+    body.site-bg {
+        background-repeat: repeat;
+        background-size: 420px auto;
+        background-attachment: fixed;
+    }
+
+    img, video {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* ================= TOP BAR ================= */
+    .top-bar {
+        background-color: var(--accent-gold);
+        height: 40px;
+        border-bottom: 1px solid #e5e5e5;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .top-bar-center {
+        display: flex;
+        gap: 15px;
+    }
+
+    .top-bar-socials {
+        position: absolute;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .social-img {
+        width: 22px;
+        height: 22px;
+        transition: transform 0.2s ease;
+    }
+
+    .social-img:hover {
+        transform: scale(1.15);
+    }
+
+    /* ================= HEADER ================= */
+    .main-header {
+        background: #fff;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .header-flex {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+
+    .header-logo img {
+        max-height: 60px;
+    }
+
+    .search-container {
+        flex-grow: 1;
+        max-width: 720px;
+    }
+
+    .search-input {
+        border: 2px solid var(--primary-magenta);
+        border-radius: 6px 0 0 6px;
+    }
+
+    .search-btn {
+        background: var(--primary-magenta);
+        color: #fff;
+        border: 2px solid var(--primary-magenta);
+        border-radius: 0 6px 6px 0;
+    }
+
+
+    .user-actions {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .user-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .user-actions a,
+    .user-actions .dropdown-toggle {
+        color: #5c3345;
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 10px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #f0dfe7;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+        min-width: 70px;
+    }
+
+    .user-actions a:hover,
+    .user-actions .dropdown-toggle:hover {
+        background: #fff6fa;
+        border-color: #f1c9dd;
+    }
+
+    .user-actions .dropdown-menu {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+        border-radius: 12px;
+        z-index: 2000;
+    }
+
+    .user-actions i {
+        font-size: 1.15rem;
+        color: var(--primary-magenta);
+    }
+
+    /* ================= NAVBAR ================= */
+    .menu-navbar {
+        background-color: var(--primary-magenta);
+        z-index: 1020;
+    }
+
+    .navbar-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .navbar-toggler.menu-toggler {
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        color: #fff;
+        background: transparent;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+    }
+
+    .navbar-toggler.categories-toggler {
+        border: 1px solid #f5d1ae;
+        background: #f8d7b3;
+        color: #6b1b3c;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }
+
+    .mobile-categories {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 6px;
+        margin-top: 6px;
+    }
+
+    .menu-navbar .nav-link {
+        color: #fff !important;
+        padding: 14px 18px !important;
+        font-size: 15px;
+        white-space: nowrap;
+        transition: background 0.2s ease;
+    }
+
+    .menu-navbar .nav-link:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* ================= DROPDOWNS ================= */
+    .dropdown-menu {
+        border-top: 3px solid var(--accent-gold);
+        border-radius: 0 0 6px 6px;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+        padding: 6px 0;
+    }
+
+    .dropdown-item {
+        font-size: 14px;
+        padding: 8px 18px;
+        transition: background 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: #f6f6f6;
+    }
+
+    /* Desktop hover dropdown */
+    @media (min-width: 992px) {
+        .dropdown:hover > .dropdown-menu {
+            display: block;
+        }
+    }
+
+    /* ================= SUBMENU ================= */
+    .dropdown-submenu {
+        position: relative;
+    }
+
+    .dropdown-submenu > .dropdown-menu {
+        top: 0;
+        left: 100%;
+        margin-left: 0.15rem;
+        display: none;
+    }
+
+    @media (min-width: 992px) {
+        .dropdown-submenu:hover > .dropdown-menu {
+            display: block;
+        }
+    }
+
+    /* ================= UTILITIES ================= */
+    .badge-sale {
+        background-color: var(--primary-magenta);
+        color: #fff;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+
+    .text-magenta {
+        color: var(--primary-magenta);
+    }
+
+    .btn-brand {
+        background: var(--primary-magenta);
+        color: #fff;
+        border: 2px solid var(--primary-magenta);
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-brand:hover {
+        background: #9c1248;
+        border-color: #9c1248;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(156, 18, 72, 0.25);
+    }
+
+    .btn-brand-outline {
+        background: #fff;
+        color: var(--primary-magenta);
+        border: 2px solid var(--primary-magenta);
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-brand-outline:hover {
+        background: var(--primary-magenta);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(189, 24, 89, 0.2);
+    }
+
+    /* ================= BREADCRUMB ================= */
+    .breadcrumb {
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px 14px;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #6a1a45;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .breadcrumb-item a:hover {
+        color: var(--primary-magenta);
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #444;
+        font-weight: 600;
+    }
+
+    /* ================= BOOK CARD ================= */
+    .book-card {
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+
+    .book-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+    }
+
+    .book-card img {
+        height: 220px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    /* ❤️ Wishlist Button */
+    .wishlist-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: transform 0.2s ease;
+    }
+
+    .wishlist-btn i {
+        color: var(--primary-magenta);
+        font-size: 16px;
+    }
+
+    .wishlist-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .wishlist-btn.is-active {
+        background: #ffe6f0;
+        box-shadow: 0 4px 10px rgba(189, 24, 89, 0.2);
+    }
+
+    .wishlist-btn.is-pulse {
+        animation: wishlistPulse 0.4s ease;
+    }
+
+    .preview-dropdown {
+        min-width: 280px;
+        padding: 10px;
+        border-radius: 16px;
+        border: 1px solid #f1d2df;
+        box-shadow: 0 16px 32px rgba(28, 16, 20, 0.2);
+        background: #fff;
+    }
+
+    .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 6px 8px 10px;
+        border-bottom: 1px solid #f0dfe7;
+        margin-bottom: 6px;
+    }
+
+    .preview-title-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .preview-title-group small {
+        font-size: 0.75rem;
+        color: #8a6a78;
+        font-weight: 600;
+    }
+
+    .preview-note {
+        background: #fff5f9;
+        color: #8f4663;
+        font-size: 0.78rem;
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin: 6px 6px 8px;
+    }
+
+    .preview-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .preview-item:hover {
+        background: #f7f7f7;
+        color: #333;
+    }
+
+    .preview-thumb {
+        width: 46px;
+        height: 62px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #f4f1f3;
+        flex-shrink: 0;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    }
+
+    .preview-meta {
+        min-width: 0;
+    }
+
+    .preview-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .preview-sub {
+        font-size: 0.78rem;
+        color: #777;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .preview-price {
+        font-size: 0.78rem;
+        color: #b0134b;
+        font-weight: 700;
+    }
+
+    .preview-empty {
+        text-align: center;
+        padding: 12px 6px;
+        color: #777;
+        font-size: 0.85rem;
+    }
+
+    .preview-footer {
+        padding: 10px 8px 4px;
+        border-top: 1px solid #f0dfe7;
+        margin-top: 6px;
+    }
+
+    .preview-footer .btn {
+        border-radius: 10px;
+    }
+
+    @keyframes wishlistPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+
+    /* ================= MOBILE STICKY CART ================= */
+    .sticky-cart {
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        z-index: 9998;
+        display: none;
+    }
+
+    .sticky-cart a {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary-magenta);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(189, 24, 89, 0.35);
+        text-decoration: none;
+        position: relative;
+    }
+
+    .sticky-cart .badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+    }
+
+    @media (max-width: 768px) {
+        .sticky-cart {
+            display: block;
+        }
+    }
+    /* ================= PAGE LOADER ================= */
+    .page-loader {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 9999;
+    }
+
+    .page-loader.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .page-loader .loader-card {
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 18px;
+        padding: 26px 28px;
+        box-shadow: 0 18px 36px rgba(0,0,0,0.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        min-width: 220px;
+    }
+
+    .page-loader .loader-logo img {
+        width: 120px;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 6px 10px rgba(0,0,0,0.12));
+    }
+
+    .loader-dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loader-dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary-magenta);
+        opacity: 0.25;
+        animation: dotBounce 1s infinite ease-in-out;
+    }
+
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    .loader-text {
+        font-size: 0.85rem;
+        color: #6b6b6b;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+    }
+
+    body.js-infinite .pagination-container {
+        display: none;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes dotBounce {
+        0%, 100% { transform: translateY(0); opacity: 0.25; }
+        50% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ================= LIVE SEARCH (GLOBAL) ================= */
+.search-container {
+    position: relative;
+    max-width: 720px;
+    width: 100%;
+}
+
+#liveSearchResults {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+    z-index: 3000;
+    display: none;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+#liveSearchResults .list-group-item {
+    border: none;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+#liveSearchResults .list-group-item.active,
+#liveSearchResults .list-group-item:hover {
+    background: #f3f3f3;
+}
+
+
+    /* ================= MOBILE ================= */
+    @media (max-width: 991px) {
+        .menu-navbar .container {
+            position: relative;
+        }
+
+        .navbar-toggle-row {
+            background: transparent;
+            border-radius: 12px;
+            padding: 6px 0;
+            gap: 10px;
+            box-shadow: none;
+        }
+
+        .navbar-toggle-row .navbar-toggler {
+            flex: 1;
+            border-radius: 12px;
+            font-size: 1rem;
+            padding: 8px 12px;
+        }
+
+        .navbar-toggler.menu-toggler.active,
+        .navbar-toggler.categories-toggler.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.7);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .header-flex {
+            flex-direction: column;
+            text-align: center;
+            row-gap: 12px;
+        }
+
+        .search-container,
+        .user-actions {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .top-bar-socials {
+            display: none;
+        }
+
+        .top-bar {
+            height: auto;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .top-bar-center {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .main-header {
+            padding: 12px 0;
+            position: relative;
+            z-index: 1030;
+        }
+
+        .header-logo img {
+            max-height: 65px;
+        }
+
+        .user-actions {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            row-gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .user-actions a,
+        .user-actions .dropdown {
+            min-width: 0;
+        }
+
+        .user-actions .dropdown-toggle {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .user-actions a,
+        .user-actions .dropdown-toggle {
+            font-size: 0.78rem;
+        }
+
+        .user-actions i {
+            font-size: 1.1rem;
+        }
+
+        .menu-navbar .nav-link {
+            padding: 10px 14px !important;
+            font-size: 14px;
+        }
+
+        .book-card img {
+            height: 180px;
+        }
+
+        /* Disable hover logic on mobile */
+        .dropdown:hover > .dropdown-menu,
+        .dropdown-submenu:hover > .dropdown-menu {
+            display: none;
+        }
+    }
+
+@media (max-width: 576px) {
+    .search-container {
+        max-width: 100%;
+    }
+
+    .search-input {
+        font-size: 14px;
+    }
+
+    .user-actions a {
+        font-size: 0.8rem;
+    }
+
+    .book-card img {
+        height: 160px;
+    }
+
+    .wishlist-btn {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 420px) {
+    .user-actions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        column-gap: 8px;
+    }
+}
+
+    /* ================= MOBILE DROPDOWN FIX ================= */
+@media (max-width: 991px) {
+
+    /* Make dropdowns full-width & readable */
+    .navbar-nav .dropdown-menu {
+        position: static;
+        float: none;
+        width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    /* Indent submenu items visually */
+    .dropdown-submenu > .dropdown-menu {
+        display: none;
+        padding-left: 15px;
+        border-left: 3px solid var(--accent-gold);
+        margin-left: 10px;
+    }
+
+    .dropdown-submenu.show > .dropdown-menu {
+        display: block;
+    }
+
+    /* Make submenu toggles look clickable */
+    .dropdown-submenu > a {
+        font-weight: 600;
+    }
+
+    /* Prevent hover-based opening on mobile */
+    .dropdown:hover > .dropdown-menu,
+    .dropdown-submenu:hover > .dropdown-menu {
+        display: none;
+    }
+}
+
+    /* ================= TOASTS ================= */
+    .toast-container {
+        position: fixed;
+        top: 92px;
+        right: 18px;
+        z-index: 1055;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toast-message {
+        background: #fff;
+        border-left: 4px solid var(--primary-magenta);
+        border-radius: 10px;
+        padding: 10px 14px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+        font-size: 0.9rem;
+        color: #333;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        min-width: 220px;
+    }
+
+    .toast-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    @media (max-width: 576px) {
+        .toast-container {
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+            top: 84px;
+            width: calc(100% - 32px);
+        }
+
+        .toast-message {
+            width: 100%;
+            min-width: 0;
+        }
+    }
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/book_detail.html */
+:root { --primary-magenta: #BD1859; }
+    .text-magenta { color: var(--primary-magenta) !important; }
+    .btn-magenta { background-color: var(--primary-magenta); color: white; border: none; transition: 0.3s; }
+    .btn-magenta:hover { background-color: #9e144a; color: white; transform: translateY(-2px); }
+    .btn-outline-magenta { border: 2px solid var(--primary-magenta); color: var(--primary-magenta); }
+    .btn-outline-magenta:hover { background-color: var(--primary-magenta); color: white; }
+
+    .thumbnail {
+        width: 80px; height: 100px; object-fit: cover; cursor: pointer;
+        border: 2px solid #f0f0f0; border-radius: 8px; padding: 4px; transition: 0.2s;
+    }
+    .thumbnail:hover, .active-thumbnail { border-color: var(--primary-magenta); transform: translateY(-3px); }
+
+    .book-main-image {
+        border-radius: 10px;
+        transition: transform 0.25s ease;
+        background: #fff;
+        padding: 6px;
+    }
+
+    .book-media-card:hover .book-main-image {
+        transform: scale(1.05);
+    }
+
+    .badge-sale { background-color: var(--primary-magenta); color: white; padding: 6px 14px; border-radius: 50px; font-weight: bold; font-size: 0.85rem; }
+
+    .rating-stars { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
+    .rating-stars input { display: none; }
+    .rating-stars label { font-size: 2.2rem; color: #e0e0e0; cursor: pointer; transition: 0.2s; }
+    .rating-stars input:checked ~ label, .rating-stars label:hover, .rating-stars label:hover ~ label { color: #f5b301; }
+
+    .progress { background-color: #f0f0f0; border-radius: 50px; }
+    .progress-bar { border-radius: 50px; }
+    
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+    .book-tabs .nav-tabs {
+        border-bottom: none;
+    }
+
+    .book-tabs .nav-link {
+        border: none;
+        background: #f4f4f6;
+        color: #555;
+        font-weight: 600;
+        border-radius: 10px 10px 0 0;
+        padding: 10px 18px;
+        margin-right: 6px;
+    }
+
+    .book-tabs .nav-link.active {
+        background: var(--primary-magenta);
+        color: #fff;
+    }
+
+    .book-tabs .tab-content {
+        border: 1px solid #eee;
+        border-top: none;
+    }
+
+    .book-tabs .desc-text {
+        line-height: 1.7;
+        font-size: 1.02rem;
+        font-family: 'Amiri', serif;
+    }
+
+    .specs-table th {
+        width: 40%;
+        color: #444;
+        font-weight: 600;
+    }
+
+    .specs-table td {
+        color: #555;
+    }
+
+    .doc-tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        max-width: 420px;
+    }
+
+    .doc-tile {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #ececec;
+        border-radius: 16px;
+        padding: 18px 16px;
+        text-align: center;
+        text-decoration: none;
+        color: #2d2d2d;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .doc-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 26px rgba(0,0,0,0.12);
+        border-color: #e2c3d2;
+        color: #2d2d2d;
+    }
+
+    .doc-icon {
+        width: 64px;
+        height: 64px;
+        margin: 6px auto 10px;
+        border-radius: 14px;
+        background: #f7eef2;
+        color: var(--primary-magenta);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .doc-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: var(--primary-magenta);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.6px;
+    }
+
+    .doc-label {
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.3px;
+    }
+
+    @media (max-width: 991px) {
+        .book-media-area {
+            height: 360px;
+        }
+
+        .rating-box {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .book-media-area {
+            height: 300px;
+        }
+
+        .thumbs-row {
+            gap: 10px;
+        }
+
+        .thumbnail {
+            width: 70px;
+            height: 90px;
+        }
+
+        .action-row .btn {
+            width: 100%;
+        }
+
+        .breadcrumb .breadcrumb-item.active {
+            max-width: 160px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .book-media-area {
+            height: 240px;
+            padding: 16px;
+        }
+
+        h1.display-6 {
+            font-size: 1.5rem;
+        }
+
+        .rating-breakdown {
+            padding: 12px;
+        }
+
+        .book-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+    }
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/cart.html */
+@media (max-width: 768px) {
+    .cart-table thead {
+        display: none;
+    }
+
+    .cart-table, .cart-table tbody, .cart-table tr, .cart-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .cart-table tr {
+        border: 1px solid #eee;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #fff;
+    }
+
+    .cart-table td {
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
+    }
+
+    .cart-table td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .cart-table td[data-label="Product"] {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .cart-table td[data-label="Product"] .d-flex {
+        align-items: center;
+    }
+
+    .cart-table td[data-label="Product"] img {
+        width: 60px;
+        height: 76px;
+        object-fit: cover;
+    }
+
+    .cart-table td[data-label="Action"] {
+        justify-content: flex-end;
+    }
+}
+
+.qty-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e5e5e5;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: #fff;
+}
+
+.qty-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #444;
+    font-weight: 700;
+}
+
+.qty-btn:hover {
+    background: var(--primary-magenta);
+    color: #fff;
+    border-color: var(--primary-magenta);
+}
+
+.qty-value {
+    min-width: 18px;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/category_books.html */
+.filter-accordion {
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    background: #fff;
+    padding: 6px 10px 10px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.filter-summary {
+    list-style: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c2a4a;
+    padding: 8px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-summary::after {
+    content: "▾";
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.filter-accordion[open] .filter-summary::after {
+    content: "▴";
+}
+
+.filter-body {
+    padding: 6px 2px 2px;
+}
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chips .chip {
+    background: #fff;
+    border: 1px solid #f0e0e8;
+    color: #6c2a4a;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .category-header {
+        align-items: flex-start;
+    }
+
+    .category-sort {
+        width: 100%;
+    }
+
+    .category-sort .form-select {
+        width: 100%;
+    }
+
+    .category-filters .form-control,
+    .category-filters .btn {
+        width: 100%;
+    }
+
+    .pagination .page-link {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/checkout.html */
+.checkout-steps {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .checkout-steps .step {
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid #eee;
+        background: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #777;
+    }
+
+    .checkout-steps .step.completed {
+        background: #f7f0f4;
+        border-color: #ead3df;
+        color: var(--primary-magenta);
+    }
+
+    .checkout-steps .step.active {
+        background: var(--primary-magenta);
+        border-color: var(--primary-magenta);
+        color: #fff;
+    }
+
+@media (max-width: 768px) {
+    .card-body {
+        padding: 16px !important;
+    }
+
+    .list-group-item .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px;
+    }
+
+    .list-group-item .item-price {
+        width: 100%;
+        text-align: right;
+    }
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/contact.html */
+/* ================= CONTACT PAGE ================= */
+
+    .contact-hero {
+        background: linear-gradient(to right, #fce4ec, #ffe0b2);
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .contact-hero h1 {
+        color: var(--primary-magenta);
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .contact-hero p {
+        color: #444;
+        font-size: 18px;
+    }
+
+    /* Cards */
+    .contact-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 25px;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .contact-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+
+    .contact-card h4 {
+        color: var(--primary-magenta);
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .contact-card p {
+        font-size: 15px;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    /* Location section */
+    .location-title {
+        text-align: center;
+        margin: 60px 0 30px;
+        color: var(--primary-magenta);
+        font-weight: 700;
+    }
+
+    .location-box h5 {
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    /* Responsive map */
+    .map-wrapper {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; /* 16:9 */
+        height: 0;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .map-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/footer.html */
+/* ================= FOOTER BASE ================= */
+footer {
+    background: linear-gradient(135deg, #fff6d6, #fde3b4);
+    padding: 45px 0 0;
+    color: #333;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 15px;
+    margin-top: auto;
+    border-top: 4px solid #BD1859;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 35px;
+}
+
+.footer-column {
+    width: 32%;
+}
+
+.footer-column h3 {
+    color: #BD1859;
+    font-size: 18px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    position: relative;
+}
+
+.footer-column h3::after {
+    content: "";
+    display: block;
+    width: 45px;
+    height: 3px;
+    background: #FED3A9;
+    margin-top: 6px;
+    border-radius: 2px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.footer-column a {
+    color: #2b2bbf;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-column a:hover {
+    color: #BD1859;
+    text-decoration: underline;
+}
+
+/* ================= SOCIAL ICONS ================= */
+.social-icons {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.social-icons a {
+    display: inline-flex;
+    background: #fff;
+    padding: 6px;
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.social-icons a:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+.social-icons img {
+    width: 26px;
+    height: 26px;
+}
+
+/* ================= FOOTER BOTTOM ================= */
+.footer-bottom {
+    text-align: center;
+    padding: 14px;
+    background: linear-gradient(to right, #BD1859, #9e1249);
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+    .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .footer-column {
+        width: 100%;
+        margin-bottom: 28px;
+    }
+
+    .footer-column h3::after {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .social-icons {
+        justify-content: flex-start;
+    }
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/gallery.html */
+/* ================= GALLERY PAGE ================= */
+
+.gallery-wrapper {
+    max-width: 1200px;
+    margin: auto;
+    padding: 50px 20px;
+}
+
+.gallery-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.gallery-header h1 {
+    color: var(--primary-magenta);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.gallery-header p {
+    color: #555;
+    font-size: 16px;
+}
+
+/* ================= EVENT SECTION ================= */
+
+.event-section {
+    margin-bottom: 70px;
+}
+
+.event-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #222;
+    border-left: 6px solid var(--primary-magenta);
+    padding-left: 15px;
+    margin-bottom: 25px;
+}
+
+/* ================= MEDIA GRID ================= */
+
+.gallery-media {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    align-items: start;
+}
+
+/* Media Card */
+.media-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    padding: 10px;
+    transition: transform 0.3s ease;
+}
+
+.media-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Images */
+.media-card img {
+    width: 100%;
+    height: auto;
+    max-height: 260px;
+    object-fit: contain;   /* ✅ NO CROPPING */
+    display: block;
+}
+
+/* Videos */
+.media-card video {
+    width: 100%;
+    height: 260px;
+    object-fit: contain;   /* ✅ NO CROPPING */
+    display: block;
+    background: #000;
+    border-radius: 8px;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+    .gallery-wrapper {
+        padding: 30px 15px;
+    }
+
+    .event-title {
+        font-size: 22px;
+    }
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/home.html */
+/* ================= HERO / SLIDER ================= */
+    .hero-section {
+        width: 100%;
+        padding: 12px 0 28px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f6f9ff 0%, #fdf3f8 60%, #f8fbff 100%);
+    }
+
+    .swiper {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .hero-swiper {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+
+    .hero-swiper .swiper-wrapper {
+        align-items: center;
+    }
+
+    .hero-swiper .swiper-slide {
+        width: 100%;
+        padding: 0;
+    }
+
+    .hero-swiper .swiper-pagination {
+        bottom: 10px !important;
+    }
+
+    .hero-swiper .swiper-pagination-bullet {
+        width: 8px;
+        height: 8px;
+        background: rgba(176, 19, 75, 0.3);
+        opacity: 1;
+    }
+
+    .hero-swiper .swiper-pagination-bullet-active {
+        width: 18px;
+        border-radius: 999px;
+        background: var(--primary-magenta);
+    }
+
+    .hero-slide {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #e7ebf4;
+        box-shadow: 0 18px 36px rgba(12, 20, 46, 0.14);
+        overflow: hidden;
+        position: relative;
+        aspect-ratio: 16 / 9;
+    }
+
+    .hero-slide::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 15% 20%, rgba(189, 24, 89, 0.08), transparent 55%),
+                    radial-gradient(circle at 80% 25%, rgba(254, 211, 169, 0.32), transparent 50%);
+        pointer-events: none;
+    }
+
+    .hero-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .hero-overlay {
+        position: absolute;
+        left: 6%;
+        bottom: 12%;
+        max-width: 46%;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        padding: 14px 16px;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.15);
+        z-index: 2;
+    }
+
+    .hero-overlay h3 {
+        font-size: 1.25rem;
+        margin: 0 0 6px;
+        color: #2b1b27;
+        font-weight: 700;
+    }
+
+    .hero-overlay p {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        color: #4a4f5a;
+    }
+
+    @media (max-width: 576px) {
+        .hero-swiper {
+            padding: 0 10px;
+        }
+
+        .hero-slide {
+            aspect-ratio: 4 / 3;
+            border-radius: 16px;
+        }
+    }
+
+    /* ================= CATEGORY GRID ================= */
+    .category-section {
+        background: linear-gradient(135deg, #f0f7ff, #fef1f7);
+        border: 1px solid #e6eef9;
+        border-radius: 18px;
+        padding: 22px 24px;
+    }
+    .category-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        border: 1px solid #eee;
+        background: #fff;
+        text-decoration: none;
+    }
+
+    .category-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 22px rgba(189, 24, 89, 0.15);
+        border-color: var(--accent-gold);
+    }
+
+    .cat-img-box {
+        height: 120px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cat-img-box img {
+        max-height: 80%;
+        max-width: 80%;
+        object-fit: contain;
+    }
+
+    .cat-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    /* ================= BOOK CARDS ================= */
+    .book-card {
+        transition: all 0.3s ease;
+    }
+    
+    .book-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+
+    .wishlist-btn {
+        transition: transform 0.2s, background-color 0.2s;
+        z-index: 10;
+    }
+
+    .wishlist-btn:hover {
+        transform: scale(1.1);
+        background-color: #ffe6f0;
+    }
+
+    .btn-custom {
+        background: var(--primary-magenta);
+        color: #fff;
+        border: none;
+    }
+
+    .btn-custom:hover {
+        background: #9c1248;
+        color: #fff;
+    }
+
+    .text-magenta {
+        color: var(--primary-magenta);
+    }
+
+    /* ================= SUBJECTWISE ================= */
+    .subject-section {
+        background: linear-gradient(135deg, #fff7ed, #fff1f7);
+        border: 1px solid #f5e3ee;
+        border-radius: 18px;
+        padding: 22px 24px;
+    }
+
+    .subject-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .subject-pill {
+        background: #fff;
+        border: 1px solid #f0e7ef;
+        border-radius: 14px;
+        padding: 14px 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: #333;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .subject-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(189, 24, 89, 0.12);
+    }
+
+    .subject-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #fde3b4;
+        color: var(--primary-magenta);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .subject-icon img {
+        width: 60%;
+        height: 60%;
+        object-fit: contain;
+    }
+
+    .subject-label {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 991px) {
+        .hero-slide {
+            aspect-ratio: 3 / 2;
+        }
+
+        .swiper-button-next,
+        .swiper-button-prev {
+            display: none;
+        }
+
+        .subject-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 576px) {
+        .hero-overlay {
+            position: static;
+            margin: 12px;
+            max-width: 100%;
+        }
+
+        .cat-img-box {
+            height: 90px;
+        }
+
+        .cat-title {
+            font-size: 0.8rem;
+        }
+
+        .subject-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 420px) {
+        .hero-slide {
+            aspect-ratio: 1 / 1;
+        }
+
+        .subject-grid {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+    }
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/invoice.html */
+@media print {
+    header, nav, footer, .sticky-cart, .toast-container, .page-loader {
+        display: none !important;
+    }
+    .btn {
+        display: none !important;
+    }
+    body {
+        background: #fff !important;
+    }
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/order_success.html */
+/* Simple animation for the checkmark */
+    .animate-check {
+        animation: popIn 0.5s ease-out;
+    }
+    @keyframes popIn {
+        0% { transform: scale(0); opacity: 0; }
+        80% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/profile.html */
+@media (max-width: 768px) {
+    .card-body.text-center.py-5 {
+        padding-top: 24px !important;
+        padding-bottom: 24px !important;
+    }
+
+    .rounded-circle {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .d-grid.gap-2.px-3 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .order-card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px;
+    }
+}
+
+.status-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.status-step {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    border: 1px solid #e5e5e5;
+    color: #777;
+}
+
+.status-step.active {
+    background: var(--primary-magenta);
+    border-color: var(--primary-magenta);
+    color: #fff;
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/publish_with_us.html */
+.proposal-list {
+        padding-left: 18px;
+        line-height: 1.7;
+        color: #333;
+    }
+
+    .proposal-list li {
+        margin-bottom: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .proposal-list {
+            padding-left: 16px;
+        }
+    }
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/search_results.html */
+.filter-accordion {
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    background: #fff;
+    padding: 6px 10px 10px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.filter-summary {
+    list-style: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c2a4a;
+    padding: 8px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-summary::after {
+    content: "▾";
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.filter-accordion[open] .filter-summary::after {
+    content: "▴";
+}
+
+.filter-body {
+    padding: 6px 2px 2px;
+}
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chips .chip {
+    background: #fff;
+    border: 1px solid #f0e0e8;
+    color: #6c2a4a;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    h4.mb-3 {
+        font-size: 1.1rem;
+    }
+}
+
+
+/* source: d:/Idara_Bookstore/store/templates/store/subject_books.html */
+.filter-accordion {
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    background: #fff;
+    padding: 6px 10px 10px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.filter-summary {
+    list-style: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c2a4a;
+    padding: 8px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-summary::after {
+    content: "▾";
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.filter-accordion[open] .filter-summary::after {
+    content: "▴";
+}
+
+.filter-body {
+    padding: 6px 2px 2px;
+}
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chips .chip {
+    background: #fff;
+    border: 1px solid #f0e0e8;
+    color: #6c2a4a;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+

@@ -124,59 +124,5 @@
 
 </div>
 
-<style>
-.filter-accordion {
-    border: 1px solid #e8e8e8;
-    border-radius: 14px;
-    background: #fff;
-    padding: 6px 10px 10px;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
-}
 
-.filter-summary {
-    list-style: none;
-    cursor: pointer;
-    font-weight: 600;
-    color: #6c2a4a;
-    padding: 8px 6px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.filter-summary::after {
-    content: "▾";
-    font-size: 0.9rem;
-    color: #999;
-}
-
-.filter-accordion[open] .filter-summary::after {
-    content: "▴";
-}
-
-.filter-body {
-    padding: 6px 2px 2px;
-}
-
-.filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.filter-chips .chip {
-    background: #fff;
-    border: 1px solid #f0e0e8;
-    color: #6c2a4a;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-}
-
-@media (max-width: 768px) {
-    h4.mb-3 {
-        font-size: 1.1rem;
-    }
-}
-</style>
 {% endblock %}
