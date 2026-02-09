@@ -39,7 +39,7 @@ from .models import (
     SearchQueryLog,
 )
 from .email_utils import send_publish_with_us
-from .tasks import enqueue_order_confirmation
+from .tasks import enqueue_order_confirmation, enqueue_order_alert
 
 logger = logging.getLogger(__name__)
 
@@ -887,8 +887,9 @@ def checkout(request):
                 is_default=is_default,
             )
 
-        # Send confirmation email (best-effort)
+        # Send confirmation + admin alert (best-effort)
         enqueue_order_confirmation(order.id)
+        enqueue_order_alert(order.id)
 
         return render(request, 'store/order_success.html', {
             'order': order,

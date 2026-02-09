@@ -110,6 +110,44 @@ def send_order_confirmation_email(order):
         logger.exception("Order email failed to send: %s", exc)
 
 
+def send_order_alert_email(order):
+    recipients = [e.strip() for e in settings.ORDER_ALERT_RECIPIENTS.split(",") if e.strip()]
+    if not recipients:
+        return
+
+    subject = f"New Order #{order.id} - Idara Kitab Ul Shifa"
+    html_body = render_to_string("emails/order_alert.html", {"order": order})
+    text_body = strip_tags(html_body)
+
+    if settings.BREVO_API_KEY:
+        for recipient in recipients:
+            _send_via_brevo(
+                to_email=recipient,
+                subject=subject,
+                text_body=text_body,
+                html_body=html_body,
+            )
+        return
+
+    if settings.SENDGRID_API_KEY:
+        for recipient in recipients:
+            _send_via_sendgrid(
+                to_email=recipient,
+                subject=subject,
+                text_body=text_body,
+                html_body=html_body,
+            )
+        return
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        to=recipients,
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
+
+
 def send_publish_with_us(subject, text_body, html_body):
     recipients = [e.strip() for e in settings.PUBLISH_WITH_US_RECIPIENTS.split(",") if e.strip()]
     if not recipients:

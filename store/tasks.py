@@ -2,7 +2,7 @@ import threading
 
 from django.conf import settings
 
-from .email_utils import send_order_confirmation_email
+from .email_utils import send_order_confirmation_email, send_order_alert_email
 from .models import Order
 
 
@@ -20,5 +20,14 @@ def enqueue_order_confirmation(order_id):
         order = Order.objects.filter(id=order_id).first()
         if order:
             send_order_confirmation_email(order)
+
+    return _run_async(_task)
+
+
+def enqueue_order_alert(order_id):
+    def _task():
+        order = Order.objects.filter(id=order_id).first()
+        if order:
+            send_order_alert_email(order)
 
     return _run_async(_task)

@@ -354,6 +354,12 @@ PUBLISH_WITH_US_RECIPIENTS = os.getenv(
     "publishing@cbspd.com,publicity@cbspd.com",
 )
 
+# Order alert recipients (comma-separated)
+ORDER_ALERT_RECIPIENTS = os.getenv(
+    "ORDER_ALERT_RECIPIENTS",
+    "",
+)
+
 # ==================================================
 # SENDGRID (HTTP API)
 # ==================================================
