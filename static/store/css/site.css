@@ -112,8 +112,7 @@
         gap: 16px;
         align-items: center;
         flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: visible;
+        overflow: visible;
         scrollbar-width: none;
         position: relative;
         z-index: 1035;
@@ -707,10 +706,10 @@
 
         .user-actions {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 6px;
-            overflow-x: auto;
+            overflow: visible;
         }
 
         .user-actions a,
