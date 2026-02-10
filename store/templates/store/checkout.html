@@ -321,6 +321,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const razorpayEnabled = form.dataset.razorpayEnabled === "1";
     if (!razorpayEnabled) return;
 
+    const pageLoader = document.getElementById("pageLoader");
+    const hidePageLoader = () => {
+        if (pageLoader) pageLoader.classList.remove("active");
+    };
+
+    const resetButton = () => {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Place Order";
+        }
+    };
+
     const getCookie = (name) => {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
@@ -338,6 +350,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     form.addEventListener("submit", function (e) {
         e.preventDefault();
+        e.stopImmediatePropagation();
+        hidePageLoader();
 
         if (button) {
             button.disabled = true;
@@ -353,6 +367,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(res => res.json())
         .then(data => {
             if (!data.ok) {
+                hidePageLoader();
+                resetButton();
                 alert(data.error || "Unable to start payment.");
                 return;
             }
@@ -364,6 +380,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 name: data.name,
                 order_id: data.razorpay_order_id,
                 prefill: data.prefill || {},
+                modal: {
+                    ondismiss: function () {
+                        hidePageLoader();
+                        resetButton();
+                    }
+                },
                 handler: function (response) {
                     const verifyData = new FormData();
                     verifyData.append("order_id", data.order_id);
@@ -381,10 +403,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         if (result.ok && result.redirect_url) {
                             window.location.href = result.redirect_url;
                         } else {
+                            hidePageLoader();
+                            resetButton();
                             alert(result.error || "Payment verification failed.");
                         }
                     })
                     .catch(() => {
+                        hidePageLoader();
+                        resetButton();
                         alert("Payment verification failed.");
                     });
                 }
@@ -392,18 +418,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const rzp = new Razorpay(options);
             rzp.on("payment.failed", function () {
+                hidePageLoader();
+                resetButton();
                 alert("Payment failed. Please try again.");
             });
             rzp.open();
         })
         .catch(() => {
+            hidePageLoader();
+            resetButton();
             alert("Unable to start payment.");
-        })
-        .finally(() => {
-            if (button) {
-                button.disabled = false;
-                button.textContent = "Place Order";
-            }
         });
     });
 });

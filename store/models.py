@@ -148,7 +148,13 @@ class Book(models.Model):
         clean = clean.strip("[]()'\",")
 
         if "/image/upload/" in clean:
-            return clean.replace("/image/upload/", "/raw/upload/")
+            clean = clean.replace("/image/upload/", "/raw/upload/")
+
+        # TOC/sample fields are PDFs; add extension when public_id is extensionless.
+        tail = clean.rsplit("/", 1)[-1]
+        if "/raw/upload/" in clean and "." not in tail:
+            clean = clean + ".pdf"
+
         return clean
 
     @property
