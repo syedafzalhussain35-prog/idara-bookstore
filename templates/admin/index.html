@@ -306,6 +306,23 @@
                     <li><a href="{% url 'admin:store_coupon_changelist' %}">Coupons</a> <span>{{ active_coupons }} active</span></li>
                 </ul>
             </div>
+            <div class="sc-card sc-card--info">
+                <div class="sc-card-title">Razorpay Status</div>
+                <ul class="sc-list">
+                    <li>
+                        <span>
+                            {% if razorpay_enabled %}
+                                Enabled {% if razorpay_key_mask %}({{ razorpay_key_mask }}){% endif %}
+                            {% else %}
+                                Disabled
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span>Update keys in Render → Environment</span>
+                    </li>
+                </ul>
+            </div>
             <div class="sc-card sc-card--success">
                 <div class="sc-card-title">Communications</div>
                 <p>Stay on top of customer questions and order updates.</p>

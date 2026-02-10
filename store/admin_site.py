@@ -5,6 +5,7 @@ from django.contrib.admin import AdminSite
 from django.db.models import Sum
 from django.db.models.functions import TruncDay, TruncMonth
 from django.utils import timezone
+from django.conf import settings
 
 from .models import (
     Banner,
@@ -81,6 +82,9 @@ class IdaraAdminSite(AdminSite):
         bundles_total = Bundle.objects.count()
         active_coupons = Coupon.objects.filter(active=True).count()
         settings_obj = SiteSettings.objects.filter(is_active=True).first()
+        razorpay_enabled = bool(getattr(settings, "RAZORPAY_KEY_ID", "") and getattr(settings, "RAZORPAY_KEY_SECRET", ""))
+        key_id = getattr(settings, "RAZORPAY_KEY_ID", "")
+        razorpay_key_mask = f"••••{key_id[-6:]}" if key_id else ""
 
         extra_context.update({
             "day_labels": json.dumps([d.strftime("%b %d") for d in day_labels]),
@@ -101,6 +105,8 @@ class IdaraAdminSite(AdminSite):
             "bundles_total": bundles_total,
             "active_coupons": active_coupons,
             "settings_obj": settings_obj,
+            "razorpay_enabled": razorpay_enabled,
+            "razorpay_key_mask": razorpay_key_mask,
         })
 
         return super().index(request, extra_context=extra_context)
