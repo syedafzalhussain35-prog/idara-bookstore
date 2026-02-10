@@ -743,14 +743,28 @@
             font-size: 1.1rem;
         }
 
+        .user-actions .dropdown {
+            position: relative;
+        }
+
         .user-actions .dropdown-menu {
-            position: static;
-            width: 100%;
-            min-width: 0;
-            margin-top: 6px;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(92vw, 340px);
+            min-width: 280px;
+            max-width: 92vw;
+            margin-top: 0;
             box-shadow: 0 8px 18px rgba(0,0,0,0.12);
             right: auto;
-            left: auto;
+            z-index: 2500;
+        }
+
+        .user-actions .preview-dropdown {
+            width: min(92vw, 340px);
+            min-width: min(92vw, 280px);
+            max-width: 92vw;
         }
 
         .menu-navbar .nav-link {
