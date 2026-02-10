@@ -6,11 +6,11 @@
 
     <!-- 🔗 Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb breadcrumb-nowrap">
             <li class="breadcrumb-item">
                 <a href="{% url 'home' %}">Home</a>
             </li>
-            <li class="breadcrumb-item active">
+            <li class="breadcrumb-item active text-truncate">
                 {{ category.name }}
             </li>
         </ol>
@@ -25,7 +25,7 @@
             </p>
         </div>
 
-        <form method="get" class="d-flex category-sort">
+        <form method="get" class="d-none d-md-flex category-sort">
             {% for key, value in request.GET.items %}
                 {% if key != 'sort' and key != 'page' %}
                     <input type="hidden" name="{{ key }}" value="{{ value }}">

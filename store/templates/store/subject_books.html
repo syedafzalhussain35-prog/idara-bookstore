@@ -5,11 +5,11 @@
 <div class="container my-5">
 
     <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb breadcrumb-nowrap">
             <li class="breadcrumb-item">
                 <a href="{% url 'home' %}">Home</a>
             </li>
-            <li class="breadcrumb-item active">
+            <li class="breadcrumb-item active text-truncate">
                 {{ subject.name }}
             </li>
         </ol>

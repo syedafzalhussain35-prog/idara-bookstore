@@ -56,12 +56,18 @@ def _is_mobile_request(request):
 
 def _get_razorpay_client():
     if not getattr(settings, "RAZORPAY_ENABLED", False):
+        logger.warning("Razorpay is disabled due to missing keys in settings.")
         return None
     try:
         import razorpay
     except Exception:
+        logger.exception("Failed to import razorpay package.")
         return None
-    return razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    try:
+        return razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    except Exception:
+        logger.exception("Failed to initialize razorpay client.")
+        return None
 
 
 def _update_recently_viewed(request, book_id):
