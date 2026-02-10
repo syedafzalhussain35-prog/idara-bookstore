@@ -6,7 +6,17 @@ from django.db.models import Sum
 from django.db.models.functions import TruncDay, TruncMonth
 from django.utils import timezone
 
-from .models import Book, Order, OrderItem
+from .models import (
+    Banner,
+    Book,
+    Bundle,
+    Category,
+    Coupon,
+    Order,
+    OrderItem,
+    SiteSettings,
+    Subject,
+)
 
 
 class IdaraAdminSite(AdminSite):
@@ -65,6 +75,12 @@ class IdaraAdminSite(AdminSite):
         total_orders_all = Order.objects.count()
         paid_orders = Order.objects.filter(is_paid=True).count()
         today_orders = Order.objects.filter(created_at__date=today).count()
+        categories_total = Category.objects.count()
+        subjects_total = Subject.objects.count()
+        banners_total = Banner.objects.count()
+        bundles_total = Bundle.objects.count()
+        active_coupons = Coupon.objects.filter(active=True).count()
+        settings_obj = SiteSettings.objects.filter(is_active=True).first()
 
         extra_context.update({
             "day_labels": json.dumps([d.strftime("%b %d") for d in day_labels]),
@@ -79,6 +95,12 @@ class IdaraAdminSite(AdminSite):
             "total_orders_all": total_orders_all,
             "paid_orders": paid_orders,
             "today_orders": today_orders,
+            "categories_total": categories_total,
+            "subjects_total": subjects_total,
+            "banners_total": banners_total,
+            "bundles_total": bundles_total,
+            "active_coupons": active_coupons,
+            "settings_obj": settings_obj,
         })
 
         return super().index(request, extra_context=extra_context)
