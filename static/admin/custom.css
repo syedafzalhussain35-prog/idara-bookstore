@@ -238,3 +238,56 @@ textarea:focus {
   padding: 10px 8px;
   border-bottom: 1px solid var(--seller-border);
 }
+
+
+/* Extra ergonomics for day-to-day operations */
+#nav-sidebar {
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 48px);
+  overflow: auto;
+}
+
+.change-form .aligned .form-row,
+.change-form .aligned .form-row div {
+  border-color: var(--seller-border);
+}
+
+.change-form .aligned label {
+  font-weight: 600;
+  color: #1e2d45;
+}
+
+.change-form .submit-row {
+  background: #f7fbff;
+  border: 1px solid var(--seller-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.change-list .actions {
+  background: #f7fbff;
+  border: 1px solid var(--seller-border);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+#changelist-filter h2,
+#changelist-filter h3 {
+  font-weight: 700;
+}
+
+fieldset.module {
+  border-radius: 12px;
+}
+
+fieldset.module h2 {
+  border-radius: 12px 12px 0 0;
+}
+
+@media (max-width: 1024px) {
+  #nav-sidebar {
+    position: static;
+    height: auto;
+  }
+}

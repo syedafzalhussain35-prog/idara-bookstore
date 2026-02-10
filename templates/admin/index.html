@@ -6,176 +6,194 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
     :root {
-        --sc-bg: #f4f6fb;
+        --sc-bg: #f3f5fb;
         --sc-card: #ffffff;
-        --sc-border: #e2e8f0;
-        --sc-text: #0f172a;
-        --sc-muted: #64748b;
-        --sc-teal: #0f766e;
-        --sc-blue: #2563eb;
-        --sc-amber: #f59e0b;
-        --sc-rose: #e11d48;
-        --sc-green: #16a34a;
-        --sc-violet: #7c3aed;
+        --sc-border: #dde4f0;
+        --sc-text: #122033;
+        --sc-muted: #5f6f86;
+        --sc-primary: #0f7a86;
+        --sc-secondary: #2f5de0;
+        --sc-success: #16a34a;
+        --sc-warning: #f59e0b;
+        --sc-danger: #e11d48;
     }
 
     body {
-        background: var(--sc-bg);
+        background: radial-gradient(circle at 10% 0%, #eff6ff 0%, #f6f7fb 45%, #f8f9fc 100%);
         color: var(--sc-text);
     }
 
-    .sc-page {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+    .sc-shell {
+        display: grid;
+        gap: 16px;
     }
 
     .sc-hero {
-        background: linear-gradient(90deg, rgba(15, 118, 110, 0.95), rgba(37, 99, 235, 0.9));
-        color: #ffffff;
-        border-radius: 18px;
-        padding: 18px 22px;
-        display: flex;
+        background: linear-gradient(105deg, rgba(15, 122, 134, 0.96), rgba(47, 93, 224, 0.95));
+        color: #fff;
+        border-radius: 20px;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+        gap: 18px;
+        box-shadow: 0 18px 34px rgba(17, 27, 44, 0.2);
     }
 
     .sc-hero h2 {
-        font-size: 20px;
-        margin: 0 0 6px;
-        font-weight: 700;
+        margin: 0 0 8px;
+        font-size: 26px;
+        line-height: 1.2;
     }
 
     .sc-hero p {
         margin: 0;
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.85);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 14px;
     }
 
-    .sc-badge {
+    .sc-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .sc-chip {
         background: rgba(255, 255, 255, 0.18);
-        padding: 6px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #fff;
+        text-decoration: none;
         border-radius: 999px;
-        font-size: 12px;
+        padding: 7px 12px;
         font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.35);
+        font-size: 12px;
     }
 
     .sc-grid {
         display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 14px;
     }
 
-    .sc-stack {
+    .sc-col {
         display: grid;
-        gap: 16px;
+        gap: 14px;
     }
 
     .sc-card {
         background: var(--sc-card);
         border: 1px solid var(--sc-border);
         border-radius: 14px;
-        padding: 16px;
-        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        padding: 14px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     }
 
-    .sc-card-title {
-        font-size: 13px;
+    .sc-title {
+        margin: 0 0 10px;
+        font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         color: var(--sc-muted);
-        margin-bottom: 10px;
+        font-weight: 700;
     }
 
-    .sc-card--info {
-        border-left: 4px solid var(--sc-blue);
+    .sc-action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
     }
 
-    .sc-card--success {
-        border-left: 4px solid var(--sc-green);
+    .sc-action {
+        border: 1px solid #d7e1f3;
+        border-radius: 10px;
+        padding: 10px;
+        text-decoration: none;
+        color: #1c2c44;
+        font-weight: 600;
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        font-size: 13px;
     }
 
-    .sc-card--warning {
-        border-left: 4px solid var(--sc-amber);
+    .sc-action:hover {
+        border-color: #9eb7ea;
+        background: #eef4ff;
     }
 
-    .sc-card--alert {
-        border-left: 4px solid var(--sc-rose);
-    }
-
-    .sc-list {
+    .sc-kv {
         list-style: none;
-        padding: 0;
         margin: 0;
+        padding: 0;
         display: grid;
         gap: 8px;
     }
 
-    .sc-list a {
-        color: var(--sc-blue);
-        text-decoration: none;
+    .sc-kv li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .sc-kv a {
+        color: #2457d0;
         font-weight: 600;
+        text-decoration: none;
     }
 
-    .sc-list span {
-        color: var(--sc-muted);
+    .sc-pill {
+        background: #edf3ff;
+        border-radius: 999px;
+        padding: 2px 10px;
         font-size: 12px;
+        color: #355280;
+        font-weight: 700;
     }
 
-    .sc-section {
+    .sc-pill.warn { background: #fff7e7; color: #945b00; }
+    .sc-pill.bad { background: #ffe8ee; color: #b4233f; }
+    .sc-pill.good { background: #e9f9ee; color: #1b7a39; }
+
+    .sc-main {
         display: grid;
         gap: 14px;
     }
 
-    .sc-section-header {
+    .sc-header-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 8px;
     }
 
-    .sc-section-header h3 {
-        margin: 0;
-        font-size: 16px;
-    }
-
-    .sc-pill {
-        background: #e2e8f0;
-        color: #475569;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-    }
-
-    .sc-metric-grid {
+    .sc-metrics {
         display: grid;
         grid-template-columns: repeat(12, 1fr);
-        gap: 12px;
+        gap: 10px;
     }
 
     .sc-metric {
-        grid-column: span 4;
-        background: #ffffff;
+        grid-column: span 3;
         border: 1px solid var(--sc-border);
-        border-radius: 12px;
-        padding: 14px 16px;
-        display: grid;
-        gap: 6px;
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+        border-top: 3px solid #b8c7e8;
+        border-radius: 10px;
+        padding: 12px;
+        background: #fff;
     }
 
     .sc-metric h4 {
         margin: 0;
-        font-size: 12px;
-        text-transform: uppercase;
+        font-size: 11px;
         letter-spacing: 0.08em;
+        text-transform: uppercase;
         color: var(--sc-muted);
     }
 
     .sc-metric strong {
-        font-size: 22px;
+        display: block;
+        margin: 8px 0 4px;
+        font-size: 24px;
         color: var(--sc-text);
     }
 
@@ -184,21 +202,16 @@
         font-size: 12px;
     }
 
-    .sc-metric--blue { border-top: 3px solid var(--sc-blue); }
-    .sc-metric--teal { border-top: 3px solid var(--sc-teal); }
-    .sc-metric--green { border-top: 3px solid var(--sc-green); }
-    .sc-metric--amber { border-top: 3px solid var(--sc-amber); }
-    .sc-metric--rose { border-top: 3px solid var(--sc-rose); }
-    .sc-metric--violet { border-top: 3px solid var(--sc-violet); }
+    .sc-metric.primary { border-top-color: var(--sc-primary); }
+    .sc-metric.secondary { border-top-color: var(--sc-secondary); }
+    .sc-metric.success { border-top-color: var(--sc-success); }
+    .sc-metric.warning { border-top-color: var(--sc-warning); }
+    .sc-metric.danger { border-top-color: var(--sc-danger); }
 
-    .sc-chart-grid {
+    .sc-graphs {
         display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 12px;
-    }
-
-    .sc-chart {
-        grid-column: span 6;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
     .sc-table {
@@ -209,209 +222,191 @@
 
     .sc-table th,
     .sc-table td {
-        padding: 8px 6px;
         border-bottom: 1px solid var(--sc-border);
+        padding: 8px 6px;
         text-align: left;
     }
 
     .sc-table th {
         color: var(--sc-muted);
-        font-weight: 600;
-        font-size: 12px;
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
     }
 
-    .sc-tag {
-        background: #fef3c7;
-        color: #92400e;
+    .sc-status {
         border-radius: 999px;
-        padding: 2px 10px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-flex;
+        padding: 2px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
     }
 
-    .sc-tag--danger {
-        background: #fee2e2;
-        color: #b91c1c;
+    .sc-status.Pending { background: #fff5dd; color: #9a5a00; }
+    .sc-status.Processing,
+    .sc-status.Packed,
+    .sc-status.Shipped { background: #e8f0ff; color: #20489f; }
+    .sc-status.Delivered { background: #e9f9ee; color: #1b7a39; }
+    .sc-status.Cancelled { background: #ffe8ee; color: #b4233f; }
+
+    .sc-two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
-    .sc-app-list table {
-        width: 100%;
-        border-collapse: collapse;
+    .sc-app-list table { width: 100%; border-collapse: collapse; }
+    .sc-app-list th, .sc-app-list td { border-bottom: 1px solid var(--sc-border); padding: 8px 6px; }
+
+    @media (max-width: 1400px) {
+        .sc-grid { grid-template-columns: 300px minmax(0, 1fr); }
+        .sc-metric { grid-column: span 4; }
     }
 
-    .sc-app-list th,
-    .sc-app-list td {
-        padding: 10px 8px;
-        border-bottom: 1px solid var(--sc-border);
-    }
-
-    .sc-app-list th {
-        color: var(--sc-muted);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 0.06em;
-    }
-
-    @media (max-width: 1200px) {
+    @media (max-width: 1080px) {
         .sc-grid { grid-template-columns: 1fr; }
         .sc-metric { grid-column: span 6; }
-        .sc-chart { grid-column: span 12; }
+        .sc-hero { grid-template-columns: 1fr; }
+        .sc-hero-actions { justify-content: flex-start; }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 680px) {
         .sc-metric { grid-column: span 12; }
-        .sc-hero { flex-direction: column; align-items: flex-start; }
+        .sc-graphs,
+        .sc-two-col,
+        .sc-action-grid { grid-template-columns: 1fr; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="sc-page">
+<div class="sc-shell">
     <div class="sc-hero">
         <div>
-            <h2>Good evening, your account health is <strong>Healthy</strong></h2>
-            <p>Monitor sales, orders, and inventory with quick actions and insights.</p>
+            <h2>Store Command Center</h2>
+            <p>Manage catalog, sales, customers, and homepage content from one place.</p>
         </div>
-        <span class="sc-badge">Seller Central</span>
+        <div class="sc-hero-actions">
+            <a class="sc-chip" href="/admin/store/book/add/">Add Book</a>
+            <a class="sc-chip" href="/admin/store/banner/add/">Add Banner</a>
+            <a class="sc-chip" href="/admin/store/order/">Orders</a>
+            <a class="sc-chip" href="/admin/store/sitesettings/">Site Settings</a>
+        </div>
     </div>
 
     <div class="sc-grid">
-        <div class="sc-stack">
-            <div class="sc-card sc-card--info">
-                <div class="sc-card-title">Actions</div>
-                <ul class="sc-list">
-                    <li><a href="/admin/store/book/add/">Add Book</a> <span>Publish a new title</span></li>
-                    <li><a href="/admin/store/banner/add/">Add Banner</a> <span>Refresh homepage</span></li>
-                    <li><a href="/admin/store/order/">View Orders</a> <span>Track recent activity</span></li>
+        <div class="sc-col">
+            <div class="sc-card">
+                <h3 class="sc-title">Quick Actions</h3>
+                <div class="sc-action-grid">
+                    <a class="sc-action" href="/admin/store/book/add/">Add Book</a>
+                    <a class="sc-action" href="/admin/store/banner/add/">Add Banner</a>
+                    <a class="sc-action" href="/admin/store/galleryitem/add/">Add Gallery Item</a>
+                    <a class="sc-action" href="/admin/store/coupon/add/">Create Coupon</a>
+                    <a class="sc-action" href="/admin/store/subject/add/">Add Subject</a>
+                    <a class="sc-action" href="/admin/store/syllabuspdf/add/">Add Syllabus PDF</a>
+                </div>
+            </div>
+
+            <div class="sc-card">
+                <h3 class="sc-title">Operations Queue</h3>
+                <ul class="sc-kv">
+                    <li><a href="/admin/store/order/?status__exact=Pending">Pending Orders</a><span class="sc-pill warn">{{ pending_orders }}</span></li>
+                    <li><a href="/admin/store/order/?status__in=Processing&Packed&Shipped">In Fulfillment</a><span class="sc-pill">{{ processing_orders }}</span></li>
+                    <li><a href="/admin/store/order/?is_paid__exact=0">Unpaid Orders</a><span class="sc-pill bad">{{ unpaid_orders }}</span></li>
+                    <li><a href="/admin/store/book/?stock__lte=5">Low Stock Books</a><span class="sc-pill bad">{{ low_stock_total }}</span></li>
+                    <li><a href="/admin/store/publishwithussubmission/">Publish Submissions</a><span class="sc-pill">{{ submissions_total }}</span></li>
                 </ul>
             </div>
-            <div class="sc-card sc-card--info">
-                <div class="sc-card-title">Store Settings</div>
-                <ul class="sc-list">
-                    <li>
-                        <a href="/admin/store/sitesettings/">Site Settings</a>
-                        <span>
-                            {% if settings_obj %}
-                                Background {% if settings_obj.background_image %}set{% else %}not set{% endif %},
-                                Sales tab: {% if settings_obj.sales_offers_enabled %}on{% else %}off{% endif %}
-                            {% else %}
-                                Not configured
-                            {% endif %}
-                        </span>
-                    </li>
-                    <li><a href="/admin/store/banner/">Banners</a> <span>{{ banners_total }} total</span></li>
-                    <li><a href="/admin/store/coupon/">Coupons</a> <span>{{ active_coupons }} active</span></li>
+
+            <div class="sc-card">
+                <h3 class="sc-title">Website Controls</h3>
+                <ul class="sc-kv">
+                    <li><a href="/admin/store/sitesettings/">Site Settings</a><span class="sc-pill {% if settings_obj %}good{% else %}bad{% endif %}">{% if settings_obj %}Ready{% else %}Missing{% endif %}</span></li>
+                    <li><a href="/admin/store/banner/">Homepage Banners</a><span class="sc-pill">{{ active_banners }}/{{ banners_total }} active</span></li>
+                    <li><a href="/admin/store/category/">Categories</a><span class="sc-pill">{{ categories_total }}</span></li>
+                    <li><a href="/admin/store/subject/">Subjects</a><span class="sc-pill">{{ subjects_total }}</span></li>
+                    <li><a href="/admin/store/bundle/">Bundles</a><span class="sc-pill">{{ bundles_total }}</span></li>
+                    <li><a href="/admin/store/coupon/">Active Coupons</a><span class="sc-pill {% if expiring_coupons %}warn{% endif %}">{{ active_coupons }}{% if expiring_coupons %} ({{ expiring_coupons }} expiring){% endif %}</span></li>
                 </ul>
             </div>
-            <div class="sc-card sc-card--info">
-                <div class="sc-card-title">Razorpay Status</div>
-                <ul class="sc-list">
-                    <li>
-                        <span>
-                            {% if razorpay_enabled %}
-                                Enabled {% if razorpay_key_mask %}({{ razorpay_key_mask }}){% endif %}
-                            {% else %}
-                                Disabled
-                            {% endif %}
-                        </span>
-                    </li>
-                    <li>
-                        <span>Update keys in Render → Environment</span>
-                    </li>
+
+            <div class="sc-card">
+                <h3 class="sc-title">Payment Status</h3>
+                <ul class="sc-kv">
+                    <li><span>{% if razorpay_enabled %}Razorpay Enabled{% if razorpay_key_mask %} ({{ razorpay_key_mask }}){% endif %}{% else %}Razorpay Disabled{% endif %}</span></li>
+                    <li><span class="sc-pill {% if razorpay_enabled %}good{% else %}bad{% endif %}">{% if razorpay_enabled %}Connected{% else %}Action Required{% endif %}</span></li>
                 </ul>
-            </div>
-            <div class="sc-card sc-card--success">
-                <div class="sc-card-title">Communications</div>
-                <p>Stay on top of customer questions and order updates.</p>
-                <ul class="sc-list">
-                    <li><a href="/admin/store/review/">Reviews</a> <span>Respond to feedback</span></li>
-                    <li><a href="/admin/store/auditlog/">Audit Logs</a> <span>Track admin changes</span></li>
-                </ul>
-            </div>
-            <div class="sc-card sc-card--success">
-                <div class="sc-card-title">Merchandising</div>
-                <ul class="sc-list">
-                    <li><a href="/admin/store/category/">Categories</a> <span>{{ categories_total }} total</span></li>
-                    <li><a href="/admin/store/subject/">Subjects</a> <span>{{ subjects_total }} total</span></li>
-                    <li><a href="/admin/store/bundle/">Bundles</a> <span>{{ bundles_total }} total</span></li>
-                </ul>
-            </div>
-            <div class="sc-card sc-card--warning">
-                <div class="sc-card-title">Inventory Alerts</div>
-                <p>{{ low_stock_total }} items are low on stock.</p>
-                <a href="{% url 'admin:store_book_changelist' %}" class="button">Review Stock</a>
             </div>
         </div>
 
-        <div class="sc-section">
+        <div class="sc-main">
             <div class="sc-card">
-                <div class="sc-section-header">
-                    <h3>Global Snapshot</h3>
+                <div class="sc-header-row">
+                    <h3 class="sc-title" style="margin:0;">Global Snapshot</h3>
                     <span class="sc-pill">Last 30 days</span>
                 </div>
-                <div class="sc-metric-grid">
-                    <div class="sc-metric sc-metric--teal">
-                        <h4>Sales</h4>
-                        <strong>&#8377;{{ total_sales|floatformat:0 }}</strong>
-                        <small>Paid orders total</small>
-                    </div>
-                    <div class="sc-metric sc-metric--blue">
-                        <h4>Total Orders</h4>
-                        <strong>{{ total_orders_all }}</strong>
-                        <small>All orders</small>
-                    </div>
-                    <div class="sc-metric sc-metric--green">
-                        <h4>Paid Orders</h4>
-                        <strong>{{ paid_orders }}</strong>
-                        <small>Payments received</small>
-                    </div>
-                    <div class="sc-metric sc-metric--amber">
-                        <h4>Orders Today</h4>
-                        <strong>{{ today_orders }}</strong>
-                        <small>Created today</small>
-                    </div>
-                    <div class="sc-metric sc-metric--violet">
-                        <h4>Best Sellers</h4>
-                        <strong>{{ best_sellers_count }}</strong>
-                        <small>Titles selling fast</small>
-                    </div>
-                    <div class="sc-metric sc-metric--rose">
-                        <h4>Low Stock</h4>
-                        <strong>{{ low_stock_total }}</strong>
-                        <small>Needs attention</small>
-                    </div>
+                <div class="sc-metrics">
+                    <div class="sc-metric primary"><h4>Sales</h4><strong>&#8377;{{ total_sales|floatformat:0 }}</strong><small>Paid orders total</small></div>
+                    <div class="sc-metric secondary"><h4>Total Orders</h4><strong>{{ total_orders_all }}</strong><small>All orders</small></div>
+                    <div class="sc-metric success"><h4>Paid Orders</h4><strong>{{ paid_orders }}</strong><small>Payments received</small></div>
+                    <div class="sc-metric warning"><h4>Orders Today</h4><strong>{{ today_orders }}</strong><small>Created today</small></div>
+                    <div class="sc-metric warning"><h4>Pending</h4><strong>{{ pending_orders }}</strong><small>Awaiting processing</small></div>
+                    <div class="sc-metric secondary"><h4>In Fulfillment</h4><strong>{{ processing_orders }}</strong><small>Processing to shipped</small></div>
+                    <div class="sc-metric danger"><h4>Low Stock</h4><strong>{{ low_stock_total }}</strong><small>{{ low_stock_critical }} critical (<=2)</small></div>
+                    <div class="sc-metric danger"><h4>Catalog Quality</h4><strong>{{ books_without_cover }}</strong><small>No cover, {{ books_without_category }} without category</small></div>
                 </div>
             </div>
 
-            <div class="sc-chart-grid">
-                <div class="sc-card sc-chart">
-                    <div class="sc-card-title">Sales Last 14 Days</div>
-                    <canvas id="salesDailyChart" height="120"></canvas>
+            <div class="sc-graphs">
+                <div class="sc-card">
+                    <h3 class="sc-title">Sales Last 14 Days</h3>
+                    <canvas id="salesDailyChart" height="110"></canvas>
                 </div>
-                <div class="sc-card sc-chart">
-                    <div class="sc-card-title">Sales Last 12 Months</div>
-                    <canvas id="salesMonthlyChart" height="120"></canvas>
+                <div class="sc-card">
+                    <h3 class="sc-title">Sales Last 12 Months</h3>
+                    <canvas id="salesMonthlyChart" height="110"></canvas>
                 </div>
             </div>
 
-            <div class="sc-chart-grid">
-                <div class="sc-card sc-chart">
-                    <div class="sc-card-title">Best Selling Books</div>
+            <div class="sc-two-col">
+                <div class="sc-card">
+                    <h3 class="sc-title">Recent Orders</h3>
                     <table class="sc-table">
                         <thead>
                             <tr>
-                                <th>Book</th>
-                                <th>Units</th>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
                             </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><a href="/admin/store/order/{{ order.id }}/change/">#{{ order.id }}</a></td>
+                                <td>{{ order.full_name }}</td>
+                                <td><span class="sc-status {{ order.status }}">{{ order.status }}</span></td>
+                                <td>&#8377;{{ order.total_cost|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4">No orders yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="sc-card">
+                    <h3 class="sc-title">Best Selling Books</h3>
+                    <table class="sc-table">
+                        <thead>
+                            <tr><th>Book</th><th>Units</th></tr>
                         </thead>
                         <tbody>
                             {% for row in best_sellers %}
                             <tr>
                                 <td>{{ row.book__title }}</td>
-                                <td><span class="sc-tag">{{ row.qty }}</span></td>
+                                <td><span class="sc-pill">{{ row.qty }}</span></td>
                             </tr>
                             {% empty %}
                             <tr><td colspan="2">No sales yet.</td></tr>
@@ -419,20 +414,20 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="sc-card sc-chart">
-                    <div class="sc-card-title">Low Stock Alerts</div>
+            </div>
+
+            <div class="sc-two-col">
+                <div class="sc-card">
+                    <h3 class="sc-title">Low Stock Alerts</h3>
                     <table class="sc-table">
                         <thead>
-                            <tr>
-                                <th>Book</th>
-                                <th>Stock</th>
-                            </tr>
+                            <tr><th>Book</th><th>Stock</th></tr>
                         </thead>
                         <tbody>
                             {% for book in low_stock %}
                             <tr>
                                 <td>{{ book.title }}</td>
-                                <td><span class="sc-tag sc-tag--danger">{{ book.stock }}</span></td>
+                                <td><span class="sc-pill bad">{{ book.stock }}</span></td>
                             </tr>
                             {% empty %}
                             <tr><td colspan="2">Stock levels look good.</td></tr>
@@ -440,10 +435,30 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="sc-card">
+                    <h3 class="sc-title">Recent Publish Submissions</h3>
+                    <table class="sc-table">
+                        <thead>
+                            <tr><th>Title</th><th>Author</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in recent_submissions %}
+                            <tr>
+                                <td><a href="/admin/store/publishwithussubmission/{{ sub.id }}/change/">{{ sub.title|truncatechars:38 }}</a></td>
+                                <td>{{ sub.author_name|truncatechars:20 }}</td>
+                                <td>{{ sub.created_at|date:"M d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3">No submissions yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="sc-card">
-                <div class="sc-card-title">Manage</div>
+                <h3 class="sc-title">All Management Modules</h3>
                 <div class="sc-app-list">
                     {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
                 </div>
@@ -467,8 +482,8 @@
                 datasets: [{
                     label: "Sales",
                     data: dailyData,
-                    borderColor: "#0f766e",
-                    backgroundColor: "rgba(15, 118, 110, 0.12)",
+                    borderColor: "#0f7a86",
+                    backgroundColor: "rgba(15, 122, 134, 0.13)",
                     tension: 0.35,
                     fill: true
                 }]
@@ -492,8 +507,8 @@
                 datasets: [{
                     label: "Sales",
                     data: monthlyData,
-                    backgroundColor: "rgba(37, 99, 235, 0.18)",
-                    borderColor: "#2563eb",
+                    backgroundColor: "rgba(47, 93, 224, 0.2)",
+                    borderColor: "#2f5de0",
                     borderWidth: 1
                 }]
             },
