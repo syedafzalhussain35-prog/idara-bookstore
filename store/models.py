@@ -612,6 +612,11 @@ class Order(models.Model):
         default=0
     )
 
+    payment_method = models.CharField(max_length=30, default="razorpay")
+    razorpay_order_id = models.CharField(max_length=100, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True)
+    razorpay_signature = models.CharField(max_length=200, blank=True)
+
     # Status
     is_paid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -750,6 +755,8 @@ class AuditLog(models.Model):
 class SiteSettings(models.Model):
     background_image = models.ImageField(upload_to="site/", blank=True, null=True)
     loader_logo = models.ImageField(upload_to="site/", blank=True, null=True)
+    sales_offers_label = models.CharField(max_length=40, default="Sales/Offers")
+    sales_offers_enabled = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

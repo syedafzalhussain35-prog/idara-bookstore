@@ -71,6 +71,8 @@ def navbar_categories(request):
     settings_obj = SiteSettings.objects.filter(is_active=True).first()
     site_background_url = settings_obj.background_image.url if settings_obj and settings_obj.background_image else ""
     site_loader_logo = settings_obj.loader_logo.url if settings_obj and settings_obj.loader_logo else ""
+    sales_offers_label = settings_obj.sales_offers_label if settings_obj and settings_obj.sales_offers_label else "Sales/Offers"
+    sales_offers_enabled = settings_obj.sales_offers_enabled if settings_obj else True
 
     return {
         'nav_categories': nav_categories,
@@ -84,4 +86,6 @@ def navbar_categories(request):
         'wishlist_count': wishlist_count,
         'site_background_url': site_background_url,
         'site_loader_logo': site_loader_logo,
+        'sales_offers_label': sales_offers_label,
+        'sales_offers_enabled': sales_offers_enabled,
     }

@@ -305,6 +305,13 @@ SHIPPING_FLAT = Decimal(os.getenv("SHIPPING_FLAT", "0"))
 SHIPPING_PER_KG = Decimal(os.getenv("SHIPPING_PER_KG", "0"))
 
 # ==================================================
+# RAZORPAY
+# ==================================================
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_ENABLED = bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)
+
+# ==================================================
 # BOOK WATERMARK
 # ==================================================
 BOOK_WATERMARK_ENABLED = os.getenv("BOOK_WATERMARK_ENABLED", "true").lower() == "true"

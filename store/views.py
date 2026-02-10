@@ -9,6 +9,7 @@ from django.db.models import Q, Avg, Count, Case, When, IntegerField, Sum
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
@@ -46,6 +47,15 @@ from .tasks import enqueue_order_confirmation, enqueue_order_alert
 logger = logging.getLogger(__name__)
 
 RECENTLY_VIEWED_LIMIT = 10
+
+def _get_razorpay_client():
+    if not getattr(settings, "RAZORPAY_ENABLED", False):
+        return None
+    try:
+        import razorpay
+    except Exception:
+        return None
+    return razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 
 def _update_recently_viewed(request, book_id):
@@ -603,373 +613,223 @@ def profile_view(request):
     user = request.user
     profile, _ = UserProfile.objects.get_or_create(user=user)
     if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        email = request.POST.get("email", "").strip()
-        first_name = request.POST.get("first_name", "").strip()
-        last_name = request.POST.get("last_name", "").strip()
-        phone = request.POST.get("phone", "").strip()
-        address = request.POST.get("address", "").strip()
-        city = request.POST.get("city", "").strip()
-        zip_code = request.POST.get("zip_code", "").strip()
-        company = request.POST.get("company", "").strip()
-
-        has_error = False
-
-        if username and username != user.username:
-            if User.objects.filter(username=username).exclude(id=user.id).exists():
-                messages.error(request, "Username already taken.")
-                has_error = True
-            else:
-                user.username = username
-
-        if email and email != user.email:
-            if User.objects.filter(email=email).exclude(id=user.id).exists():
-                messages.error(request, "Email already in use.")
-                has_error = True
-            else:
-                user.email = email
-
-        user.first_name = first_name
-        user.last_name = last_name
-        user.save()
-
-        profile.phone = phone
-        profile.address = address
-        profile.city = city
-        profile.zip_code = zip_code
-        profile.company = company
-        profile.save()
-
-        if not has_error:
-            messages.success(request, "Profile updated successfully.")
-        return redirect('profile')
-
-    orders = Order.objects.filter(user=user).prefetch_related('items__book')
-    addresses = UserAddress.objects.filter(user=user)
-    return render(request, 'store/profile.html', {
-        'orders': orders,
-        'profile': profile,
-        'addresses': addresses,
-    })
-
-
-@login_required
-@require_POST
-def add_address(request):
-    label = request.POST.get("label", "Home").strip() or "Home"
-    full_name = request.POST.get("full_name", "").strip()
-    phone = request.POST.get("phone", "").strip()
-    address = request.POST.get("address", "").strip()
-    city = request.POST.get("city", "").strip()
-    zip_code = request.POST.get("zip_code", "").strip()
-    is_default = bool(request.POST.get("is_default"))
-
-    if not address or not city:
-        messages.error(request, "Address and city are required.")
-        return redirect("profile")
-
-    if is_default:
-        UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
-
-    UserAddress.objects.create(
-        user=request.user,
-        label=label,
-        full_name=full_name,
-        phone=phone,
-        address=address,
-        city=city,
-        zip_code=zip_code,
-        is_default=is_default,
-    )
-    messages.success(request, "Address saved.")
-    return redirect("profile")
-
-
-@login_required
-@require_POST
-def set_default_address(request, address_id):
-    address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-    UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
-    address.is_default = True
-    address.save(update_fields=["is_default"])
-    messages.success(request, "Default address updated.")
-    return redirect("profile")
-
-
-@login_required
-@require_POST
-def delete_address(request, address_id):
-    address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-    address.delete()
-    messages.success(request, "Address deleted.")
-    return redirect("profile")
-
-
-# ==================================================
-# CART
-# ==================================================
-
-def _get_or_create_cart(request):
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        return cart
-
-    cart_id = request.session.get('cart_id')
-    cart = Cart.objects.filter(id=cart_id, user__isnull=True).first()
-    if cart:
-        return cart
-
-    cart = Cart.objects.create(user=None)
-    request.session['cart_id'] = cart.id
-    request.session.modified = True
-    return cart
-
-
-def add_to_cart(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
-    cart = _get_or_create_cart(request)
-
-    item, created = CartItem.objects.get_or_create(cart=cart, book=book)
-    if not created:
-        item.quantity += 1
-        item.save()
-
-    return redirect('cart_detail')
-
-
-def cart_detail(request):
-    cart = _get_or_create_cart(request)
-    has_cart_items = cart.items.exists() or cart.bundle_items.exists()
-    return render(request, 'store/cart.html', {
-        'cart': cart,
-        'cart_items': cart.items.select_related('book'),
-        'bundle_items': cart.bundle_items.select_related('bundle'),
-        'has_cart_items': has_cart_items,
-    })
-
-
-def update_cart_item(request, item_id, action):
-    cart = _get_or_create_cart(request)
-    item = get_object_or_404(CartItem, id=item_id, cart=cart)
-    if action == "plus":
-        item.quantity += 1
-        item.save(update_fields=["quantity"])
-    elif action == "minus":
-        if item.quantity > 1:
-            item.quantity -= 1
-            item.save(update_fields=["quantity"])
-        else:
-            item.delete()
-    return redirect("cart_detail")
-
-
-def update_bundle_item(request, item_id, action):
-    cart = _get_or_create_cart(request)
-    item = get_object_or_404(CartBundleItem, id=item_id, cart=cart)
-    if action == "plus":
-        item.quantity += 1
-        item.save(update_fields=["quantity"])
-    elif action == "minus":
-        if item.quantity > 1:
-            item.quantity -= 1
-            item.save(update_fields=["quantity"])
-        else:
-            item.delete()
-    return redirect("cart_detail")
-
-def remove_from_cart(request, item_id):
-    cart = _get_or_create_cart(request)
-    CartItem.objects.filter(id=item_id, cart=cart).delete()
-    return redirect('cart_detail')
-
-
-def add_bundle_to_cart(request, bundle_id):
-    bundle = get_object_or_404(Bundle, id=bundle_id, is_active=True)
-    cart = _get_or_create_cart(request)
-
-    item, created = CartBundleItem.objects.get_or_create(cart=cart, bundle=bundle)
-    if not created:
-        item.quantity += 1
-        item.save()
-
-    return redirect('cart_detail')
-
-
-def remove_bundle_from_cart(request, item_id):
-    cart = _get_or_create_cart(request)
-    CartBundleItem.objects.filter(id=item_id, cart=cart).delete()
-    return redirect('cart_detail')
-
-
-# ==================================================
-# CHECKOUT + AUTO USER HANDLING 🧾
-# ==================================================
-def checkout(request):
-    # 🛒 Cart handling
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-    else:
-        # Better Guest logic: Check session for a temporary cart ID
-        cart_id = request.session.get('cart_id')
-        cart = Cart.objects.filter(id=cart_id, user__isnull=True).first()
-    
-    if not cart or not (cart.items.exists() or cart.bundle_items.exists()):
-        return redirect('cart_detail')
-
-    addresses = []
-    default_address = None
-    if request.user.is_authenticated:
-        addresses = list(UserAddress.objects.filter(user=request.user))
-        default_address = next((addr for addr in addresses if addr.is_default), None)
-
-    subtotal = cart.get_total()
-    discount_amount = Decimal("0.00")
-    # Calculate item-level discounts (MRP - Price)
-    for item in cart.items.select_related("book").all():
-        if item.book.mrp_price and item.book.mrp_price > item.book.price:
-            discount_amount += (item.book.mrp_price - item.book.price) * item.quantity
-    # Bundle discount if bundle_price is lower than sum of book prices
-    for bitem in cart.bundle_items.select_related("bundle").all():
-        original_total = bitem.bundle.original_total
-        if original_total and original_total > bitem.bundle.bundle_price:
-            discount_amount += (original_total - bitem.bundle.bundle_price) * bitem.quantity
-
-    # Shipping by weight (uses Book.weight text, if present)
-    shipping_base = Decimal(str(getattr(settings, "SHIPPING_FLAT", 0)))
-    shipping_per_kg = Decimal(str(getattr(settings, "SHIPPING_PER_KG", 0)))
-    total_weight = Decimal("0.00")
-    for item in cart.items.select_related("book").all():
-        raw = (item.book.weight or "").strip()
-        if raw:
-            match = re.search(r"(\d+(?:\.\d+)?)", raw)
-            if match:
-                try:
-                    total_weight += Decimal(match.group(1)) * item.quantity
-                except Exception:
-                    pass
-    shipping_amount = shipping_base + (total_weight * shipping_per_kg)
-
-    gst_rate = Decimal(str(getattr(settings, "GST_RATE", 0)))
-    gst_amount = (subtotal - discount_amount) * gst_rate / Decimal("100") if gst_rate else Decimal("0.00")
-    total_cost = subtotal - discount_amount + gst_amount + shipping_amount
-
-    if request.method == "POST":
-        email = request.POST.get("email")
-        full_name = request.POST.get("full_name")
-        
-        # 🔐 AUTO USER HANDLING
-        user = None
-        if request.user.is_authenticated:
-            user = request.user
-        else:
-            # Atomic check to prevent duplicate user creation under high load
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={"username": email}
-            )
-
-            if created:
-                password = get_random_string(10)
-                user.set_password(password)
-                user.save()
-            
-            # Attach the guest cart to the newly created user
-            cart.user = user
-            cart.save()
-
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-
-        # 🧾 CREATE ORDER
-        with transaction.atomic():
-            order = Order.objects.create(
-                user=user,
-                full_name=full_name,
-                email=email,
-                mobile=request.POST.get("mobile"),
-                address=request.POST.get("address"),
-                city=request.POST.get("city"),
-                zip_code=request.POST.get("zip_code"),
-                subtotal=subtotal,
-                discount_amount=discount_amount,
-                gst_rate=gst_rate,
-                gst_amount=gst_amount,
-                shipping_amount=shipping_amount,
-                total_cost=total_cost,
-                status="Processing",
-                is_paid=False,
-            )
-
-            for item in cart.items.all():
-                OrderItem.objects.create(
-                    order=order,
-                    book=item.book,
-                    price=item.book.price,
-                    quantity=item.quantity
-                )
-                # 📦 Update Stock
-                if item.book.stock >= item.quantity:
-                    item.book.stock -= item.quantity
-                    item.book.save()
-
-            for bundle_item in cart.bundle_items.select_related("bundle").all():
-                books = list(bundle_item.bundle.books.all())
-                if not books:
-                    continue
-                per_book_price = bundle_item.bundle.bundle_price / len(books)
-                for book in books:
-                    OrderItem.objects.create(
-                        order=order,
-                        book=book,
-                        price=per_book_price,
-                        quantity=bundle_item.quantity
-                    )
-                    if book.stock >= bundle_item.quantity:
-                        book.stock -= bundle_item.quantity
-                        book.save()
-
-            # 🧹 Clear cart
-            cart.items.all().delete()
-            cart.bundle_items.all().delete()
-            # Clean up guest session
-            if 'cart_id' in request.session:
-                del request.session['cart_id']
-
-        if request.user.is_authenticated and request.POST.get("save_address"):
-            label = request.POST.get("address_label", "Checkout").strip() or "Checkout"
-            is_default = bool(request.POST.get("set_default"))
-            if is_default:
-                UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
-            UserAddress.objects.create(
-                user=request.user,
-                label=label,
-                full_name=full_name,
-                phone=request.POST.get("mobile"),
-                address=request.POST.get("address"),
-                city=request.POST.get("city"),
-                zip_code=request.POST.get("zip_code"),
-                is_default=is_default,
-            )
-
-        # Send confirmation + admin alert (best-effort)
-        enqueue_order_confirmation(order.id)
-        enqueue_order_alert(order.id)
-
-        token = signing.dumps({"order_id": order.id, "email": order.email})
-        return render(request, 'store/order_success.html', {
-            'order': order,
-            'invoice_token': token,
-        })
+        messages.error(request, "Please complete payment to place the order.")
+        return redirect("checkout")
 
     return render(request, "store/checkout.html", {
         'cart': cart,
-        'subtotal': subtotal,
-        'discount_amount': discount_amount,
-        'gst_rate': gst_rate,
-        'gst_amount': gst_amount,
-        'shipping_amount': shipping_amount,
-        'total_cost': total_cost,
+        **totals,
         'addresses': addresses,
         'default_address': default_address,
+        'razorpay_key_id': getattr(settings, "RAZORPAY_KEY_ID", ""),
+        'razorpay_enabled': getattr(settings, "RAZORPAY_ENABLED", False),
+    })
+
+
+@require_POST
+def razorpay_create_order(request):
+    if not getattr(settings, "RAZORPAY_ENABLED", False):
+        return JsonResponse({"ok": False, "error": "Razorpay is not configured."}, status=400)
+
+    client = _get_razorpay_client()
+    if not client:
+        return JsonResponse({"ok": False, "error": "Razorpay client not available."}, status=400)
+
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    else:
+        cart_id = request.session.get('cart_id')
+        cart = Cart.objects.filter(id=cart_id, user__isnull=True).first()
+
+    if not cart or not (cart.items.exists() or cart.bundle_items.exists()):
+        return JsonResponse({"ok": False, "error": "Cart is empty."}, status=400)
+
+    full_name = (request.POST.get("full_name") or "").strip()
+    email = (request.POST.get("email") or "").strip()
+    if not full_name or not email:
+        return JsonResponse({"ok": False, "error": "Name and email are required."}, status=400)
+
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    else:
+        user, created = User.objects.get_or_create(email=email, defaults={"username": email})
+        if created:
+            password = get_random_string(10)
+            user.set_password(password)
+            user.save()
+        cart.user = user
+        cart.save(update_fields=["user"])
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+    totals = _calculate_checkout_totals(cart)
+
+    with transaction.atomic():
+        order = Order.objects.create(
+            user=user,
+            full_name=full_name,
+            email=email,
+            mobile=request.POST.get("mobile"),
+            address=request.POST.get("address"),
+            city=request.POST.get("city"),
+            zip_code=request.POST.get("zip_code"),
+            subtotal=totals["subtotal"],
+            discount_amount=totals["discount_amount"],
+            gst_rate=totals["gst_rate"],
+            gst_amount=totals["gst_amount"],
+            shipping_amount=totals["shipping_amount"],
+            total_cost=totals["total_cost"],
+            status="Pending",
+            is_paid=False,
+            payment_method="razorpay",
+        )
+
+        for item in cart.items.select_related("book").all():
+            OrderItem.objects.create(
+                order=order,
+                book=item.book,
+                price=item.book.price,
+                quantity=item.quantity,
+            )
+
+        for bundle_item in cart.bundle_items.select_related("bundle").all():
+            books = list(bundle_item.bundle.books.all())
+            if not books:
+                continue
+            per_book_price = bundle_item.bundle.bundle_price / len(books)
+            for book in books:
+                OrderItem.objects.create(
+                    order=order,
+                    book=book,
+                    price=per_book_price,
+                    quantity=bundle_item.quantity,
+                )
+
+    if request.user.is_authenticated and request.POST.get("save_address"):
+        label = request.POST.get("address_label", "Checkout").strip() or "Checkout"
+        is_default = bool(request.POST.get("set_default"))
+        if is_default:
+            UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+        UserAddress.objects.create(
+            user=request.user,
+            label=label,
+            full_name=full_name,
+            phone=request.POST.get("mobile"),
+            address=request.POST.get("address"),
+            city=request.POST.get("city"),
+            zip_code=request.POST.get("zip_code"),
+            is_default=is_default,
+        )
+
+    amount_paise = int(totals["total_cost"] * Decimal("100"))
+    try:
+        rz_order = client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "payment_capture": 1,
+            "receipt": f"order_{order.id}",
+        })
+    except Exception:
+        logger.exception("Failed to create Razorpay order")
+        return JsonResponse({"ok": False, "error": "Unable to initiate payment."}, status=500)
+
+    order.razorpay_order_id = rz_order.get("id", "")
+    order.save(update_fields=["razorpay_order_id"])
+
+    return JsonResponse({
+        "ok": True,
+        "razorpay_key_id": getattr(settings, "RAZORPAY_KEY_ID", ""),
+        "razorpay_order_id": order.razorpay_order_id,
+        "amount": amount_paise,
+        "currency": "INR",
+        "order_id": order.id,
+        "name": "Idara Kitab Ul Shifa",
+        "prefill": {
+            "name": full_name,
+            "email": email,
+            "contact": request.POST.get("mobile", ""),
+        },
+    })
+
+
+@require_POST
+def razorpay_verify_payment(request):
+    if not getattr(settings, "RAZORPAY_ENABLED", False):
+        return JsonResponse({"ok": False, "error": "Razorpay is not configured."}, status=400)
+
+    client = _get_razorpay_client()
+    if not client:
+        return JsonResponse({"ok": False, "error": "Razorpay client not available."}, status=400)
+
+    order_id = request.POST.get("order_id")
+    razorpay_order_id = request.POST.get("razorpay_order_id")
+    razorpay_payment_id = request.POST.get("razorpay_payment_id")
+    razorpay_signature = request.POST.get("razorpay_signature")
+
+    if not all([order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature]):
+        return JsonResponse({"ok": False, "error": "Missing payment details."}, status=400)
+
+    order = get_object_or_404(Order, id=order_id, razorpay_order_id=razorpay_order_id)
+
+    try:
+        client.utility.verify_payment_signature({
+            "razorpay_order_id": razorpay_order_id,
+            "razorpay_payment_id": razorpay_payment_id,
+            "razorpay_signature": razorpay_signature,
+        })
+    except Exception:
+        return JsonResponse({"ok": False, "error": "Payment verification failed."}, status=400)
+
+    order.is_paid = True
+    order.status = "Processing"
+    order.razorpay_payment_id = razorpay_payment_id
+    order.razorpay_signature = razorpay_signature
+    order.save(update_fields=["is_paid", "status", "razorpay_payment_id", "razorpay_signature"])
+
+    for item in order.items.select_related("book").all():
+        if item.book.stock >= item.quantity:
+            item.book.stock -= item.quantity
+            item.book.save(update_fields=["stock"])
+
+    if order.user_id:
+        cart = Cart.objects.filter(user_id=order.user_id).first()
+        if cart:
+            cart.items.all().delete()
+            cart.bundle_items.all().delete()
+    else:
+        if 'cart_id' in request.session:
+            del request.session['cart_id']
+
+    enqueue_order_confirmation(order.id)
+    enqueue_order_alert(order.id)
+
+    token = signing.dumps({"order_id": order.id, "email": order.email})
+    success_url = reverse("order_success", args=[order.id]) + f"?token={token}"
+
+    return JsonResponse({"ok": True, "redirect_url": success_url})
+
+
+def order_success_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    token = request.GET.get("token")
+
+    if request.user.is_authenticated:
+        if not (request.user.is_staff or order.user_id == request.user.id):
+            return redirect("home")
+    else:
+        if not token:
+            return redirect("home")
+        try:
+            data = signing.loads(token, max_age=60 * 60 * 24 * 7)
+        except Exception:
+            return redirect("home")
+        if data.get("order_id") != order.id or data.get("email") != order.email:
+            return redirect("home")
+
+    invoice_token = signing.dumps({"order_id": order.id, "email": order.email})
+    return render(request, "store/order_success.html", {
+        "order": order,
+        "invoice_token": invoice_token,
     })
 # ==================================================
 # STATIC & POLICY PAGES

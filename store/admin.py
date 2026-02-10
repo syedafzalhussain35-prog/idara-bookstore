@@ -481,10 +481,11 @@ class OrderAdmin(admin.ModelAdmin):
         "full_name",
         "email_link",
         "total_cost_display",
+        "payment_method",
+        "is_paid",
         "invoice_link",
         "city",
         "status",
-        "is_paid",
         "created_at",
     )
 
@@ -499,6 +500,10 @@ class OrderAdmin(admin.ModelAdmin):
         "gst_amount",
         "shipping_amount",
         "total_cost",
+        "payment_method",
+        "razorpay_order_id",
+        "razorpay_payment_id",
+        "razorpay_signature",
     )
 
     date_hierarchy = "created_at"
@@ -751,12 +756,15 @@ class AuditLogAdmin(admin.ModelAdmin):
 
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ("id", "is_active", "created_at")
+    list_display = ("id", "sales_offers_label", "sales_offers_enabled", "is_active", "created_at")
     list_filter = ("is_active", "created_at")
     ordering = ("-created_at",)
     fieldsets = (
         ("Branding", {
             "fields": ("background_image", "loader_logo")
+        }),
+        ("Navbar", {
+            "fields": ("sales_offers_label", "sales_offers_enabled")
         }),
         ("Status", {
             "fields": ("is_active",)

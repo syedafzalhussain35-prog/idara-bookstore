@@ -113,8 +113,10 @@
         align-items: center;
         flex-wrap: nowrap;
         overflow-x: auto;
+        overflow-y: visible;
         scrollbar-width: none;
-        z-index: 3;
+        position: relative;
+        z-index: 1035;
     }
 
     .user-actions::-webkit-scrollbar {
@@ -795,6 +797,10 @@
         padding-left: 15px;
         border-left: 3px solid var(--accent-gold);
         margin-left: 10px;
+    }
+
+    .menu-navbar .dropdown.show > .dropdown-menu {
+        display: block;
     }
 
     .dropdown-submenu.show > .dropdown-menu {

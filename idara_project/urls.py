@@ -81,6 +81,9 @@ urlpatterns = [
     path('cart/item/<int:item_id>/<str:action>/', views.update_cart_item, name='update_cart_item'),
     path('cart/bundle/<int:item_id>/<str:action>/', views.update_bundle_item, name='update_bundle_item'),
     path('checkout/', views.checkout, name='checkout'),
+    path('checkout/razorpay/create/', views.razorpay_create_order, name='razorpay_create_order'),
+    path('checkout/razorpay/verify/', views.razorpay_verify_payment, name='razorpay_verify_payment'),
+    path('order-success/<int:order_id>/', views.order_success_view, name='order_success'),
     path('invoice/<int:order_id>/', views.invoice_view, name='invoice'),
 ]
 
