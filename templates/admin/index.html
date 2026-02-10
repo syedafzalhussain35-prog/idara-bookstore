@@ -283,16 +283,16 @@
             <div class="sc-card sc-card--info">
                 <div class="sc-card-title">Actions</div>
                 <ul class="sc-list">
-                    <li><a href="{% url 'admin:store_book_add' %}">Add Book</a> <span>Publish a new title</span></li>
-                    <li><a href="{% url 'admin:store_banner_add' %}">Add Banner</a> <span>Refresh homepage</span></li>
-                    <li><a href="{% url 'admin:store_order_changelist' %}">View Orders</a> <span>Track recent activity</span></li>
+                    <li><a href="{% url 'idara_admin:store_book_add' %}">Add Book</a> <span>Publish a new title</span></li>
+                    <li><a href="{% url 'idara_admin:store_banner_add' %}">Add Banner</a> <span>Refresh homepage</span></li>
+                    <li><a href="{% url 'idara_admin:store_order_changelist' %}">View Orders</a> <span>Track recent activity</span></li>
                 </ul>
             </div>
             <div class="sc-card sc-card--info">
                 <div class="sc-card-title">Store Settings</div>
                 <ul class="sc-list">
                     <li>
-                        <a href="{% url 'admin:store_sitesettings_changelist' %}">Site Settings</a>
+                        <a href="{% url 'idara_admin:store_sitesettings_changelist' %}">Site Settings</a>
                         <span>
                             {% if settings_obj %}
                                 Background {% if settings_obj.background_image %}set{% else %}not set{% endif %},
@@ -302,8 +302,8 @@
                             {% endif %}
                         </span>
                     </li>
-                    <li><a href="{% url 'admin:store_banner_changelist' %}">Banners</a> <span>{{ banners_total }} total</span></li>
-                    <li><a href="{% url 'admin:store_coupon_changelist' %}">Coupons</a> <span>{{ active_coupons }} active</span></li>
+                    <li><a href="{% url 'idara_admin:store_banner_changelist' %}">Banners</a> <span>{{ banners_total }} total</span></li>
+                    <li><a href="{% url 'idara_admin:store_coupon_changelist' %}">Coupons</a> <span>{{ active_coupons }} active</span></li>
                 </ul>
             </div>
             <div class="sc-card sc-card--info">
@@ -327,16 +327,16 @@
                 <div class="sc-card-title">Communications</div>
                 <p>Stay on top of customer questions and order updates.</p>
                 <ul class="sc-list">
-                    <li><a href="{% url 'admin:store_review_changelist' %}">Reviews</a> <span>Respond to feedback</span></li>
-                    <li><a href="{% url 'admin:store_auditlog_changelist' %}">Audit Logs</a> <span>Track admin changes</span></li>
+                    <li><a href="{% url 'idara_admin:store_review_changelist' %}">Reviews</a> <span>Respond to feedback</span></li>
+                    <li><a href="{% url 'idara_admin:store_auditlog_changelist' %}">Audit Logs</a> <span>Track admin changes</span></li>
                 </ul>
             </div>
             <div class="sc-card sc-card--success">
                 <div class="sc-card-title">Merchandising</div>
                 <ul class="sc-list">
-                    <li><a href="{% url 'admin:store_category_changelist' %}">Categories</a> <span>{{ categories_total }} total</span></li>
-                    <li><a href="{% url 'admin:store_subject_changelist' %}">Subjects</a> <span>{{ subjects_total }} total</span></li>
-                    <li><a href="{% url 'admin:store_bundle_changelist' %}">Bundles</a> <span>{{ bundles_total }} total</span></li>
+                    <li><a href="{% url 'idara_admin:store_category_changelist' %}">Categories</a> <span>{{ categories_total }} total</span></li>
+                    <li><a href="{% url 'idara_admin:store_subject_changelist' %}">Subjects</a> <span>{{ subjects_total }} total</span></li>
+                    <li><a href="{% url 'idara_admin:store_bundle_changelist' %}">Bundles</a> <span>{{ bundles_total }} total</span></li>
                 </ul>
             </div>
             <div class="sc-card sc-card--warning">
