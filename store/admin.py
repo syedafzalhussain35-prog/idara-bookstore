@@ -796,18 +796,29 @@ class BannerAdmin(admin.ModelAdmin):
         "category",
         "order",
         "is_active",
+        "show_on_mobile",
+        "show_on_desktop",
         "focal_x",
         "focal_y",
         "mobile_height",
         "tablet_height",
     )
-    list_editable = ("order", "is_active", "focal_x", "focal_y", "mobile_height", "tablet_height")
+    list_editable = (
+        "order",
+        "is_active",
+        "show_on_mobile",
+        "show_on_desktop",
+        "focal_x",
+        "focal_y",
+        "mobile_height",
+        "tablet_height",
+    )
     search_fields = ("title", "headline", "subheadline")
     ordering = ("order", "id")
 
     fieldsets = (
         ("Banner", {
-            "fields": ("title", "headline", "subheadline", "image", "category", "order", "is_active")
+            "fields": ("title", "headline", "subheadline", "image", "category", "order", "is_active", "show_on_mobile", "show_on_desktop")
         }),
         ("CTA", {
             "fields": ("cta_text", "cta_category")

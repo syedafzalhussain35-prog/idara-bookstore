@@ -136,9 +136,20 @@ class Book(models.Model):
     def _cloudinary_raw_url(self, url):
         if not url:
             return ""
-        if "/image/upload/" in url:
-            return url.replace("/image/upload/", "/raw/upload/")
-        return url
+        raw = str(url).strip()
+        clean = raw
+
+        # Extract first URL-like token and trim accidental trailing paste chars.
+        if "http://" in raw or "https://" in raw:
+            for token in raw.split():
+                if token.startswith("http://") or token.startswith("https://"):
+                    clean = token
+                    break
+        clean = clean.strip("[]()'\",")
+
+        if "/image/upload/" in clean:
+            return clean.replace("/image/upload/", "/raw/upload/")
+        return clean
 
     @property
     def toc_pdf_url(self):
@@ -234,6 +245,14 @@ class Banner(models.Model):
     )
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    show_on_mobile = models.BooleanField(
+        default=False,
+        help_text="Enable this banner for mobile screens.",
+    )
+    show_on_desktop = models.BooleanField(
+        default=True,
+        help_text="Enable this banner for desktop/tablet screens.",
+    )
     focal_x = models.PositiveSmallIntegerField(default=50)
     focal_y = models.PositiveSmallIntegerField(default=50)
     mobile_height = models.PositiveSmallIntegerField(

@@ -126,22 +126,22 @@
             <div class="book-tabs mt-4">
                 <ul class="nav nav-tabs" id="bookTab" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="desc-tab" data-bs-toggle="tab"
-                                data-bs-target="#desc" type="button" role="tab"
-                                aria-controls="desc" aria-selected="true">
-                            Description
+                        <button class="nav-link active" id="spec-tab" data-bs-toggle="tab"
+                                data-bs-target="#spec" type="button" role="tab"
+                                aria-controls="spec" aria-selected="true">
+                            Specifications
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="spec-tab" data-bs-toggle="tab"
-                                data-bs-target="#spec" type="button" role="tab"
-                                aria-controls="spec" aria-selected="false">
-                            Specifications
+                        <button class="nav-link" id="desc-tab" data-bs-toggle="tab"
+                                data-bs-target="#desc" type="button" role="tab"
+                                aria-controls="desc" aria-selected="false">
+                            Description
                         </button>
                     </li>
                 </ul>
                 <div class="tab-content p-4 bg-white shadow-sm rounded-bottom">
-                    <div class="tab-pane fade show active" id="desc" role="tabpanel" aria-labelledby="desc-tab">
+                    <div class="tab-pane fade" id="desc" role="tabpanel" aria-labelledby="desc-tab">
                         {% if book.description %}
                         <div class="desc-text text-secondary">
                             {{ book.description|linebreaks }}
@@ -170,7 +170,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="tab-pane fade" id="spec" role="tabpanel" aria-labelledby="spec-tab">
+                    <div class="tab-pane fade show active" id="spec" role="tabpanel" aria-labelledby="spec-tab">
                         <div class="table-responsive">
                             <table class="table table-sm specs-table mb-0">
                                 <tbody>

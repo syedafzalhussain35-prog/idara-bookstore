@@ -48,6 +48,12 @@ logger = logging.getLogger(__name__)
 
 RECENTLY_VIEWED_LIMIT = 10
 
+
+def _is_mobile_request(request):
+    ua = (request.META.get("HTTP_USER_AGENT") or "").lower()
+    return bool(re.search(r"android|iphone|ipod|mobile|opera mini|iemobile", ua))
+
+
 def _get_razorpay_client():
     if not getattr(settings, "RAZORPAY_ENABLED", False):
         return None
@@ -94,6 +100,25 @@ def _ordered_by_ids(model, ids):
     return model.objects.filter(id__in=ids).order_by(preserved)
 
 
+def _bundle_max_quantity(bundle):
+    stocks = list(bundle.books.values_list("stock", flat=True))
+    if not stocks:
+        return 0
+    return min(stocks)
+
+
+def _validate_cart_stock(cart):
+    issues = []
+    for item in cart.items.select_related("book").all():
+        if item.quantity > item.book.stock:
+            issues.append(f"{item.book.title} (available: {item.book.stock})")
+    for bitem in cart.bundle_items.select_related("bundle").all():
+        available = _bundle_max_quantity(bitem.bundle)
+        if bitem.quantity > available:
+            issues.append(f"{bitem.bundle.name} bundle (available: {available})")
+    return issues
+
+
 def _cache_get_ids(key, queryset, ttl):
     cached_ids = cache.get(key)
     if cached_ids is not None:
@@ -109,10 +134,19 @@ def _cache_get_ids(key, queryset, ttl):
 
 def home(request):
     cache_ttl = getattr(settings, "HOME_CACHE_TTL", 120)
+    is_mobile = _is_mobile_request(request)
+
+    banner_filter = Q(is_active=True)
+    if is_mobile:
+        banner_filter &= Q(show_on_mobile=True)
+        banner_cache_key = "home:banners:mobile"
+    else:
+        banner_filter &= Q(show_on_desktop=True)
+        banner_cache_key = "home:banners:desktop"
 
     banner_ids = _cache_get_ids(
-        "home:banners",
-        Banner.objects.filter(is_active=True).order_by("order", "id"),
+        banner_cache_key,
+        Banner.objects.filter(banner_filter).order_by("order", "id"),
         cache_ttl,
     )
     banners = _ordered_by_ids(Banner, banner_ids)
@@ -739,11 +773,23 @@ def add_to_cart(request, book_id):
     book = get_object_or_404(Book, id=book_id)
     cart = _get_or_create_cart(request)
 
-    item, created = CartItem.objects.get_or_create(cart=cart, book=book)
-    if not created:
-        item.quantity += 1
-        item.save()
+    if book.stock < 1:
+        messages.error(request, "This book is out of stock.")
+        return redirect(request.META.get('HTTP_REFERER', 'cart_detail'))
 
+    item, created = CartItem.objects.get_or_create(cart=cart, book=book)
+    if created:
+        if item.quantity > book.stock:
+            item.quantity = book.stock
+            item.save(update_fields=["quantity"])
+        return redirect('cart_detail')
+
+    if item.quantity >= book.stock:
+        messages.warning(request, f"Only {book.stock} copy/copies available for {book.title}.")
+        return redirect('cart_detail')
+
+    item.quantity += 1
+    item.save(update_fields=["quantity"])
     return redirect('cart_detail')
 
 
@@ -762,6 +808,13 @@ def update_cart_item(request, item_id, action):
     cart = _get_or_create_cart(request)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
     if action == "plus":
+        if item.book.stock < 1:
+            messages.error(request, f"{item.book.title} is out of stock.")
+            item.delete()
+            return redirect("cart_detail")
+        if item.quantity >= item.book.stock:
+            messages.warning(request, f"Only {item.book.stock} copy/copies available for {item.book.title}.")
+            return redirect("cart_detail")
         item.quantity += 1
         item.save(update_fields=["quantity"])
     elif action == "minus":
@@ -777,6 +830,14 @@ def update_bundle_item(request, item_id, action):
     cart = _get_or_create_cart(request)
     item = get_object_or_404(CartBundleItem, id=item_id, cart=cart)
     if action == "plus":
+        available = _bundle_max_quantity(item.bundle)
+        if available < 1:
+            messages.error(request, f"{item.bundle.name} bundle is out of stock.")
+            item.delete()
+            return redirect("cart_detail")
+        if item.quantity >= available:
+            messages.warning(request, f"Only {available} copy/copies available for {item.bundle.name} bundle.")
+            return redirect("cart_detail")
         item.quantity += 1
         item.save(update_fields=["quantity"])
     elif action == "minus":
@@ -797,12 +858,25 @@ def remove_from_cart(request, item_id):
 def add_bundle_to_cart(request, bundle_id):
     bundle = get_object_or_404(Bundle, id=bundle_id, is_active=True)
     cart = _get_or_create_cart(request)
+    available = _bundle_max_quantity(bundle)
+
+    if available < 1:
+        messages.error(request, f"{bundle.name} bundle is out of stock.")
+        return redirect(request.META.get('HTTP_REFERER', 'cart_detail'))
 
     item, created = CartBundleItem.objects.get_or_create(cart=cart, bundle=bundle)
-    if not created:
-        item.quantity += 1
-        item.save()
+    if created:
+        if item.quantity > available:
+            item.quantity = available
+            item.save(update_fields=["quantity"])
+        return redirect('cart_detail')
 
+    if item.quantity >= available:
+        messages.warning(request, f"Only {available} copy/copies available for {bundle.name} bundle.")
+        return redirect('cart_detail')
+
+    item.quantity += 1
+    item.save(update_fields=["quantity"])
     return redirect('cart_detail')
 
 
@@ -864,6 +938,11 @@ def checkout(request):
     if not cart or not (cart.items.exists() or cart.bundle_items.exists()):
         return redirect('cart_detail')
 
+    stock_issues = _validate_cart_stock(cart)
+    if stock_issues:
+        messages.error(request, "Some items exceed stock: " + ", ".join(stock_issues[:3]))
+        return redirect('cart_detail')
+
     addresses = []
     default_address = None
     if request.user.is_authenticated:
@@ -903,6 +982,10 @@ def razorpay_create_order(request):
 
     if not cart or not (cart.items.exists() or cart.bundle_items.exists()):
         return JsonResponse({"ok": False, "error": "Cart is empty."}, status=400)
+
+    stock_issues = _validate_cart_stock(cart)
+    if stock_issues:
+        return JsonResponse({"ok": False, "error": "Some items exceed stock: " + ", ".join(stock_issues[:3])}, status=400)
 
     full_name = (request.POST.get("full_name") or "").strip()
     email = (request.POST.get("email") or "").strip()

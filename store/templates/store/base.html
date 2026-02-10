@@ -371,6 +371,13 @@
 
                         <li>
                             <a class="dropdown-item" target="_blank"
+                               href="https://res.cloudinary.com/dbntthdy5/raw/upload/v1/books/pdfs/Digital_Books_New_List_dyiwum">
+                                Digital Books List
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" target="_blank"
                                href="{% static 'store/catalogues/english-catalogue.pdf' %}">
                                 English Catalogue
                             </a>
@@ -447,20 +454,22 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ============================
        MOBILE SUBMENU TOGGLE
     ============================ */
+    const shouldToggleSubmenu = () =>
+        window.innerWidth < 992 || window.matchMedia("(hover: none)").matches;
+
     document.querySelectorAll(".dropdown-submenu > .dropdown-toggle").forEach(link => {
         link.addEventListener("click", function (e) {
-            if (window.innerWidth < 992) {
-                e.preventDefault();
-                e.stopPropagation();
-                const parent = this.closest(".dropdown-submenu");
-                if (!parent) return;
-                const isOpen = parent.classList.contains("show");
-                document.querySelectorAll(".dropdown-submenu.show").forEach(openItem => {
-                    openItem.classList.remove("show");
-                });
-                if (!isOpen) {
-                    parent.classList.add("show");
-                }
+            if (!shouldToggleSubmenu()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const parent = this.closest(".dropdown-submenu");
+            if (!parent) return;
+            const isOpen = parent.classList.contains("show");
+            document.querySelectorAll(".dropdown-submenu.show").forEach(openItem => {
+                openItem.classList.remove("show");
+            });
+            if (!isOpen) {
+                parent.classList.add("show");
             }
         });
     });
@@ -499,6 +508,48 @@ document.addEventListener("DOMContentLoaded", function () {
             if (window.innerWidth < 992) {
                 e.stopPropagation();
             }
+        });
+    });
+
+    /* ============================
+       MOBILE USER ACTIONS DROPDOWN
+    ============================ */
+    document.querySelectorAll(".user-actions .dropdown > .dropdown-toggle").forEach(toggle => {
+        toggle.addEventListener("click", function (e) {
+            if (window.innerWidth >= 992) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const parent = this.closest(".dropdown");
+            if (!parent) return;
+            const menu = parent.querySelector(".dropdown-menu");
+            const isOpen = parent.classList.contains("show");
+
+            document.querySelectorAll(".user-actions .dropdown.show").forEach(openItem => {
+                openItem.classList.remove("show");
+                const openMenu = openItem.querySelector(".dropdown-menu");
+                const openToggle = openItem.querySelector(".dropdown-toggle");
+                if (openMenu) openMenu.classList.remove("show");
+                if (openToggle) openToggle.setAttribute("aria-expanded", "false");
+            });
+
+            if (!isOpen) {
+                parent.classList.add("show");
+                if (menu) menu.classList.add("show");
+                this.setAttribute("aria-expanded", "true");
+            }
+        });
+    });
+
+    document.addEventListener("click", function (e) {
+        if (window.innerWidth >= 992) return;
+        if (e.target.closest(".user-actions")) return;
+        document.querySelectorAll(".user-actions .dropdown.show").forEach(openItem => {
+            openItem.classList.remove("show");
+            const openMenu = openItem.querySelector(".dropdown-menu");
+            const openToggle = openItem.querySelector(".dropdown-toggle");
+            if (openMenu) openMenu.classList.remove("show");
+            if (openToggle) openToggle.setAttribute("aria-expanded", "false");
         });
     });
 
