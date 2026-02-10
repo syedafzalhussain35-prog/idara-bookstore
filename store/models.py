@@ -133,6 +133,25 @@ class Book(models.Model):
         super().save(*args, **kwargs)
         self._apply_watermark_if_needed()
 
+    def _cloudinary_raw_url(self, url):
+        if not url:
+            return ""
+        if "/image/upload/" in url:
+            return url.replace("/image/upload/", "/raw/upload/")
+        return url
+
+    @property
+    def toc_pdf_url(self):
+        if not self.toc_pdf:
+            return ""
+        return self._cloudinary_raw_url(self.toc_pdf.url)
+
+    @property
+    def sample_pdf_url(self):
+        if not self.sample_pdf:
+            return ""
+        return self._cloudinary_raw_url(self.sample_pdf.url)
+
 
 class BookImage(models.Model):
     book = models.ForeignKey(
