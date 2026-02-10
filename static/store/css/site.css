@@ -1628,7 +1628,7 @@ footer {
         box-shadow: 0 18px 36px rgba(12, 20, 46, 0.14);
         overflow: hidden;
         position: relative;
-        aspect-ratio: 16 / 9;
+        height: clamp(320px, 45vw, 520px);
     }
 
     .hero-slide::after {
@@ -1819,7 +1819,7 @@ footer {
 
     @media (max-width: 991px) {
         .hero-slide {
-            aspect-ratio: 3 / 2;
+            height: var(--banner-height-tablet, 420px);
         }
 
         .swiper-button-next,
@@ -1854,7 +1854,7 @@ footer {
 
     @media (max-width: 420px) {
         .hero-slide {
-            aspect-ratio: 1 / 1;
+            height: var(--banner-height-mobile, 360px);
         }
 
         .subject-grid {
