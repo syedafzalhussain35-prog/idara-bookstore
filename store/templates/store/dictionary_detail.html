@@ -1,0 +1,37 @@
+{% extends 'store/base.html' %}
+
+{% block title %}{{ meta_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <a href="{% url 'dictionary_list' %}" class="small text-decoration-none">&larr; Back to Dictionary</a>
+
+    <div class="card border-0 shadow-sm mt-2">
+        <div class="card-body p-4">
+            <h1 class="h3 fw-bold mb-3" style="color: var(--primary-magenta);">{{ term.english_term }}</h1>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="small text-muted">Transliteration</div>
+                    <div class="fw-semibold">{{ term.transliteration|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small text-muted">Arabic/Persian/Urdu Script</div>
+                    <div class="fw-semibold" style="direction: rtl; text-align: right; font-family: 'Amiri', serif;">
+                        {{ term.arabic_script|default:"-" }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small text-muted">Section</div>
+                    <div class="fw-semibold">{{ term.section|default:"-" }}</div>
+                </div>
+                <div class="col-12">
+                    <div class="small text-muted mb-1">Description</div>
+                    <div class="lh-lg">{{ term.description|linebreaks }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

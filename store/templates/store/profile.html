@@ -114,19 +114,34 @@
                         <div class="col-12">
                             <div class="border rounded p-3 bg-light">
                                 <div class="fw-semibold mb-2 text-magenta">IKS Coins+ Eligibility</div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="iks_follow_instagram" id="iksFollowInstagram"
-                                           {% if profile.iks_follow_instagram %}checked{% endif %}>
-                                    <label class="form-check-label" for="iksFollowInstagram">
-                                        I follow IKS on Instagram
-                                    </label>
+                                <div class="small text-muted mb-2">
+                                    Follow first, then tick the checkboxes to confirm.
                                 </div>
-                                <div class="form-check mt-1">
-                                    <input class="form-check-input" type="checkbox" name="iks_follow_facebook" id="iksFollowFacebook"
-                                           {% if profile.iks_follow_facebook %}checked{% endif %}>
-                                    <label class="form-check-label" for="iksFollowFacebook">
-                                        I follow IKS on Facebook
-                                    </label>
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" name="iks_follow_instagram" id="iksFollowInstagram"
+                                               {% if profile.iks_follow_instagram %}checked{% endif %}>
+                                        <label class="form-check-label" for="iksFollowInstagram">
+                                            I follow IKS on Instagram
+                                        </label>
+                                    </div>
+                                    <a href="https://www.instagram.com/idara_kit_ul_shifa/" target="_blank" rel="noopener noreferrer"
+                                       class="btn btn-sm btn-outline-dark text-nowrap">
+                                        <i class="fab fa-instagram me-1"></i> Follow
+                                    </a>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" name="iks_follow_facebook" id="iksFollowFacebook"
+                                               {% if profile.iks_follow_facebook %}checked{% endif %}>
+                                        <label class="form-check-label" for="iksFollowFacebook">
+                                            I follow IKS on Facebook
+                                        </label>
+                                    </div>
+                                    <a href="https://www.facebook.com/idarakitabulshifa" target="_blank" rel="noopener noreferrer"
+                                       class="btn btn-sm btn-outline-dark text-nowrap">
+                                        <i class="fab fa-facebook-f me-1"></i> Follow
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -338,7 +353,15 @@
                                             <span class="h5 fw-bold text-magenta">₹{{ order.total_cost }}</span>
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
-                                            <small class="text-muted">Status: {{ order.status }}</small>
+                                            <small class="text-muted">
+                                                Status: {{ order.status }}{% if order.sub_status %} - {{ order.sub_status }}{% endif %}
+                                            </small>
+                                            <form method="post" action="{% url 'reorder_order' order.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-brand-outline">
+                                                    Reorder
+                                                </button>
+                                            </form>
                                             <a href="{% url 'invoice' order.id %}" class="btn btn-sm btn-outline-dark">
                                                 Invoice
                                             </a>

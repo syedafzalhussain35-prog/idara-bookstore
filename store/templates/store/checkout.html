@@ -130,6 +130,25 @@
                         <hr class="my-4">
 
                         <h5 class="fw-bold mb-3" style="color: var(--primary-magenta);">
+                            Coupon
+                        </h5>
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="coupon_code" value="{{ coupon_code }}"
+                                       placeholder="Enter coupon code (optional)">
+                                <button class="btn btn-outline-dark" type="button" id="applyCouponBtn">Apply</button>
+                            </div>
+                            {% if selected_coupon %}
+                            <div class="small text-success mt-2">
+                                Coupon <strong>{{ selected_coupon.code }}</strong> applied.
+                            </div>
+                            {% endif %}
+                            {% if coupon_error %}
+                            <div class="small text-danger mt-2">❌ {{ coupon_error }}</div>
+                            {% endif %}
+                        </div>
+
+                        <h5 class="fw-bold mb-3" style="color: var(--primary-magenta);">
                             Payment Method
                         </h5>
 
@@ -287,13 +306,17 @@
                         <span>Shipping</span>
                         <span>₹{{ shipping_amount }}</span>
                     </div>
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Coupon Discount</span>
+                        <span>- &#8377;{{ coupon_discount|default:"0.00" }}</span>
+                    </div>
 
                     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
                         <span class="h5 fw-bold">Total</span>
                         <span class="h5 fw-bold"
                               style="color: var(--primary-magenta);"
                               id="grandTotal">
-                            ₹{{ total_cost }}
+                            ₹{{ payable_total|default:total_cost }}
                         </span>
                     </div>
                 </div>
@@ -335,6 +358,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("checkoutForm");
     const button = document.getElementById("placeOrderBtn");
     if (!form) return;
+
+    const applyCouponBtn = document.getElementById("applyCouponBtn");
+    if (applyCouponBtn) {
+        applyCouponBtn.addEventListener("click", function () {
+            const couponField = form.querySelector('[name="coupon_code"]');
+            const redeemField = form.querySelector('[name="redeem_coins"]');
+            const params = new URLSearchParams();
+            if (couponField && couponField.value.trim()) params.set("coupon_code", couponField.value.trim());
+            if (redeemField && redeemField.value.trim()) params.set("redeem_coins", redeemField.value.trim());
+            const target = "{% url 'checkout' %}" + (params.toString() ? ("?" + params.toString()) : "");
+            window.location.href = target;
+        });
+    }
 
     const razorpayEnabled = form.dataset.razorpayEnabled === "1";
     if (!razorpayEnabled) return;
@@ -448,7 +484,9 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Unable to start payment.");
         });
     });
+
 });
 </script>
 
 {% endblock %}
+

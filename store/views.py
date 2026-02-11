@@ -19,6 +19,7 @@ import logging
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
+from string import ascii_uppercase
 
 
 from .models import (
@@ -40,6 +41,7 @@ from .models import (
     PublishWithUsSubmission,
     Banner,
     SearchQueryLog,
+    UnaniTerm,
 )
 from .email_utils import send_publish_with_us
 from .tasks import enqueue_order_confirmation, enqueue_order_alert
@@ -115,6 +117,13 @@ def _ordered_by_ids(model, ids):
         return model.objects.none()
     preserved = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(ids)], output_field=IntegerField())
     return model.objects.filter(id__in=ids).order_by(preserved)
+
+
+def _recommended_books(limit=6, exclude_ids=None):
+    exclude_ids = exclude_ids or []
+    qs = Book.objects.filter(stock__gt=0).exclude(id__in=exclude_ids)
+    qs = qs.order_by("-is_bestseller", "-is_trending", "-created_at")
+    return qs[:limit]
 
 
 def _bundle_max_quantity(bundle):
@@ -430,6 +439,7 @@ def search(request):
             user=request.user
         ).values_list('book_id', flat=True)
 
+    has_filters = bool(subject_slug or min_price or max_price or rating)
     return render(request, 'store/search_results.html', {
         'books': books,
         'query': query,
@@ -440,7 +450,69 @@ def search(request):
         'rating': rating,
         'subjects': Subject.objects.filter(is_active=True).order_by('name'),
         'wishlist_ids': wishlist_ids,
+        'has_filters': has_filters,
+        'suggested_books': _recommended_books(limit=8),
         'is_homepage': False,
+    })
+
+
+def dictionary_list(request):
+    query = (request.GET.get("q") or "").strip()
+    selected_section = (request.GET.get("section") or "").strip()
+    selected_letter = (request.GET.get("letter") or "").strip().upper()
+
+    terms_qs = UnaniTerm.objects.filter(is_published=True)
+
+    if query:
+        terms_qs = terms_qs.filter(
+            Q(english_term__icontains=query)
+            | Q(transliteration__icontains=query)
+            | Q(arabic_script__icontains=query)
+            | Q(description__icontains=query)
+        )
+
+    all_sections = list(
+        UnaniTerm.objects.filter(is_published=True)
+        .exclude(section="")
+        .values_list("section", flat=True)
+        .distinct()
+        .order_by("section")
+    )
+    if selected_section and selected_section in all_sections:
+        terms_qs = terms_qs.filter(section=selected_section)
+    else:
+        selected_section = ""
+
+    if selected_letter and selected_letter in ascii_uppercase:
+        terms_qs = terms_qs.filter(english_term__istartswith=selected_letter)
+    else:
+        selected_letter = ""
+
+    page_size = int(getattr(settings, "DICTIONARY_PAGE_SIZE", 20))
+    paginator = Paginator(terms_qs, page_size)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "store/dictionary_list.html", {
+        "page_obj": page_obj,
+        "query": query,
+        "selected_section": selected_section,
+        "selected_letter": selected_letter,
+        "letters": list(ascii_uppercase),
+        "sections": all_sections,
+    })
+
+
+def dictionary_detail(request, slug):
+    term = get_object_or_404(UnaniTerm, slug=slug, is_published=True)
+    description_snippet = strip_tags(term.description or "").strip()
+    meta_description = description_snippet[:150]
+    if len(description_snippet) > 150:
+        meta_description += "..."
+
+    return render(request, "store/dictionary_detail.html", {
+        "term": term,
+        "meta_title": f"{term.english_term} Meaning in Unani | IKS Dictionary",
+        "meta_description": meta_description,
     })
 
 
@@ -628,7 +700,11 @@ def login_page(request):
 @login_required
 def wishlist_view(request):
     wishlist_items = Wishlist.objects.select_related('book').filter(user=request.user)
-    return render(request, 'store/wishlist.html', {'wishlist_items': wishlist_items})
+    exclude_ids = [item.book_id for item in wishlist_items]
+    return render(request, 'store/wishlist.html', {
+        'wishlist_items': wishlist_items,
+        'suggested_books': _recommended_books(limit=6, exclude_ids=exclude_ids),
+    })
 
 
 @login_required
@@ -827,11 +903,13 @@ def add_to_cart(request, book_id):
 def cart_detail(request):
     cart = _get_or_create_cart(request)
     has_cart_items = cart.items.exists() or cart.bundle_items.exists()
+    exclude_ids = list(cart.items.values_list("book_id", flat=True))
     return render(request, 'store/cart.html', {
         'cart': cart,
         'cart_items': cart.items.select_related('book'),
         'bundle_items': cart.bundle_items.select_related('bundle'),
         'has_cart_items': has_cart_items,
+        'suggested_books': _recommended_books(limit=6, exclude_ids=exclude_ids),
     })
 
 
@@ -917,6 +995,37 @@ def remove_bundle_from_cart(request, item_id):
     return redirect('cart_detail')
 
 
+@login_required
+@require_POST
+def reorder_order(request, order_id):
+    source_order = get_object_or_404(Order.objects.prefetch_related("items__book"), id=order_id, user=request.user)
+    cart = _get_or_create_cart(request)
+    added = 0
+    skipped = 0
+    for order_item in source_order.items.all():
+        book = order_item.book
+        if book.stock <= 0:
+            skipped += 1
+            continue
+        cart_item, _ = CartItem.objects.get_or_create(cart=cart, book=book)
+        max_addable = max(book.stock - cart_item.quantity, 0)
+        qty_to_add = min(order_item.quantity, max_addable)
+        if qty_to_add <= 0:
+            skipped += 1
+            continue
+        cart_item.quantity += qty_to_add
+        cart_item.save(update_fields=["quantity"])
+        added += qty_to_add
+
+    if added:
+        messages.success(request, f"Reorder added ({added} item(s)) to your cart.")
+    if skipped:
+        messages.warning(request, f"{skipped} item(s) skipped due to stock limits.")
+    if not added and not skipped:
+        messages.info(request, "No items available to reorder.")
+    return redirect("cart_detail")
+
+
 def _calculate_checkout_totals(cart):
     subtotal = cart.get_total()
     discount_amount = Decimal("0.00")
@@ -956,6 +1065,48 @@ def _calculate_checkout_totals(cart):
     }
 
 
+def _cart_category_ids(cart):
+    return list(
+        cart.items.select_related("book__category")
+        .exclude(book__category__isnull=True)
+        .values_list("book__category_id", flat=True)
+        .distinct()
+    )
+
+
+def _validate_coupon_for_cart(raw_code, cart, subtotal):
+    code = (raw_code or "").strip().upper()
+    if not code:
+        return None, ""
+
+    coupon = Coupon.objects.filter(code__iexact=code).first()
+    if not coupon:
+        return None, "❌ Invalid coupon code."
+
+    valid, message = coupon.validate_for_cart(
+        subtotal=subtotal,
+        category_ids=_cart_category_ids(cart),
+    )
+    if not valid:
+        return None, message
+    return coupon, "Coupon applied."
+
+
+def _totals_with_coupon(base_totals, coupon):
+    totals = dict(base_totals)
+    coupon_discount = Decimal("0.00")
+    if coupon:
+        coupon_discount = coupon.discount_amount_for_subtotal(totals["subtotal"])
+    combined_discount = totals["discount_amount"] + coupon_discount
+    taxable = max(totals["subtotal"] - combined_discount, Decimal("0.00"))
+    gst_amount = taxable * totals["gst_rate"] / Decimal("100") if totals["gst_rate"] else Decimal("0.00")
+    totals["coupon_discount"] = coupon_discount
+    totals["discount_amount"] = combined_discount
+    totals["gst_amount"] = gst_amount
+    totals["total_cost"] = taxable + totals["shipping_amount"] + gst_amount
+    return totals
+
+
 # ==================================================
 # CHECKOUT + AUTO USER HANDLING
 # ==================================================
@@ -980,30 +1131,35 @@ def checkout(request):
         addresses = list(UserAddress.objects.filter(user=request.user))
         default_address = next((addr for addr in addresses if addr.is_default), None)
 
-    totals = _calculate_checkout_totals(cart)
-    requested_redeem = 0
-    estimated_earn = 0
-    payable_total = totals["total_cost"]
-    if user and user.is_authenticated:
-        process_due_pending_rewards_for_user(user)
-        wallet = get_wallet(user)
-        max_redeemable = get_max_redeemable(wallet, totals["total_cost"])
-        try:
-            requested_redeem = int(request.POST.get("redeem_coins") or 0)
-        except (TypeError, ValueError):
-            requested_redeem = 0
-        requested_redeem = max(0, min(requested_redeem, max_redeemable))
-        estimated_earn = estimate_purchase_coins(user, totals["total_cost"])
-        payable_total = totals["total_cost"] - Decimal(requested_redeem)
-        if payable_total < 0:
-            payable_total = Decimal("0.00")
+    base_totals = _calculate_checkout_totals(cart)
+    coupon_code = (request.GET.get("coupon_code") or "").strip()
+    selected_coupon = None
+    coupon_error = ""
+    if coupon_code:
+        selected_coupon, coupon_error = _validate_coupon_for_cart(coupon_code, cart, base_totals["subtotal"])
+        if not selected_coupon and coupon_error:
+            messages.error(request, f"{coupon_error}")
+    totals = _totals_with_coupon(base_totals, selected_coupon)
+
     wallet = None
     max_redeemable = 0
     coin_settings = get_coin_settings()
+    requested_redeem = 0
+    estimated_earn = 0
+    payable_total = totals["total_cost"]
     if request.user.is_authenticated:
         process_due_pending_rewards_for_user(request.user)
         wallet = get_wallet(request.user)
         max_redeemable = get_max_redeemable(wallet, totals["total_cost"])
+        estimated_earn = estimate_purchase_coins(request.user, totals["total_cost"])
+        try:
+            requested_redeem = int(request.GET.get("redeem_coins") or 0)
+        except (TypeError, ValueError):
+            requested_redeem = 0
+        requested_redeem = max(0, min(requested_redeem, max_redeemable))
+        payable_total = totals["total_cost"] - Decimal(requested_redeem)
+        if payable_total < 0:
+            payable_total = Decimal("0.00")
 
     if request.method == "POST":
         messages.error(request, "Please complete payment to place the order.")
@@ -1016,9 +1172,14 @@ def checkout(request):
         'default_address': default_address,
         'razorpay_key_id': getattr(settings, "RAZORPAY_KEY_ID", ""),
         'razorpay_enabled': getattr(settings, "RAZORPAY_ENABLED", False),
+        'selected_coupon': selected_coupon,
+        'coupon_code': coupon_code,
+        'coupon_error': coupon_error,
         'coin_wallet': wallet,
         'coin_max_redeemable': max_redeemable,
         'coin_settings': coin_settings,
+        'requested_redeem': requested_redeem,
+        'payable_total': payable_total,
     })
 
 
@@ -1062,7 +1223,28 @@ def razorpay_create_order(request):
         cart.save(update_fields=["user"])
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-    totals = _calculate_checkout_totals(cart)
+    base_totals = _calculate_checkout_totals(cart)
+    coupon_code = (request.POST.get("coupon_code") or "").strip()
+    selected_coupon, coupon_error = _validate_coupon_for_cart(coupon_code, cart, base_totals["subtotal"])
+    if coupon_code and not selected_coupon:
+        return JsonResponse({"ok": False, "error": coupon_error}, status=400)
+    totals = _totals_with_coupon(base_totals, selected_coupon)
+    requested_redeem = 0
+    estimated_earn = 0
+    payable_total = totals["total_cost"]
+    if user and user.is_authenticated:
+        process_due_pending_rewards_for_user(user)
+        wallet = get_wallet(user)
+        max_redeemable = get_max_redeemable(wallet, totals["total_cost"])
+        try:
+            requested_redeem = int(request.POST.get("redeem_coins") or 0)
+        except (TypeError, ValueError):
+            requested_redeem = 0
+        requested_redeem = max(0, min(requested_redeem, max_redeemable))
+        estimated_earn = estimate_purchase_coins(user, totals["total_cost"])
+        payable_total = totals["total_cost"] - Decimal(requested_redeem)
+        if payable_total < 0:
+            payable_total = Decimal("0.00")
 
     with transaction.atomic():
         order = Order.objects.create(
@@ -1079,6 +1261,7 @@ def razorpay_create_order(request):
             gst_amount=totals["gst_amount"],
             shipping_amount=totals["shipping_amount"],
             total_cost=payable_total,
+            coupon=selected_coupon,
             status="Pending",
             is_paid=False,
             payment_method="razorpay",
@@ -1190,10 +1373,26 @@ def razorpay_verify_payment(request):
     order.save(update_fields=["is_paid", "status", "razorpay_payment_id", "razorpay_signature"])
     apply_redemption_for_order(order)
 
+    partial_backorder = []
     for item in order.items.select_related("book").all():
-        if item.book.stock >= item.quantity:
-            item.book.stock -= item.quantity
+        available = max(item.book.stock, 0)
+        allocated = min(item.quantity, available)
+        backordered = max(item.quantity - allocated, 0)
+        if allocated:
+            item.book.stock -= allocated
             item.book.save(update_fields=["stock"])
+        item.allocated_quantity = allocated
+        item.backordered_quantity = backordered
+        item.save(update_fields=["allocated_quantity", "backordered_quantity"])
+        if backordered:
+            partial_backorder.append(f"{item.book.title} ({backordered})")
+
+    if partial_backorder:
+        order.sub_status = "Partially allocated, waiting for stock"
+        order.internal_comment = (
+            "Partial allocation at payment: " + ", ".join(partial_backorder[:6])
+        )
+        order.save(update_fields=["sub_status", "internal_comment"])
 
     if order.user_id:
         cart = Cart.objects.filter(user_id=order.user_id).first()

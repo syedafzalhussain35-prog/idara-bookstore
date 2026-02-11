@@ -39,6 +39,7 @@ from .models import (
     IKSCoinsSettings,
     IKSWallet,
     IKSWalletTransaction,
+    UnaniTerm,
 )
 from .admin_site import IdaraAdminSite
 from .coins import manual_adjust_wallet, queue_order_pending_rewards, process_due_pending_rewards_for_user
@@ -471,7 +472,7 @@ class BookAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ("book", "price", "quantity")
+    readonly_fields = ("book", "price", "quantity", "allocated_quantity", "backordered_quantity")
     can_delete = False
 
 
@@ -486,9 +487,12 @@ class OrderAdmin(admin.ModelAdmin):
         "full_name",
         "email_link",
         "total_cost_display",
+        "sub_status",
         "coins_redeemed",
         "coins_earned_final",
         "coin_status",
+        "packing_assignee",
+        "shipping_assignee",
         "payment_method",
         "is_paid",
         "invoice_link",
@@ -497,7 +501,7 @@ class OrderAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = ("status", "is_paid", "created_at", "city")
+    list_filter = ("status", "is_paid", "created_at", "city", "packing_assignee", "shipping_assignee")
     search_fields = ("full_name", "email", "city", "user__username")
     readonly_fields = (
         "user",
@@ -711,6 +715,7 @@ class CouponAdmin(admin.ModelAdmin):
         "code",
         "discount_type",
         "value",
+        "minimum_order_amount",
         "active",
         "expiry_date",
         "is_valid_coupon",
@@ -723,7 +728,7 @@ class CouponAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Coupon Details", {
-            "fields": ("code", "discount_type", "value")
+            "fields": ("code", "discount_type", "value", "minimum_order_amount", "valid_categories")
         }),
         ("Status & Expiry", {
             "fields": ("expiry_date", "active")
@@ -744,6 +749,28 @@ class CouponAdmin(admin.ModelAdmin):
         if obj.expiry_date and obj.expiry_date < timezone.now().date():
             obj.active = False
         super().save_model(request, obj, form, change)
+
+
+@admin.register(UnaniTerm)
+class UnaniTermAdmin(admin.ModelAdmin):
+    list_display = ("english_term", "section", "is_published", "updated_at")
+    search_fields = ("english_term", "transliteration", "arabic_script", "description")
+    list_filter = ("section", "is_published")
+    prepopulated_fields = {"slug": ("english_term",)}
+    ordering = ("english_term",)
+    readonly_fields = ("created_at", "updated_at")
+    list_per_page = 50
+    actions = ("publish_terms", "unpublish_terms")
+
+    @admin.action(description="Publish selected terms")
+    def publish_terms(self, request, queryset):
+        count = queryset.update(is_published=True)
+        self.message_user(request, f"{count} term(s) published.")
+
+    @admin.action(description="Unpublish selected terms")
+    def unpublish_terms(self, request, queryset):
+        count = queryset.update(is_published=False)
+        self.message_user(request, f"{count} term(s) unpublished.")
 
 
 # ======================
@@ -1020,3 +1047,4 @@ admin_site.register(SiteSettings, SiteSettingsAdmin)
 admin_site.register(IKSCoinsSettings, IKSCoinsSettingsAdmin)
 admin_site.register(IKSWallet, IKSWalletAdmin)
 admin_site.register(IKSWalletTransaction, IKSWalletTransactionAdmin)
+admin_site.register(UnaniTerm, UnaniTermAdmin)

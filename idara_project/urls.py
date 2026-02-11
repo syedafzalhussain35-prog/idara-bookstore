@@ -16,6 +16,7 @@ urlpatterns = [
     # AUTH (DJANGO-ALLAUTH)
     # ==================================================
     path('accounts/', include('allauth.urls')),
+    path('', include('store.urls')),
 
     # ==================================================
     # HOME & CATEGORY
@@ -55,6 +56,7 @@ urlpatterns = [
     path('profile/address/add/', views.add_address, name='add_address'),
     path('profile/address/<int:address_id>/default/', views.set_default_address, name='set_default_address'),
     path('profile/address/<int:address_id>/delete/', views.delete_address, name='delete_address'),
+    path('profile/order/<int:order_id>/reorder/', views.reorder_order, name='reorder_order'),
 
     # ==================================================
     # BOOKS & REVIEWS

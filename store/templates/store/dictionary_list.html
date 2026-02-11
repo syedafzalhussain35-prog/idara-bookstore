@@ -1,0 +1,195 @@
+{% extends 'store/base.html' %}
+
+{% block title %}IKS Unani Medical Dictionary{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="fw-bold mb-3" style="color: var(--primary-magenta);">IKS Unani Medical Dictionary</h1>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-12 col-md-6">
+            <div class="input-group">
+                <input type="text" id="dictionarySearchInput" name="q" class="form-control" value="{{ query }}" placeholder="Search English term, transliteration, Arabic script, description...">
+                <button class="btn btn-outline-dark" type="button" id="scriptKeyboardToggle">⌨ Script</button>
+            </div>
+            <div id="scriptKeyboardPanel" class="border rounded mt-2 p-2 bg-white" style="display:none;">
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ا</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ب</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">پ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ت</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ٹ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ث</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ج</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">چ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ح</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">خ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">د</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ڈ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ذ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ر</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ڑ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ز</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ژ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">س</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ش</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ص</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ض</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ط</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ظ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ع</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">غ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ف</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ق</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ک</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">گ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ل</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">م</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ن</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ں</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">و</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ہ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ھ</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ء</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ی</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ے</button>
+                </div>
+                <div class="d-flex flex-wrap gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="vkSpace">Space</button>
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="vkBackspace">Backspace</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="vkClear">Clear</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="vkClose">Close</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-8 col-md-3">
+            <select name="section" class="form-select">
+                <option value="">All sections</option>
+                {% for value in sections %}
+                <option value="{{ value }}" {% if selected_section == value %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-4 col-md-3 d-grid">
+            <button class="btn btn-brand" type="submit">Search</button>
+        </div>
+        {% if selected_letter %}
+        <input type="hidden" name="letter" value="{{ selected_letter }}">
+        {% endif %}
+    </form>
+
+    <div class="border rounded p-2 mb-3 bg-white">
+        <div class="d-flex flex-wrap gap-1">
+            <a class="btn btn-sm {% if not selected_letter %}btn-brand{% else %}btn-outline-secondary{% endif %}" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if selected_section %}section={{ selected_section|urlencode }}&{% endif %}">All</a>
+            {% for letter in letters %}
+            <a class="btn btn-sm {% if selected_letter == letter %}btn-brand{% else %}btn-outline-secondary{% endif %}" href="?letter={{ letter }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}">
+                {{ letter }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if page_obj.object_list %}
+    <div class="card border-0 shadow-sm">
+        <div class="list-group list-group-flush">
+            {% for item in page_obj.object_list %}
+            <a href="{% url 'dictionary_detail' item.slug %}" class="list-group-item list-group-item-action py-3">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <h2 class="h6 mb-1 fw-bold text-dark">{{ item.english_term }}</h2>
+                        <div class="small text-muted">{{ item.description|truncatechars:120 }}</div>
+                    </div>
+                    {% if item.section %}
+                    <span class="badge text-bg-light border">{{ item.section }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-light border mb-0">
+        No dictionary terms found for your current search/filter.
+    </div>
+    {% endif %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-4" aria-label="Dictionary pagination">
+        <ul class="pagination justify-content-center flex-wrap">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("dictionarySearchInput");
+    const panel = document.getElementById("scriptKeyboardPanel");
+    const toggle = document.getElementById("scriptKeyboardToggle");
+    if (!input || !panel || !toggle) return;
+
+    const insertAtCursor = (text) => {
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? input.value.length;
+        input.value = input.value.slice(0, start) + text + input.value.slice(end);
+        const pos = start + text.length;
+        input.setSelectionRange(pos, pos);
+        input.focus();
+    };
+
+    toggle.addEventListener("click", () => {
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+        if (panel.style.display === "block") input.focus();
+    });
+
+    panel.querySelectorAll(".vk-key").forEach((btn) => {
+        btn.addEventListener("click", () => insertAtCursor(btn.textContent || ""));
+    });
+
+    const backspace = document.getElementById("vkBackspace");
+    if (backspace) {
+        backspace.addEventListener("click", () => {
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? input.value.length;
+            if (start !== end) {
+                input.value = input.value.slice(0, start) + input.value.slice(end);
+                input.setSelectionRange(start, start);
+            } else if (start > 0) {
+                input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+                input.setSelectionRange(start - 1, start - 1);
+            }
+            input.focus();
+        });
+    }
+
+    const space = document.getElementById("vkSpace");
+    if (space) space.addEventListener("click", () => insertAtCursor(" "));
+
+    const clear = document.getElementById("vkClear");
+    if (clear) {
+        clear.addEventListener("click", () => {
+            input.value = "";
+            input.focus();
+        });
+    }
+
+    const close = document.getElementById("vkClose");
+    if (close) close.addEventListener("click", () => { panel.style.display = "none"; });
+});
+</script>
+{% endblock %}

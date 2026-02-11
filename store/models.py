@@ -570,6 +570,8 @@ class Coupon(models.Model):
         decimal_places=2,
         help_text="Percentage or flat amount"
     )
+    minimum_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    valid_categories = models.ManyToManyField("Category", blank=True, related_name="coupons")
     active = models.BooleanField(default=True)
     expiry_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -593,6 +595,23 @@ class Coupon(models.Model):
         if self.expiry_date and self.expiry_date < timezone.now().date():
             self.active = False
         super().save(*args, **kwargs)
+
+    def validate_for_cart(self, *, subtotal, category_ids):
+        if not self.active:
+            return False, "❌ Coupon inactive."
+        if self.expiry_date and self.expiry_date < timezone.now().date():
+            return False, "❌ Coupon expired."
+        if subtotal < self.minimum_order_amount:
+            return False, f"❌ Minimum order ₹{self.minimum_order_amount} required."
+        valid_ids = set(self.valid_categories.values_list("id", flat=True))
+        if valid_ids and not (set(category_ids) & valid_ids):
+            return False, "❌ Not valid for this category."
+        return True, "Coupon applied."
+
+    def discount_amount_for_subtotal(self, subtotal):
+        if self.discount_type == "percent":
+            return (subtotal * self.value) / Decimal("100")
+        return min(self.value, subtotal)
 # ======================
 # ORDERS
 # ======================
@@ -617,6 +636,23 @@ class Order(models.Model):
         ('Cancelled', 'Cancelled'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    sub_status = models.CharField(max_length=80, blank=True, default="")
+    customer_note = models.TextField(blank=True, default="")
+    internal_comment = models.TextField(blank=True, default="")
+    packing_assignee = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="packing_orders",
+    )
+    shipping_assignee = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="shipping_orders",
+    )
 
     # Added db_index for faster guest order lookups
     full_name = models.CharField(max_length=100)
@@ -707,6 +743,8 @@ class OrderItem(models.Model):
     book = models.ForeignKey(Book, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1)
+    allocated_quantity = models.PositiveIntegerField(default=0)
+    backordered_quantity = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f"{self.book.title} × {self.quantity}"
@@ -978,3 +1016,37 @@ def _apply_text_watermark(image_field, text):
     storage.save(name, ContentFile(buffer.read()))
     image_field.name = name
     return True
+
+class UnaniTerm(models.Model):
+    english_term = models.CharField(max_length=255, unique=True, db_index=True)
+    description = models.TextField()
+    transliteration = models.CharField(max_length=255, blank=True, db_index=True)
+    arabic_script = models.CharField(max_length=255, blank=True, db_index=True)
+    section = models.CharField(max_length=120, blank=True, db_index=True)
+    slug = models.SlugField(max_length=255, unique=True, db_index=True, blank=True)
+    is_published = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["english_term"]
+        indexes = [
+            models.Index(fields=["english_term"]),
+            models.Index(fields=["section", "is_published"]),
+            models.Index(fields=["is_published", "created_at"]),
+        ]
+
+    def __str__(self):
+        return self.english_term
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.english_term)[:245] or "term"
+            candidate = base
+            counter = 2
+            while UnaniTerm.objects.exclude(pk=self.pk).filter(slug=candidate).exists():
+                suffix = f"-{counter}"
+                candidate = f"{base[:255-len(suffix)]}{suffix}"
+                counter += 1
+            self.slug = candidate
+        super().save(*args, **kwargs)
