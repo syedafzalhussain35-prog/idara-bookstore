@@ -95,14 +95,26 @@
         <div class="list-group list-group-flush">
             {% for item in page_obj.object_list %}
             <a href="{% url 'dictionary_detail' item.slug %}" class="list-group-item list-group-item-action py-3">
-                <div class="d-flex justify-content-between align-items-start gap-2">
-                    <div>
-                        <h2 class="h6 mb-1 fw-bold text-dark">{{ item.english_term }}</h2>
-                        <div class="small text-muted">{{ item.description|truncatechars:120 }}</div>
-                    </div>
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <h2 class="h6 mb-0 fw-bold text-dark">{{ item.english_term }}</h2>
                     {% if item.section %}
                     <span class="badge text-bg-light border">{{ item.section }}</span>
                     {% endif %}
+                </div>
+                <div class="row g-2 align-items-start">
+                    <div class="col-md-6">
+                        <div class="small text-muted">Transliteration</div>
+                        <div class="fw-semibold">{{ item.transliteration|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted">Arabic/Persian/Urdu</div>
+                        <div class="fw-semibold p-2 rounded border bg-light"
+                             style="direction: rtl; text-align: right; font-family: 'Amiri', serif; min-height: 40px;">
+                            {{ item.arabic_script|default:"-" }}
+                        </div>
+                    </div>
+                </div>
+                <div class="small text-muted mt-2">{{ item.description|truncatechars:170 }}</div>
                 </div>
             </a>
             {% endfor %}
