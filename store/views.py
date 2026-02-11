@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Q, Avg, Count, Case, When, IntegerField, Sum
+from django.db.models import Q, Avg, Count, Case, When, IntegerField, Sum, Value
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -470,6 +470,17 @@ def dictionary_list(request):
             | Q(arabic_script__icontains=query)
             | Q(description__icontains=query)
         )
+        # Prioritize native script matches for Unani usage patterns.
+        terms_qs = terms_qs.annotate(
+            match_priority=Case(
+                When(arabic_script__icontains=query, then=Value(1)),
+                When(transliteration__icontains=query, then=Value(2)),
+                When(english_term__icontains=query, then=Value(3)),
+                When(description__icontains=query, then=Value(4)),
+                default=Value(5),
+                output_field=IntegerField(),
+            )
+        ).order_by("match_priority", "english_term")
 
     all_sections = list(
         UnaniTerm.objects.filter(is_published=True)
@@ -488,6 +499,7 @@ def dictionary_list(request):
     else:
         selected_letter = ""
 
+    total_published = UnaniTerm.objects.filter(is_published=True).count()
     page_size = int(getattr(settings, "DICTIONARY_PAGE_SIZE", 20))
     paginator = Paginator(terms_qs, page_size)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -499,6 +511,7 @@ def dictionary_list(request):
         "selected_letter": selected_letter,
         "letters": list(ascii_uppercase),
         "sections": all_sections,
+        "total_published": total_published,
     })
 
 

@@ -6,12 +6,13 @@
 <div class="container py-4">
     <h1 class="fw-bold mb-3" style="color: var(--primary-magenta);">IKS Unani Medical Dictionary</h1>
 
-    <form method="get" class="row g-2 mb-3">
+    <form method="get" class="row g-2 mb-3 align-items-start">
         <div class="col-12 col-md-6">
             <div class="input-group">
-                <input type="text" id="dictionarySearchInput" name="q" class="form-control" value="{{ query }}" placeholder="Search English term, transliteration, Arabic script, description...">
+                <input type="text" id="dictionarySearchInput" name="q" class="form-control" value="{{ query }}" placeholder="Search Urdu/Arabic/Persian term (recommended), transliteration, or English...">
                 <button class="btn btn-outline-dark" type="button" id="scriptKeyboardToggle">⌨ Script</button>
             </div>
+            <div class="small text-muted mt-1">Best results: search using Arabic/Persian/Urdu script terms.</div>
             <div id="scriptKeyboardPanel" class="border rounded mt-2 p-2 bg-white" style="display:none;">
                 <div class="d-flex flex-wrap gap-1 mb-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ا</button>
@@ -70,8 +71,8 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-4 col-md-3 d-grid">
-            <button class="btn btn-brand" type="submit">Search</button>
+        <div class="col-4 col-md-3 d-flex">
+            <button class="btn btn-brand w-100 py-2 align-self-start" type="submit">Search</button>
         </div>
         {% if selected_letter %}
         <input type="hidden" name="letter" value="{{ selected_letter }}">
@@ -109,7 +110,11 @@
     </div>
     {% else %}
     <div class="alert alert-light border mb-0">
+        {% if total_published == 0 %}
+        No dictionary entries are published yet. Please add/publish terms from admin.
+        {% else %}
         No dictionary terms found for your current search/filter.
+        {% endif %}
     </div>
     {% endif %}
 

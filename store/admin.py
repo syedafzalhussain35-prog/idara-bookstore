@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.urls import path
 from django.shortcuts import render
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
 import re
 from django.contrib.admin.helpers import ActionForm
@@ -754,13 +754,28 @@ class CouponAdmin(admin.ModelAdmin):
 @admin.register(UnaniTerm)
 class UnaniTermAdmin(admin.ModelAdmin):
     list_display = ("english_term", "section", "is_published", "updated_at")
-    search_fields = ("english_term", "transliteration", "arabic_script", "description")
+    search_fields = ("arabic_script", "transliteration", "english_term", "description")
     list_filter = ("section", "is_published")
     prepopulated_fields = {"slug": ("english_term",)}
     ordering = ("english_term",)
     readonly_fields = ("created_at", "updated_at")
     list_per_page = 50
     actions = ("publish_terms", "unpublish_terms")
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        if search_term:
+            queryset = queryset.annotate(
+                search_priority=Case(
+                    When(arabic_script__icontains=search_term, then=Value(1)),
+                    When(transliteration__icontains=search_term, then=Value(2)),
+                    When(english_term__icontains=search_term, then=Value(3)),
+                    When(description__icontains=search_term, then=Value(4)),
+                    default=Value(5),
+                    output_field=IntegerField(),
+                )
+            ).order_by("search_priority", "english_term")
+        return queryset, use_distinct
 
     @admin.action(description="Publish selected terms")
     def publish_terms(self, request, queryset):
