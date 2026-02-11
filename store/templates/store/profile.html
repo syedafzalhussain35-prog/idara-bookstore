@@ -112,6 +112,25 @@
                                    value="{{ profile.zip_code }}">
                         </div>
                         <div class="col-12">
+                            <div class="border rounded p-3 bg-light">
+                                <div class="fw-semibold mb-2 text-magenta">IKS Coins+ Eligibility</div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="iks_follow_instagram" id="iksFollowInstagram"
+                                           {% if profile.iks_follow_instagram %}checked{% endif %}>
+                                    <label class="form-check-label" for="iksFollowInstagram">
+                                        I follow IKS on Instagram
+                                    </label>
+                                </div>
+                                <div class="form-check mt-1">
+                                    <input class="form-check-input" type="checkbox" name="iks_follow_facebook" id="iksFollowFacebook"
+                                           {% if profile.iks_follow_facebook %}checked{% endif %}>
+                                    <label class="form-check-label" for="iksFollowFacebook">
+                                        I follow IKS on Facebook
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
                             <button type="submit"
                                     class="btn text-white fw-bold px-4"
                                     style="background-color:var(--primary-magenta);">
@@ -199,6 +218,75 @@
                             <button type="submit" class="btn btn-sm btn-brand">Save Address</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h4 class="fw-bold text-magenta mb-0">IKS Coins+ Wallet</h4>
+                    <p class="text-muted small mb-0">Track earnings, pending credits, and redemptions</p>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-2">
+                                <div class="small text-muted">Balance</div>
+                                <div class="fw-bold">{{ wallet.balance|default:0 }} Coins</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-2">
+                                <div class="small text-muted">Pending</div>
+                                <div class="fw-bold">{{ wallet.pending_balance|default:0 }} Coins</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-2">
+                                <div class="small text-muted">Total Earned</div>
+                                <div class="fw-bold">{{ wallet.total_earned|default:0 }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-2">
+                                <div class="small text-muted">Total Redeemed</div>
+                                <div class="fw-bold">{{ wallet.total_redeemed|default:0 }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-2">
+                                <div class="small text-muted">Monthly Earned</div>
+                                <div class="fw-bold">{{ wallet.monthly_earned|default:0 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Coins</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in coin_transactions %}
+                                <tr>
+                                    <td>{{ tx.created_at|date:"d M Y" }}</td>
+                                    <td>{{ tx.get_tx_type_display }}</td>
+                                    <td>{{ tx.get_status_display }}</td>
+                                    <td class="fw-semibold {% if tx.coins < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ tx.coins }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-muted">No coin transactions yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

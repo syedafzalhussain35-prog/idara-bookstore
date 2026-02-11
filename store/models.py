@@ -402,6 +402,8 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=100, blank=True)
     zip_code = models.CharField(max_length=10, blank=True)
     company = models.CharField(max_length=200, blank=True)
+    iks_follow_instagram = models.BooleanField(default=False)
+    iks_follow_facebook = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -668,6 +670,18 @@ class Order(models.Model):
     razorpay_order_id = models.CharField(max_length=100, blank=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True)
     razorpay_signature = models.CharField(max_length=200, blank=True)
+    coins_redeemed = models.PositiveIntegerField(default=0)
+    coins_earned_estimate = models.PositiveIntegerField(default=0)
+    coins_earned_final = models.PositiveIntegerField(default=0)
+    COIN_STATUS_CHOICES = [
+        ("none", "None"),
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+    coin_status = models.CharField(max_length=20, choices=COIN_STATUS_CHOICES, default="none")
+    coin_release_date = models.DateTimeField(blank=True, null=True)
+    coin_manual_override = models.BooleanField(default=False)
 
     # Status
     is_paid = models.BooleanField(default=False)
@@ -817,6 +831,89 @@ class SiteSettings(models.Model):
 
     def __str__(self):
         return f"Site Settings #{self.id}"
+
+
+class IKSCoinsSettings(models.Model):
+    name = models.CharField(max_length=80, default="IKS Coins+")
+    is_active = models.BooleanField(default=True)
+    program_enabled = models.BooleanField(default=True)
+    earn_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("5.00"))
+    max_coins_per_order = models.PositiveIntegerField(default=100)
+    monthly_earning_cap = models.PositiveIntegerField(default=300)
+    redemption_percentage_limit = models.PositiveSmallIntegerField(default=20)
+    minimum_cart_value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("300.00"))
+    credit_delay_days = models.PositiveSmallIntegerField(default=7)
+    registration_bonus = models.PositiveIntegerField(default=25)
+    first_purchase_bonus = models.PositiveIntegerField(default=25)
+    review_bonus = models.PositiveIntegerField(default=10)
+    profile_completion_bonus = models.PositiveIntegerField(default=10)
+    disallow_with_coupon = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-id"]
+
+    def __str__(self):
+        return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
+
+
+class IKSWallet(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="iks_wallet")
+    balance = models.PositiveIntegerField(default=0)
+    pending_balance = models.PositiveIntegerField(default=0)
+    total_earned = models.PositiveIntegerField(default=0)
+    total_redeemed = models.PositiveIntegerField(default=0)
+    monthly_earned = models.PositiveIntegerField(default=0)
+    month_key = models.CharField(max_length=7, default="", help_text="YYYY-MM for monthly cap tracking")
+    is_frozen = models.BooleanField(default=False)
+    is_earning_blocked = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user__username"]
+
+    def __str__(self):
+        return f"IKS Wallet: {self.user.username}"
+
+
+class IKSWalletTransaction(models.Model):
+    TX_TYPE_CHOICES = [
+        ("purchase_reward", "Purchase Reward"),
+        ("registration_bonus", "Registration Bonus"),
+        ("first_purchase_bonus", "First Purchase Bonus"),
+        ("review_reward", "Review Reward"),
+        ("profile_completion_reward", "Profile Completion Reward"),
+        ("redemption_deduction", "Redemption Deduction"),
+        ("manual_adjustment", "Manual Admin Adjustment"),
+    ]
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    wallet = models.ForeignKey(IKSWallet, on_delete=models.CASCADE, related_name="transactions")
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name="coin_transactions")
+    book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True, related_name="coin_transactions")
+    tx_type = models.CharField(max_length=40, choices=TX_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="completed")
+    coins = models.IntegerField(help_text="Positive for credit, negative for deduction.")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    note = models.CharField(max_length=255, blank=True)
+    release_date = models.DateTimeField(blank=True, null=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "release_date"]),
+            models.Index(fields=["tx_type", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.wallet.user.username} | {self.tx_type} | {self.coins}"
 
 
 def _apply_text_watermark(image_field, text):

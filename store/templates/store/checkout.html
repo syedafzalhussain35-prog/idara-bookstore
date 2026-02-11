@@ -150,6 +150,24 @@
                             {% endif %}
                         </div>
 
+                        {% if user.is_authenticated and coin_wallet %}
+                        <div class="p-3 border rounded mb-3">
+                            <div class="fw-bold mb-2 text-magenta">IKS Coins+ Redemption</div>
+                            <div class="small text-muted mb-2">
+                                Balance: {{ coin_wallet.balance }} Coins.
+                                Max usable on this order: {{ coin_max_redeemable }} Coins ({{ coin_settings.redemption_percentage_limit }}% cap).
+                            </div>
+                            {% if coin_max_redeemable > 0 %}
+                            <input type="number" name="redeem_coins" class="form-control" min="0" max="{{ coin_max_redeemable }}" value="0">
+                            {% else %}
+                            <input type="number" name="redeem_coins" class="form-control" value="0" readonly>
+                            <div class="small text-muted mt-2">
+                                Minimum cart value for redemption is ₹{{ coin_settings.minimum_cart_value }}.
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
 
                         <div class="d-flex flex-wrap gap-2 align-items-center mb-3 text-muted small">
                             <span class="badge text-bg-light border">Secure Checkout</span>

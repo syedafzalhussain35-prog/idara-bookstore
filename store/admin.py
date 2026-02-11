@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.urls import path
 from django.shortcuts import render
 from django.db import transaction
+from django.db.models import Sum
 from decimal import Decimal, InvalidOperation
 import re
 from django.contrib.admin.helpers import ActionForm
@@ -35,8 +36,12 @@ from .models import (
     SearchQueryLog,
     AuditLog,
     SiteSettings,
+    IKSCoinsSettings,
+    IKSWallet,
+    IKSWalletTransaction,
 )
 from .admin_site import IdaraAdminSite
+from .coins import manual_adjust_wallet, queue_order_pending_rewards, process_due_pending_rewards_for_user
 
 admin_site = IdaraAdminSite(name="idara_admin")
 
@@ -481,6 +486,9 @@ class OrderAdmin(admin.ModelAdmin):
         "full_name",
         "email_link",
         "total_cost_display",
+        "coins_redeemed",
+        "coins_earned_final",
+        "coin_status",
         "payment_method",
         "is_paid",
         "invoice_link",
@@ -504,12 +512,16 @@ class OrderAdmin(admin.ModelAdmin):
         "razorpay_order_id",
         "razorpay_payment_id",
         "razorpay_signature",
+        "coins_redeemed",
+        "coins_earned_estimate",
+        "coins_earned_final",
+        "coin_status",
     )
 
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
     ordering = ("-created_at",)
-    actions = ("export_orders_csv",)
+    actions = ("export_orders_csv", "force_credit_coins", "cancel_pending_coin_credit")
 
     def save_model(self, request, obj, form, change):
         original = None
@@ -535,6 +547,20 @@ class OrderAdmin(admin.ModelAdmin):
                 obj,
                 {"status": {"from": original.status, "to": obj.status}},
             )
+            if obj.user_id and obj.status == "Delivered":
+                queue_order_pending_rewards(obj)
+                process_due_pending_rewards_for_user(obj.user)
+            if obj.user_id and obj.status == "Cancelled":
+                txs = IKSWalletTransaction.objects.filter(order=obj, status="pending")
+                if txs.exists():
+                    wallet = IKSWallet.objects.filter(user=obj.user).first()
+                    if wallet:
+                        pending_sum = txs.aggregate(total=Sum("coins"))["total"] or 0
+                        wallet.pending_balance = max(wallet.pending_balance - max(int(pending_sum), 0), 0)
+                        wallet.save(update_fields=["pending_balance", "updated_at"])
+                    txs.update(status="cancelled", completed_at=timezone.now(), note="Auto-cancelled with order")
+                    obj.coin_status = "cancelled"
+                    obj.save(update_fields=["coin_status"])
 
     @admin.display(description="Email")
     def email_link(self, obj):
@@ -582,6 +608,42 @@ class OrderAdmin(admin.ModelAdmin):
                 order.created_at,
             ])
         return response
+
+    @admin.action(description="Force credit pending coins now")
+    def force_credit_coins(self, request, queryset):
+        updated = 0
+        for order in queryset.select_related("user"):
+            if not order.user_id:
+                continue
+            if order.coin_status == "pending":
+                order.coin_release_date = timezone.now()
+                order.coin_manual_override = True
+                order.save(update_fields=["coin_release_date", "coin_manual_override"])
+                process_due_pending_rewards_for_user(order.user)
+                updated += 1
+        self.message_user(request, f"Forced coin release for {updated} order(s).")
+
+    @admin.action(description="Cancel pending coin credits")
+    def cancel_pending_coin_credit(self, request, queryset):
+        cancelled = 0
+        for order in queryset.select_related("user"):
+            if order.coin_status != "pending":
+                continue
+            txs = IKSWalletTransaction.objects.filter(order=order, status="pending")
+            if not txs.exists():
+                continue
+            if order.user_id:
+                wallet = IKSWallet.objects.filter(user=order.user).first()
+                if wallet:
+                    pending_sum = txs.aggregate(total=Sum("coins"))["total"] or 0
+                    wallet.pending_balance = max(wallet.pending_balance - max(int(pending_sum), 0), 0)
+                    wallet.save(update_fields=["pending_balance", "updated_at"])
+            txs.update(status="cancelled", completed_at=timezone.now(), note="Cancelled by admin")
+            order.coin_status = "cancelled"
+            order.coin_manual_override = True
+            order.save(update_fields=["coin_status", "coin_manual_override"])
+            cancelled += 1
+        self.message_user(request, f"Cancelled pending coin credit for {cancelled} order(s).")
 # ======================
 # CART ADMIN
 # ======================
@@ -724,7 +786,7 @@ class GalleryItemAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "phone", "city", "company", "updated_at")
+    list_display = ("user", "phone", "city", "company", "iks_follow_instagram", "iks_follow_facebook", "updated_at")
     search_fields = ("user__username", "user__email", "phone", "city", "company")
     ordering = ("-updated_at",)
 
@@ -771,6 +833,102 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         }),
     )
 
+
+@admin.register(IKSCoinsSettings)
+class IKSCoinsSettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "is_active",
+        "program_enabled",
+        "earn_percentage",
+        "max_coins_per_order",
+        "monthly_earning_cap",
+        "redemption_percentage_limit",
+        "credit_delay_days",
+        "updated_at",
+    )
+    list_filter = ("is_active", "program_enabled")
+    ordering = ("-updated_at",)
+
+
+@admin.register(IKSWallet)
+class IKSWalletAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "balance",
+        "pending_balance",
+        "total_earned",
+        "total_redeemed",
+        "monthly_earned",
+        "is_frozen",
+        "is_earning_blocked",
+        "updated_at",
+    )
+    search_fields = ("user__username", "user__email")
+    list_filter = ("is_frozen", "is_earning_blocked")
+    readonly_fields = ("updated_at",)
+    actions = ("freeze_wallets", "unfreeze_wallets", "block_earning", "unblock_earning", "reset_wallets")
+
+    @admin.action(description="Freeze selected wallets")
+    def freeze_wallets(self, request, queryset):
+        updated = queryset.update(is_frozen=True)
+        self.message_user(request, f"Frozen {updated} wallet(s).")
+
+    @admin.action(description="Unfreeze selected wallets")
+    def unfreeze_wallets(self, request, queryset):
+        updated = queryset.update(is_frozen=False)
+        self.message_user(request, f"Unfroze {updated} wallet(s).")
+
+    @admin.action(description="Block selected users from earning")
+    def block_earning(self, request, queryset):
+        updated = queryset.update(is_earning_blocked=True)
+        self.message_user(request, f"Blocked earning for {updated} wallet(s).")
+
+    @admin.action(description="Unblock selected users from earning")
+    def unblock_earning(self, request, queryset):
+        updated = queryset.update(is_earning_blocked=False)
+        self.message_user(request, f"Unblocked earning for {updated} wallet(s).")
+
+    @admin.action(description="Reset selected wallets to zero")
+    def reset_wallets(self, request, queryset):
+        count = 0
+        for wallet in queryset:
+            delta = -int(wallet.balance)
+            if delta:
+                manual_adjust_wallet(wallet, delta, note="Admin wallet reset")
+            wallet.pending_balance = 0
+            wallet.monthly_earned = 0
+            wallet.save(update_fields=["pending_balance", "monthly_earned", "updated_at"])
+            count += 1
+        self.message_user(request, f"Reset {count} wallet(s).")
+
+
+@admin.register(IKSWalletTransaction)
+class IKSWalletTransactionAdmin(admin.ModelAdmin):
+    list_display = ("id", "wallet", "tx_type", "status", "coins", "order", "book", "release_date", "created_at")
+    list_filter = ("tx_type", "status", "created_at")
+    search_fields = ("wallet__user__username", "wallet__user__email", "note")
+    readonly_fields = ("created_at", "completed_at")
+    autocomplete_fields = ("wallet", "order", "book")
+
+    def save_model(self, request, obj, form, change):
+        is_new = not change
+        super().save_model(request, obj, form, change)
+        if not is_new:
+            return
+        if obj.tx_type != "manual_adjustment" or obj.status != "completed" or not obj.wallet_id:
+            return
+        wallet = obj.wallet
+        if obj.coins >= 0:
+            wallet.balance += obj.coins
+            wallet.total_earned += obj.coins
+        else:
+            wallet.balance = max(wallet.balance + obj.coins, 0)
+            wallet.total_redeemed += abs(obj.coins)
+        wallet.save(update_fields=["balance", "total_earned", "total_redeemed", "updated_at"])
+        if not obj.completed_at:
+            obj.completed_at = timezone.now()
+            obj.save(update_fields=["completed_at"])
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
@@ -859,3 +1017,6 @@ admin_site.register(Banner, BannerAdmin)
 admin_site.register(SearchQueryLog, SearchQueryLogAdmin)
 admin_site.register(AuditLog, AuditLogAdmin)
 admin_site.register(SiteSettings, SiteSettingsAdmin)
+admin_site.register(IKSCoinsSettings, IKSCoinsSettingsAdmin)
+admin_site.register(IKSWallet, IKSWalletAdmin)
+admin_site.register(IKSWalletTransaction, IKSWalletTransactionAdmin)

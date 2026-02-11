@@ -43,6 +43,17 @@ from .models import (
 )
 from .email_utils import send_publish_with_us
 from .tasks import enqueue_order_confirmation, enqueue_order_alert
+from .coins import (
+    get_coin_settings,
+    get_wallet,
+    get_max_redeemable,
+    estimate_purchase_coins,
+    apply_redemption_for_order,
+    queue_order_pending_rewards,
+    process_due_pending_rewards_for_user,
+    award_review_bonus_if_eligible,
+    award_profile_completion_bonus_if_eligible,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -577,7 +588,7 @@ def add_review(request, book_id):
     if not OrderItem.objects.filter(order__user=request.user, book=book).exists():
         return redirect('book_detail', book_id=book.id)
 
-    Review.objects.update_or_create(
+    review, _ = Review.objects.update_or_create(
         user=request.user,
         book=book,
         defaults={
@@ -585,6 +596,7 @@ def add_review(request, book_id):
             'comment': request.POST.get('comment', '').strip()
         }
     )
+    award_review_bonus_if_eligible(request.user, review.book)
 
     return redirect('book_detail', book_id=book.id)
 
@@ -664,6 +676,8 @@ def profile_view(request):
         city = request.POST.get("city", "").strip()
         zip_code = request.POST.get("zip_code", "").strip()
         company = request.POST.get("company", "").strip()
+        iks_follow_instagram = bool(request.POST.get("iks_follow_instagram"))
+        iks_follow_facebook = bool(request.POST.get("iks_follow_facebook"))
 
         has_error = False
 
@@ -690,7 +704,10 @@ def profile_view(request):
         profile.city = city
         profile.zip_code = zip_code
         profile.company = company
+        profile.iks_follow_instagram = iks_follow_instagram
+        profile.iks_follow_facebook = iks_follow_facebook
         profile.save()
+        award_profile_completion_bonus_if_eligible(user)
 
         if not has_error:
             messages.success(request, "Profile updated successfully.")
@@ -698,10 +715,16 @@ def profile_view(request):
 
     orders = Order.objects.filter(user=user).prefetch_related('items__book')
     addresses = UserAddress.objects.filter(user=user)
+    process_due_pending_rewards_for_user(user)
+    wallet = get_wallet(user)
+    coin_transactions = wallet.transactions.select_related("order", "book")[:40]
     return render(request, 'store/profile.html', {
         'orders': orders,
         'profile': profile,
         'addresses': addresses,
+        'wallet': wallet,
+        'coin_settings': get_coin_settings(),
+        'coin_transactions': coin_transactions,
     })
 
 
@@ -958,6 +981,29 @@ def checkout(request):
         default_address = next((addr for addr in addresses if addr.is_default), None)
 
     totals = _calculate_checkout_totals(cart)
+    requested_redeem = 0
+    estimated_earn = 0
+    payable_total = totals["total_cost"]
+    if user and user.is_authenticated:
+        process_due_pending_rewards_for_user(user)
+        wallet = get_wallet(user)
+        max_redeemable = get_max_redeemable(wallet, totals["total_cost"])
+        try:
+            requested_redeem = int(request.POST.get("redeem_coins") or 0)
+        except (TypeError, ValueError):
+            requested_redeem = 0
+        requested_redeem = max(0, min(requested_redeem, max_redeemable))
+        estimated_earn = estimate_purchase_coins(user, totals["total_cost"])
+        payable_total = totals["total_cost"] - Decimal(requested_redeem)
+        if payable_total < 0:
+            payable_total = Decimal("0.00")
+    wallet = None
+    max_redeemable = 0
+    coin_settings = get_coin_settings()
+    if request.user.is_authenticated:
+        process_due_pending_rewards_for_user(request.user)
+        wallet = get_wallet(request.user)
+        max_redeemable = get_max_redeemable(wallet, totals["total_cost"])
 
     if request.method == "POST":
         messages.error(request, "Please complete payment to place the order.")
@@ -970,6 +1016,9 @@ def checkout(request):
         'default_address': default_address,
         'razorpay_key_id': getattr(settings, "RAZORPAY_KEY_ID", ""),
         'razorpay_enabled': getattr(settings, "RAZORPAY_ENABLED", False),
+        'coin_wallet': wallet,
+        'coin_max_redeemable': max_redeemable,
+        'coin_settings': coin_settings,
     })
 
 
@@ -1029,10 +1078,13 @@ def razorpay_create_order(request):
             gst_rate=totals["gst_rate"],
             gst_amount=totals["gst_amount"],
             shipping_amount=totals["shipping_amount"],
-            total_cost=totals["total_cost"],
+            total_cost=payable_total,
             status="Pending",
             is_paid=False,
             payment_method="razorpay",
+            coins_redeemed=requested_redeem,
+            coins_earned_estimate=estimated_earn,
+            coins_earned_final=estimated_earn,
         )
 
         for item in cart.items.select_related("book").all():
@@ -1072,7 +1124,7 @@ def razorpay_create_order(request):
             is_default=is_default,
         )
 
-    amount_paise = int(totals["total_cost"] * Decimal("100"))
+    amount_paise = int(payable_total * Decimal("100"))
     try:
         rz_order = client.order.create({
             "amount": amount_paise,
@@ -1136,6 +1188,7 @@ def razorpay_verify_payment(request):
     order.razorpay_payment_id = razorpay_payment_id
     order.razorpay_signature = razorpay_signature
     order.save(update_fields=["is_paid", "status", "razorpay_payment_id", "razorpay_signature"])
+    apply_redemption_for_order(order)
 
     for item in order.items.select_related("book").all():
         if item.book.stock >= item.quantity:
@@ -1153,6 +1206,8 @@ def razorpay_verify_payment(request):
 
     enqueue_order_confirmation(order.id)
     enqueue_order_alert(order.id)
+    if order.user_id:
+        process_due_pending_rewards_for_user(order.user)
 
     token = signing.dumps({"order_id": order.id, "email": order.email})
     success_url = reverse("order_success", args=[order.id]) + f"?token={token}"

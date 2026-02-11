@@ -1,6 +1,7 @@
 from .models import Category, Cart, Book, Wishlist, SiteSettings
 from django.db.models import Sum, Case, When, IntegerField
 from django.conf import settings
+from .coins import get_wallet, process_due_pending_rewards_for_user
 
 def navbar_categories(request):
     """
@@ -73,6 +74,10 @@ def navbar_categories(request):
     site_loader_logo = settings_obj.loader_logo.url if settings_obj and settings_obj.loader_logo else ""
     sales_offers_label = settings_obj.sales_offers_label if settings_obj and settings_obj.sales_offers_label else "Sales/Offers"
     sales_offers_enabled = settings_obj.sales_offers_enabled if settings_obj else True
+    coin_wallet = None
+    if request.user.is_authenticated:
+        process_due_pending_rewards_for_user(request.user)
+        coin_wallet = get_wallet(request.user)
 
     return {
         'nav_categories': nav_categories,
@@ -88,4 +93,5 @@ def navbar_categories(request):
         'site_loader_logo': site_loader_logo,
         'sales_offers_label': sales_offers_label,
         'sales_offers_enabled': sales_offers_enabled,
+        'coin_wallet': coin_wallet,
     }
