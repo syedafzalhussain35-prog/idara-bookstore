@@ -164,6 +164,10 @@
         display: none !important;
     }
 
+    .username-mobile {
+        display: none;
+    }
+
     /* ================= NAVBAR ================= */
     .menu-navbar {
         background-color: var(--primary-magenta);
@@ -745,6 +749,18 @@
 
         .user-actions i {
             font-size: 1.1rem;
+        }
+
+        .username-full {
+            display: none;
+        }
+
+        .username-mobile {
+            display: inline;
+            max-width: 62px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .mobile-admin-link {

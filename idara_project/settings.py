@@ -277,6 +277,12 @@ else:
         },
     }
 
+# Force secure media URLs (https) so mobile browsers don't block mixed content.
+CLOUDINARY_STORAGE = {
+    'SECURE': True,
+}
+cloudinary.config(secure=True)
+
 # Allow serving static files from finders if collectstatic didn't run
 WHITENOISE_USE_FINDERS = True
 

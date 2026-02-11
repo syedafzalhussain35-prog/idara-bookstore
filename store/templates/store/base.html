@@ -214,7 +214,11 @@
         </div>
         {% endif %}
 
-        <a href="{% url 'profile' %}"><i class="fas fa-user-circle"></i>{{ user.username }}</a>
+        <a href="{% url 'profile' %}" class="user-profile-link">
+            <i class="fas fa-user-circle"></i>
+            <span class="username-full">{{ user.username }}</span>
+            <span class="username-mobile">{{ user.username|slice:":6" }}{% if user.username|length > 6 %}...{% endif %}</span>
+        </a>
         {% if user.is_staff %}
         <a href="{% url 'admin:index' %}" class="mobile-admin-link"><i class="fas fa-shield-alt"></i>Admin</a>
         {% endif %}
