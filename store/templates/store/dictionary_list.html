@@ -1,19 +1,266 @@
-{% extends 'store/base.html' %}
+﻿{% extends 'store/base.html' %}
 
 {% block title %}IKS Unani Medical Dictionary{% endblock %}
+{% block extra_css %}
+<style>
+.dictionary-shell {
+    max-width: 1220px;
+    margin: 0 auto;
+}
+
+.dictionary-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #fff4ea 45%, #ffeef4 100%);
+    border: 1px solid #f2dce6;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 14px 30px rgba(56, 24, 38, 0.08);
+}
+
+.dictionary-title {
+    margin: 0;
+    color: #841a4a;
+    letter-spacing: 0.2px;
+}
+
+.dictionary-subtitle {
+    margin: 4px 0 14px;
+    color: #5e4a53;
+    font-size: 0.95rem;
+}
+
+.dictionary-search .input-group-text {
+    background: #fff;
+    border-color: #e7ceda;
+}
+
+.dictionary-search .form-control,
+.dictionary-search .form-select {
+    border-color: #e7ceda;
+}
+
+.dictionary-search .form-control:focus,
+.dictionary-search .form-select:focus {
+    border-color: #be1d63;
+    box-shadow: 0 0 0 0.18rem rgba(190, 29, 99, 0.16);
+}
+
+.script-toggle {
+    border-color: #d8bcc9;
+    color: #5e2642;
+    background: #fff;
+}
+
+.script-toggle:hover {
+    border-color: #be1d63;
+    color: #be1d63;
+}
+
+.script-keyboard {
+    border: 1px solid #e8d2dc;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.alpha-strip-wrap {
+    margin-top: 14px;
+    border: 1px solid #f0dce5;
+    border-radius: 14px;
+    background: #fff;
+    padding: 10px;
+}
+
+.alpha-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    direction: rtl;
+}
+
+.alpha-chip {
+    min-width: 38px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #d9c2ce;
+    background: #fff;
+    color: #5f2a44;
+    font-weight: 600;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.alpha-chip.active {
+    background: #be1d63;
+    border-color: #be1d63;
+    color: #fff;
+}
+
+.alpha-chip:hover {
+    border-color: #be1d63;
+    color: #be1d63;
+}
+
+.results-meta {
+    margin-top: 14px;
+    color: #6f5a64;
+    font-size: 0.9rem;
+}
+
+.term-results {
+    margin-top: 14px;
+    display: grid;
+    gap: 14px;
+}
+
+.term-card {
+    border: 1px solid #ead6e0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 20px rgba(22, 12, 18, 0.06);
+    padding: 14px;
+}
+
+.term-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.term-script-label {
+    color: #6e5561;
+    font-size: 0.82rem;
+    margin-bottom: 5px;
+}
+
+.term-script-box {
+    border: 1px solid #e6d6de;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #fff 0%, #fff8fc 100%);
+    padding: 10px 12px;
+    min-width: 320px;
+}
+
+.term-script {
+    direction: rtl;
+    text-align: right;
+    font-family: "Amiri", serif;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    color: #2e1a26;
+}
+
+.term-transliteration {
+    margin-top: 6px;
+    color: #5f4956;
+    font-weight: 600;
+    font-size: 0.94rem;
+}
+
+.term-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.term-title {
+    margin: 12px 0 6px;
+    font-size: 1.12rem;
+    color: #231f22;
+    line-height: 1.25;
+}
+
+.term-description {
+    margin: 0;
+    color: #51454c;
+}
+
+.term-open {
+    border-radius: 999px;
+    font-weight: 600;
+    padding: 5px 12px;
+}
+
+.dictionary-pagination .page-link {
+    color: #7a1f49;
+}
+
+.dictionary-pagination .page-item.active .page-link {
+    background: #be1d63;
+    border-color: #be1d63;
+}
+
+@media (max-width: 991px) {
+    .term-script-box {
+        min-width: 260px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dictionary-hero {
+        padding: 14px;
+    }
+
+    .term-head {
+        flex-direction: column;
+    }
+
+    .term-actions {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .term-script-box {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .term-script {
+        font-size: 1.35rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h1 class="fw-bold mb-3" style="color: var(--primary-magenta);">IKS Unani Medical Dictionary</h1>
+    <div class="dictionary-shell">
+        <div class="dictionary-hero">
+            <h1 class="fw-bold dictionary-title">IKS Unani Medical Dictionary</h1>
+            <p class="dictionary-subtitle">Script-first dictionary for Urdu, Arabic, and Persian medical terminology.</p>
 
-    <form method="get" class="row g-2 mb-3 align-items-start">
-        <div class="col-12 col-md-6">
-            <div class="input-group">
-                <input type="text" id="dictionarySearchInput" name="q" class="form-control" value="{{ query }}" placeholder="Search Urdu/Arabic/Persian term (recommended), transliteration, or English...">
-                <button class="btn btn-outline-dark" type="button" id="scriptKeyboardToggle">⌨ Script</button>
-            </div>
-            <div class="small text-muted mt-1">Best results: search using Arabic/Persian/Urdu script terms.</div>
-            <div id="scriptKeyboardPanel" class="border rounded mt-2 p-2 bg-white" style="display:none;">
+            <form method="get" class="row g-2 dictionary-search align-items-start">
+                <div class="col-12 col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text">Search</span>
+                        <input type="text" id="dictionarySearchInput" name="q" class="form-control" value="{{ query }}" placeholder="Search Urdu/Arabic/Persian term (recommended), transliteration, or English...">
+                        <button class="btn script-toggle" type="button" id="scriptKeyboardToggle">Script Keyboard</button>
+                    </div>
+                    <div class="small text-muted mt-1">Tip: search in script for best relevance.</div>
+                </div>
+                <div class="col-8 col-lg-3">
+                    <select name="section" class="form-select">
+                        <option value="">All sections</option>
+                        {% for value in sections %}
+                        <option value="{{ value }}" {% if selected_section == value %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-4 col-lg-3 d-flex">
+                    <button class="btn btn-brand w-100 py-2 align-self-start" type="submit">Apply</button>
+                </div>
+                {% if selected_letter %}
+                <input type="hidden" name="letter" value="{{ selected_letter }}">
+                {% endif %}
+            </form>
+
+            <div id="scriptKeyboardPanel" class="script-keyboard mt-2 p-2" style="display:none;">
                 <div class="d-flex flex-wrap gap-1 mb-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ا</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ب</button>
@@ -62,95 +309,83 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="vkClose">Close</button>
                 </div>
             </div>
-        </div>
-        <div class="col-8 col-md-3">
-            <select name="section" class="form-select">
-                <option value="">All sections</option>
-                {% for value in sections %}
-                <option value="{{ value }}" {% if selected_section == value %}selected{% endif %}>{{ value }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-4 col-md-3 d-flex">
-            <button class="btn btn-brand w-100 py-2 align-self-start" type="submit">Search</button>
-        </div>
-        {% if selected_letter %}
-        <input type="hidden" name="letter" value="{{ selected_letter }}">
-        {% endif %}
-    </form>
 
-    <div class="border rounded p-2 mb-3 bg-white">
-        <div class="d-flex flex-wrap gap-1">
-            <a class="btn btn-sm {% if not selected_letter %}btn-brand{% else %}btn-outline-secondary{% endif %}" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if selected_section %}section={{ selected_section|urlencode }}&{% endif %}">All</a>
-            {% for letter in letters %}
-            <a class="btn btn-sm {% if selected_letter == letter %}btn-brand{% else %}btn-outline-secondary{% endif %}" href="?letter={{ letter }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}">
-                {{ letter }}
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-
-    {% if page_obj.object_list %}
-    <div class="card border-0 shadow-sm">
-        <div class="list-group list-group-flush">
-            {% for item in page_obj.object_list %}
-            <a href="{% url 'dictionary_detail' item.slug %}" class="list-group-item list-group-item-action py-3">
-                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <h2 class="h6 mb-0 fw-bold text-dark">{{ item.english_term }}</h2>
-                    {% if item.section %}
-                    <span class="badge text-bg-light border">{{ item.section }}</span>
-                    {% endif %}
+            <div class="alpha-strip-wrap">
+                <div class="alpha-strip">
+                    <a class="alpha-chip {% if not selected_letter %}active{% endif %}" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if selected_section %}section={{ selected_section|urlencode }}&{% endif %}">All</a>
+                    {% for letter in letters %}
+                    <a class="alpha-chip {% if selected_letter == letter %}active{% endif %}" href="?letter={{ letter }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}">
+                        {{ letter }}
+                    </a>
+                    {% endfor %}
                 </div>
-                <div class="row g-2 align-items-start">
-                    <div class="col-md-6">
-                        <div class="small text-muted">Transliteration</div>
-                        <div class="fw-semibold">{{ item.transliteration|default:"-" }}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="small text-muted">Arabic/Persian/Urdu</div>
-                        <div class="fw-semibold p-2 rounded border bg-light"
-                             style="direction: rtl; text-align: right; font-family: 'Amiri', serif; min-height: 40px;">
-                            {{ item.arabic_script|default:"-" }}
+            </div>
+        </div>
+
+        <div class="results-meta">
+            {% if page_obj.paginator.count %}
+                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} terms
+            {% else %}
+                No terms found
+            {% endif %}
+        </div>
+
+        {% if page_obj.object_list %}
+        <div class="term-results">
+            {% for item in page_obj.object_list %}
+            <article class="term-card">
+                <div class="term-head">
+                    <div class="term-script-wrap">
+                        <div class="term-script-label">Arabic/Persian/Urdu</div>
+                        <div class="term-script-box">
+                            <div class="term-script">{{ item.arabic_script|default:"-" }}</div>
+                            <div class="term-transliteration">{{ item.transliteration|default:"-" }}</div>
                         </div>
                     </div>
+                    <div class="term-actions">
+                        {% if item.section %}
+                        <span class="badge text-bg-light border">{{ item.section }}</span>
+                        {% endif %}
+                        <a href="{% url 'dictionary_detail' item.slug %}" class="btn btn-sm btn-brand term-open">Open</a>
+                    </div>
                 </div>
-                <div class="small text-muted mt-2">{{ item.description|truncatechars:170 }}</div>
-                </div>
-            </a>
+                <h2 class="term-title">{{ item.english_term }}</h2>
+                <p class="term-description">{{ item.description|truncatechars:220 }}</p>
+            </article>
             {% endfor %}
         </div>
-    </div>
-    {% else %}
-    <div class="alert alert-light border mb-0">
-        {% if total_published == 0 %}
-        No dictionary entries are published yet. Please add/publish terms from admin.
         {% else %}
-        No dictionary terms found for your current search/filter.
+        <div class="alert alert-light border mb-0 mt-3">
+            {% if total_published == 0 %}
+            No dictionary entries are published yet. Please add/publish terms from admin.
+            {% else %}
+            No dictionary terms found for your current search/filter.
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4 dictionary-pagination" aria-label="Dictionary pagination">
+            <ul class="pagination justify-content-center flex-wrap">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">{{ num }}</a>
+                </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
         {% endif %}
     </div>
-    {% endif %}
-
-    {% if page_obj.paginator.num_pages > 1 %}
-    <nav class="mt-4" aria-label="Dictionary pagination">
-        <ul class="pagination justify-content-center flex-wrap">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">Previous</a>
-            </li>
-            {% endif %}
-            {% for num in page_obj.paginator.page_range %}
-            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">{{ num }}</a>
-            </li>
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">Next</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
 
 <script>

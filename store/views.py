@@ -19,7 +19,6 @@ import logging
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
-from string import ascii_uppercase
 
 
 from .models import (
@@ -60,6 +59,12 @@ from .coins import (
 logger = logging.getLogger(__name__)
 
 RECENTLY_VIEWED_LIMIT = 10
+DICTIONARY_SCRIPT_LETTERS = [
+    "ا", "آ", "ب", "پ", "ت", "ٹ", "ث", "ج", "چ", "ح", "خ",
+    "د", "ڈ", "ذ", "ر", "ڑ", "ز", "ژ", "س", "ش", "ص", "ض",
+    "ط", "ظ", "ع", "غ", "ف", "ق", "ک", "گ", "ل", "م", "ن",
+    "ں", "و", "ہ", "ھ", "ء", "ی", "ے",
+]
 
 
 def _is_mobile_request(request):
@@ -459,7 +464,7 @@ def search(request):
 def dictionary_list(request):
     query = (request.GET.get("q") or "").strip()
     selected_section = (request.GET.get("section") or "").strip()
-    selected_letter = (request.GET.get("letter") or "").strip().upper()
+    selected_letter = (request.GET.get("letter") or "").strip()
 
     terms_qs = UnaniTerm.objects.filter(is_published=True)
 
@@ -480,7 +485,7 @@ def dictionary_list(request):
                 default=Value(5),
                 output_field=IntegerField(),
             )
-        ).order_by("match_priority", "english_term")
+        ).order_by("match_priority", "arabic_script", "transliteration", "english_term")
 
     all_sections = list(
         UnaniTerm.objects.filter(is_published=True)
@@ -494,10 +499,19 @@ def dictionary_list(request):
     else:
         selected_section = ""
 
-    if selected_letter and selected_letter in ascii_uppercase:
-        terms_qs = terms_qs.filter(english_term__istartswith=selected_letter)
+    if selected_letter and selected_letter in DICTIONARY_SCRIPT_LETTERS:
+        terms_qs = terms_qs.filter(arabic_script__startswith=selected_letter)
     else:
         selected_letter = ""
+
+    # Script-first ordering for a Unani Urdu/Arabic/Persian dictionary.
+    terms_qs = terms_qs.annotate(
+        script_priority=Case(
+            When(arabic_script="", then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    ).order_by("script_priority", "arabic_script", "transliteration", "english_term")
 
     total_published = UnaniTerm.objects.filter(is_published=True).count()
     page_size = int(getattr(settings, "DICTIONARY_PAGE_SIZE", 20))
@@ -509,7 +523,7 @@ def dictionary_list(request):
         "query": query,
         "selected_section": selected_section,
         "selected_letter": selected_letter,
-        "letters": list(ascii_uppercase),
+        "letters": DICTIONARY_SCRIPT_LETTERS,
         "sections": all_sections,
         "total_published": total_published,
     })
