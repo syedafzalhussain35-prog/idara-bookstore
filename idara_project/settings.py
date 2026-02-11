@@ -19,7 +19,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==================================================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-secret")
 
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+# Security-first default for production safety.
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+if not DEBUG and SECRET_KEY == "dev-only-secret":
+    raise RuntimeError("Set DJANGO_SECRET_KEY when DEBUG=False.")
 
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
 if allowed_hosts_env:
@@ -49,6 +52,11 @@ for host in [
 if not DEBUG:
     render_external_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = False
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
     CSRF_TRUSTED_ORIGINS = [
         'https://idarakitabulshifa.com',
         'https://www.idarakitabulshifa.com',

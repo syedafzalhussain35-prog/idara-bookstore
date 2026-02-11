@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core import signing
 from django.contrib.auth.decorators import login_required
@@ -74,7 +74,7 @@ def _update_recently_viewed(request, book_id):
     viewed = request.session.get("recently_viewed", [])
     try:
         viewed = [int(bid) for bid in viewed if str(bid).isdigit()]
-    except Exception:
+    except (ValueError, TypeError):
         viewed = []
 
     if book_id in viewed:
@@ -132,6 +132,30 @@ def _cache_get_ids(key, queryset, ttl):
     ids = list(queryset.values_list("id", flat=True))
     cache.set(key, ids, ttl)
     return ids
+
+
+def _to_decimal(value):
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    try:
+        return Decimal(raw)
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+
+
+def _apply_price_rating_filters(queryset, min_price_raw="", max_price_raw="", rating_raw=""):
+    min_price = _to_decimal(min_price_raw)
+    max_price = _to_decimal(max_price_raw)
+    rating = _to_decimal(rating_raw)
+
+    if min_price is not None:
+        queryset = queryset.filter(price__gte=min_price)
+    if max_price is not None:
+        queryset = queryset.filter(price__lte=max_price)
+    if rating is not None:
+        queryset = queryset.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating)
+    return queryset
 
 
 # ==================================================
@@ -285,22 +309,12 @@ def category_books(request, slug):
     max_price = request.GET.get('max_price', '').strip()
     rating = request.GET.get('rating', '').strip()
 
-    if min_price:
-        try:
-            books_qs = books_qs.filter(price__gte=Decimal(min_price))
-        except Exception:
-            pass
-    if max_price:
-        try:
-            books_qs = books_qs.filter(price__lte=Decimal(max_price))
-        except Exception:
-            pass
-    if rating:
-        try:
-            rating_val = Decimal(rating)
-            books_qs = books_qs.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating_val)
-        except Exception:
-            pass
+    books_qs = _apply_price_rating_filters(
+        books_qs,
+        min_price_raw=min_price,
+        max_price_raw=max_price,
+        rating_raw=rating,
+    )
 
     sort = request.GET.get('sort')
     if sort == 'newest':
@@ -363,22 +377,12 @@ def search(request):
     if subject_slug:
         books_qs = books_qs.filter(subjects__slug=subject_slug)
 
-    if min_price:
-        try:
-            books_qs = books_qs.filter(price__gte=Decimal(min_price))
-        except Exception:
-            pass
-    if max_price:
-        try:
-            books_qs = books_qs.filter(price__lte=Decimal(max_price))
-        except Exception:
-            pass
-    if rating:
-        try:
-            rating_val = Decimal(rating)
-            books_qs = books_qs.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating_val)
-        except Exception:
-            pass
+    books_qs = _apply_price_rating_filters(
+        books_qs,
+        min_price_raw=min_price,
+        max_price_raw=max_price,
+        rating_raw=rating,
+    )
 
     results_count = books_qs.count() if query else 0
 
@@ -447,22 +451,12 @@ def subject_books(request, slug):
     max_price = request.GET.get('max_price', '').strip()
     rating = request.GET.get('rating', '').strip()
 
-    if min_price:
-        try:
-            books_qs = books_qs.filter(price__gte=Decimal(min_price))
-        except Exception:
-            pass
-    if max_price:
-        try:
-            books_qs = books_qs.filter(price__lte=Decimal(max_price))
-        except Exception:
-            pass
-    if rating:
-        try:
-            rating_val = Decimal(rating)
-            books_qs = books_qs.annotate(avg_rating=Avg('reviews__rating')).filter(avg_rating__gte=rating_val)
-        except Exception:
-            pass
+    books_qs = _apply_price_rating_filters(
+        books_qs,
+        min_price_raw=min_price,
+        max_price_raw=max_price,
+        rating_raw=rating,
+    )
 
     paginator = Paginator(books_qs, 12)
     books = paginator.get_page(request.GET.get('page'))
@@ -913,7 +907,7 @@ def _calculate_checkout_totals(cart):
             if match:
                 try:
                     total_weight += Decimal(match.group(1)) * item.quantity
-                except Exception:
+                except (InvalidOperation, ValueError, TypeError):
                     pass
     shipping_amount = shipping_base + (total_weight * shipping_per_kg)
 

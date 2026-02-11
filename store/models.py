@@ -287,7 +287,10 @@ class Banner(models.Model):
     def has_webp(self):
         if not self.image:
             return False
-        return self.image.storage.exists(self.webp_name)
+        try:
+            return self.image.storage.exists(self.webp_name)
+        except Exception:
+            return False
 
     def webp_url(self):
         if self.has_webp():
@@ -305,15 +308,20 @@ class Banner(models.Model):
             from PIL import Image
         except Exception:
             return
-
-        self.image.open()
-        img = Image.open(self.image)
-        if img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
-        buffer = BytesIO()
-        img.save(buffer, format="WEBP", quality=82, method=6)
-        buffer.seek(0)
-        self.image.storage.save(self.webp_name, ContentFile(buffer.read()))
+        try:
+            # Some remote storages (e.g. Cloudinary) may not allow reopening an
+            # already-saved file object in admin edits. Skip conversion instead
+            # of breaking the save request.
+            self.image.open()
+            img = Image.open(self.image)
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            buffer = BytesIO()
+            img.save(buffer, format="WEBP", quality=82, method=6)
+            buffer.seek(0)
+            self.image.storage.save(self.webp_name, ContentFile(buffer.read()))
+        except Exception:
+            return
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

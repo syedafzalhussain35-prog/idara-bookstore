@@ -17,3 +17,6 @@ static/store/gallery/
 *.mp4
 *.exe
 *.docx
+
+# Secrets and local key exports
+domain/*.csv

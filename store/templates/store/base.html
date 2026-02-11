@@ -104,7 +104,7 @@
     <div class="user-actions">
     {% if user.is_authenticated %}
         <div class="dropdown">
-            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle js-mobile-action-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-mobile-href="{% url 'wishlist' %}">
                 <i class="fas fa-heart"></i>Wishlist
             </a>
         <div class="dropdown-menu preview-dropdown">
@@ -141,7 +141,7 @@
         </div>
         
         <div class="dropdown">
-            <a class="dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle position-relative js-mobile-action-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-mobile-href="{% url 'cart_detail' %}">
                 <i class="fas fa-shopping-cart"></i>Cart
                 {% if cart_count > 0 %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
@@ -184,7 +184,7 @@
 
         {% if recently_viewed_books %}
         <div class="dropdown">
-            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle js-mobile-action-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-mobile-href="{% if recently_viewed_books and recently_viewed_books.0 %}{% url 'book_detail' recently_viewed_books.0.id %}{% else %}{% url 'home' %}{% endif %}">
                 <i class="fas fa-clock"></i>Recent
             </a>
             <div class="dropdown-menu preview-dropdown">
@@ -215,9 +215,12 @@
         {% endif %}
 
         <a href="{% url 'profile' %}"><i class="fas fa-user-circle"></i>{{ user.username }}</a>
+        {% if user.is_staff %}
+        <a href="{% url 'admin:index' %}" class="mobile-admin-link"><i class="fas fa-shield-alt"></i>Admin</a>
+        {% endif %}
     {% else %}
         <div class="dropdown">
-            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle js-mobile-action-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-mobile-href="{% url 'account_login' %}?next={{ request.path }}">
                 <i class="fas fa-user-circle"></i>Login
             </a>
             <div class="dropdown-menu preview-dropdown">
@@ -238,7 +241,7 @@
         </div>
 
         <div class="dropdown">
-            <a class="dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="dropdown-toggle position-relative js-mobile-action-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-mobile-href="{% url 'cart_detail' %}">
                 <i class="fas fa-shopping-cart"></i>Cart
                 {% if cart_count > 0 %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
@@ -534,38 +537,10 @@ document.addEventListener("DOMContentLoaded", function () {
         toggle.addEventListener("click", function (e) {
             if (window.innerWidth >= 992) return;
             e.preventDefault();
-            e.stopPropagation();
-
-            const parent = this.closest(".dropdown");
-            if (!parent) return;
-            const menu = parent.querySelector(".dropdown-menu");
-            const isOpen = parent.classList.contains("show");
-
-            document.querySelectorAll(".user-actions .dropdown.show").forEach(openItem => {
-                openItem.classList.remove("show");
-                const openMenu = openItem.querySelector(".dropdown-menu");
-                const openToggle = openItem.querySelector(".dropdown-toggle");
-                if (openMenu) openMenu.classList.remove("show");
-                if (openToggle) openToggle.setAttribute("aria-expanded", "false");
-            });
-
-            if (!isOpen) {
-                parent.classList.add("show");
-                if (menu) menu.classList.add("show");
-                this.setAttribute("aria-expanded", "true");
+            const mobileHref = this.getAttribute("data-mobile-href");
+            if (mobileHref) {
+                window.location.href = mobileHref;
             }
-        });
-    });
-
-    document.addEventListener("click", function (e) {
-        if (window.innerWidth >= 992) return;
-        if (e.target.closest(".user-actions")) return;
-        document.querySelectorAll(".user-actions .dropdown.show").forEach(openItem => {
-            openItem.classList.remove("show");
-            const openMenu = openItem.querySelector(".dropdown-menu");
-            const openToggle = openItem.querySelector(".dropdown-toggle");
-            if (openMenu) openMenu.classList.remove("show");
-            if (openToggle) openToggle.setAttribute("aria-expanded", "false");
         });
     });
 
