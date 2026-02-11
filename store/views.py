@@ -1321,6 +1321,15 @@ def razorpay_create_order(request):
         )
 
     amount_paise = int(payable_total * Decimal("100"))
+    if amount_paise < 100:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": "Payable amount must be at least Rs. 1.00 to initiate online payment.",
+            },
+            status=400,
+        )
+
     try:
         rz_order = client.order.create({
             "amount": amount_paise,
@@ -1328,9 +1337,14 @@ def razorpay_create_order(request):
             "payment_capture": 1,
             "receipt": f"order_{order.id}",
         })
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to create Razorpay order")
-        return JsonResponse({"ok": False, "error": "Unable to initiate payment."}, status=500)
+        detail = str(exc).strip()
+        if detail:
+            message = f"Unable to initiate payment. {detail}"
+        else:
+            message = "Unable to initiate payment."
+        return JsonResponse({"ok": False, "error": message}, status=500)
 
     order.razorpay_order_id = rz_order.get("id", "")
     order.save(update_fields=["razorpay_order_id"])
