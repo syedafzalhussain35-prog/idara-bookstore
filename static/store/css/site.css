@@ -727,19 +727,29 @@
         .user-actions {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             gap: 10px;
             margin-bottom: 6px;
             overflow: visible;
         }
 
-        .user-actions a,
-        .user-actions .dropdown {
-            min-width: 0;
+        .user-actions > .dropdown,
+        .user-actions > a {
+            flex: 0 1 110px;
+            min-width: 110px;
+            max-width: 128px;
         }
 
-        .user-actions .dropdown-toggle {
+        .user-actions .dropdown-toggle,
+        .user-actions > a {
             width: 100%;
+            min-height: 88px;
             justify-content: center;
+            padding: 8px 10px;
+        }
+
+        .user-actions .dropdown-toggle::after {
+            display: none;
         }
 
         .user-actions a,
@@ -813,9 +823,7 @@
 
 @media (max-width: 420px) {
     .user-actions {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        column-gap: 8px;
+        justify-content: center;
     }
 }
 
