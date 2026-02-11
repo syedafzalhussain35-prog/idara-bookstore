@@ -252,7 +252,7 @@ class Banner(models.Model):
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     show_on_mobile = models.BooleanField(
-        default=False,
+        default=True,
         help_text="Enable this banner for mobile screens.",
     )
     show_on_desktop = models.BooleanField(

@@ -166,19 +166,27 @@ def home(request):
     cache_ttl = getattr(settings, "HOME_CACHE_TTL", 120)
     is_mobile = _is_mobile_request(request)
 
-    banner_filter = Q(is_active=True)
     if is_mobile:
-        banner_filter &= Q(show_on_mobile=True)
-        banner_cache_key = "home:banners:mobile"
+        banner_ids = _cache_get_ids(
+            "home:banners:mobile",
+            Banner.objects.filter(is_active=True, show_on_mobile=True).order_by("order", "id"),
+            cache_ttl,
+        )
+        # Backward-compatible fallback for existing data created before
+        # device flags were introduced (mobile flag defaulted to False).
+        if not banner_ids:
+            banner_ids = _cache_get_ids(
+                "home:banners:mobile:fallback",
+                Banner.objects.filter(is_active=True, show_on_desktop=True).order_by("order", "id"),
+                cache_ttl,
+            )
     else:
-        banner_filter &= Q(show_on_desktop=True)
-        banner_cache_key = "home:banners:desktop"
+        banner_ids = _cache_get_ids(
+            "home:banners:desktop",
+            Banner.objects.filter(is_active=True, show_on_desktop=True).order_by("order", "id"),
+            cache_ttl,
+        )
 
-    banner_ids = _cache_get_ids(
-        banner_cache_key,
-        Banner.objects.filter(banner_filter).order_by("order", "id"),
-        cache_ttl,
-    )
     banners = _ordered_by_ids(Banner, banner_ids)
 
     featured_ids = _cache_get_ids(
