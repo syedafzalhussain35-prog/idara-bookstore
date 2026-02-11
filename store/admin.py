@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django import forms
 from django.contrib import messages
-from django.urls import path
+from django.urls import path, reverse
 from django.shortcuts import render
 from django.db import transaction
 from django.db.models import Sum, Case, When, Value, IntegerField
@@ -12,6 +12,7 @@ import re
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponse
 import csv
+from io import TextIOWrapper
 
 from .models import (
     Book,
@@ -56,16 +57,207 @@ def _log_audit(request, action, obj, changes):
         changes=changes,
     )
 
+
+def _normalize_header(value):
+    return str(value or "").strip().lower().replace("_", " ")
+
+
+def _split_multi(value):
+    if value in (None, ""):
+        return []
+    return [part.strip() for part in re.split(r"[\/,|]+", str(value)) if part.strip()]
+
+
+def _coerce_bool(value, default=None):
+    if value in (None, ""):
+        return default
+    val = str(value).strip().lower()
+    if val in {"1", "true", "yes", "y", "on"}:
+        return True
+    if val in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
+
+
+def _coerce_int(value, default=None):
+    if value in (None, ""):
+        return default
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _coerce_decimal(value, default=None):
+    if value in (None, ""):
+        return default
+    try:
+        return Decimal(str(value).strip())
+    except (InvalidOperation, ValueError, TypeError):
+        return default
+
+
+def _load_tabular_rows(uploaded_file):
+    name = (getattr(uploaded_file, "name", "") or "").lower()
+    if name.endswith(".csv"):
+        uploaded_file.seek(0)
+        wrapper = TextIOWrapper(uploaded_file.file, encoding="utf-8-sig")
+        reader = csv.reader(wrapper)
+        rows = list(reader)
+        wrapper.detach()
+    elif name.endswith(".xlsx"):
+        try:
+            from openpyxl import load_workbook
+        except Exception as exc:
+            raise ValueError("openpyxl is not installed. Add it to requirements and deploy.") from exc
+        uploaded_file.seek(0)
+        wb = load_workbook(uploaded_file, data_only=True)
+        ws = wb.active
+        rows = [list(row) for row in ws.iter_rows(values_only=True)]
+    else:
+        raise ValueError("Unsupported file type. Upload CSV or XLSX.")
+
+    if not rows:
+        return []
+
+    headers = [_normalize_header(item) for item in rows[0]]
+    parsed_rows = []
+    for index, raw_row in enumerate(rows[1:], start=2):
+        row_dict = {}
+        for col_index, header in enumerate(headers):
+            if not header:
+                continue
+            value = raw_row[col_index] if col_index < len(raw_row) else None
+            row_dict[header] = value
+        if any(value not in (None, "") for value in row_dict.values()):
+            row_dict["_row_number"] = index
+            parsed_rows.append(row_dict)
+    return parsed_rows
+
+
+class BulkImportForm(forms.Form):
+    file = forms.FileField(help_text="Upload CSV or XLSX file.")
+    dry_run = forms.BooleanField(required=False, initial=False, help_text="Validate only.")
+
+
+class BulkImportAdminMixin:
+    bulk_import_template = "admin/store/common/import_data.html"
+    bulk_import_changelist_template = "admin/store/common/change_list_with_import.html"
+    bulk_import_title = "Bulk Import"
+    bulk_import_help = ""
+    bulk_import_columns = ()
+
+    def get_bulk_import_url_name(self):
+        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_import_data"
+
+    def get_bulk_import_rows(self, request):
+        if "file" not in request.FILES:
+            return []
+        return _load_tabular_rows(request.FILES["file"])
+
+    def import_row(self, row_data):
+        raise NotImplementedError("import_row must be implemented.")
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "import-data/",
+                self.admin_site.admin_view(self.import_data_view),
+                name=self.get_bulk_import_url_name(),
+            ),
+        ]
+        return custom_urls + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["import_button_label"] = "Bulk Import"
+        extra_context["import_button_url"] = reverse(f"admin:{self.get_bulk_import_url_name()}")
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def import_data_view(self, request):
+        form = BulkImportForm(request.POST or None, request.FILES or None)
+        if request.method == "POST" and form.is_valid():
+            dry_run = form.cleaned_data["dry_run"]
+            created = 0
+            updated = 0
+            skipped = 0
+            errors = []
+            try:
+                rows = self.get_bulk_import_rows(request)
+            except Exception as exc:
+                messages.error(request, str(exc))
+                rows = None
+
+            if rows is not None:
+                with transaction.atomic():
+                    for row in rows:
+                        try:
+                            status = self.import_row(row)
+                        except Exception as exc:
+                            errors.append(f"Row {row.get('_row_number', '?')}: {exc}")
+                            continue
+                        if status == "created":
+                            created += 1
+                        elif status == "updated":
+                            updated += 1
+                        else:
+                            skipped += 1
+
+                    if dry_run:
+                        transaction.set_rollback(True)
+
+            if rows is not None:
+                summary = (
+                    f"Import completed. Created: {created}, Updated: {updated}, "
+                    f"Skipped: {skipped}, Errors: {len(errors)}"
+                )
+                if dry_run:
+                    summary += " (dry run)"
+                messages.success(request, summary)
+                for item in errors[:20]:
+                    messages.error(request, item)
+                if len(errors) > 20:
+                    messages.error(request, f"Additional errors not shown: {len(errors) - 20}")
+
+        context = {
+            "form": form,
+            "title": self.bulk_import_title,
+            "bulk_import_help": self.bulk_import_help,
+            "bulk_import_columns": self.bulk_import_columns,
+            "changelist_url": reverse(
+                f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
+            ),
+        }
+        return render(request, self.bulk_import_template, context)
+
 # ======================
 # CATEGORY ADMIN
 # ======================
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     list_display = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("name",)
     ordering = ("name",)
+    change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
+    bulk_import_title = "Bulk Import Categories"
+    bulk_import_help = "Required: name. Optional: slug."
+    bulk_import_columns = ("name", "slug")
+
+    def import_row(self, row_data):
+        name = str(row_data.get("name") or "").strip()
+        if not name:
+            raise ValueError("name is required.")
+
+        slug = str(row_data.get("slug") or "").strip()
+        category, created = Category.objects.get_or_create(name=name)
+        if slug:
+            category.slug = slug
+            category.save()
+            return "created" if created else "updated"
+        return "created" if created else "updated"
 
 
 # ======================
@@ -179,7 +371,7 @@ class BookAdmin(admin.ModelAdmin):
     actions = ("bulk_update_price", "export_books_csv")
 
     class ImportBooksForm(forms.Form):
-        file = forms.FileField(help_text="Upload XLSX file.")
+        file = forms.FileField(help_text="Upload CSV or XLSX file.")
         dry_run = forms.BooleanField(required=False, initial=False, help_text="Validate only.")
 
     class ImportImagesForm(forms.Form):
@@ -293,57 +485,41 @@ class BookAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    def _normalize_header(self, val):
-        return str(val or "").strip().lower()
-
-    def _split_subjects(self, raw):
-        if not raw:
-            return []
-        parts = re.split(r"[\/,|]+", str(raw))
-        return [p.strip() for p in parts if p.strip()]
-
     def import_books_view(self, request):
         form = self.ImportBooksForm(request.POST or None, request.FILES or None)
         if request.method == "POST" and form.is_valid():
-            try:
-                from openpyxl import load_workbook
-            except Exception:
-                messages.error(request, "openpyxl is not installed. Add it to requirements and deploy.")
-                return render(request, "admin/store/book/import_books.html", {"form": form})
-
-            file = form.cleaned_data["file"]
             dry_run = form.cleaned_data["dry_run"]
-
-            wb = load_workbook(file, data_only=True)
-            ws = wb.active
-            rows = list(ws.iter_rows(values_only=True))
-            if not rows:
-                messages.error(request, "The file appears to be empty.")
+            file = form.cleaned_data["file"]
+            try:
+                rows = _load_tabular_rows(file)
+            except Exception as exc:
+                messages.error(request, str(exc))
                 return render(request, "admin/store/book/import_books.html", {"form": form})
-
-            headers = [self._normalize_header(h) for h in rows[0]]
-            header_map = {h: idx for idx, h in enumerate(headers)}
-
-            def get_val(row, key):
-                idx = header_map.get(key)
-                return row[idx] if idx is not None else None
 
             created = 0
             updated = 0
             errors = 0
 
             with transaction.atomic():
-                for row in rows[1:]:
-                    title = (get_val(row, "book title") or get_val(row, "title") or "").strip()
-                    author = (get_val(row, "author") or "").strip()
+                for row in rows:
+                    title = str(row.get("book title") or row.get("title") or "").strip()
+                    author = str(row.get("author") or "").strip()
                     if not title or not author:
                         errors += 1
                         continue
 
-                    category_name = (get_val(row, "category") or "").strip()
-                    subject_raw = get_val(row, "subject") or get_val(row, "subjects")
-                    isbn = (get_val(row, "isbn") or "").strip()
-                    price_raw = get_val(row, "rate") or get_val(row, "price")
+                    category_name = str(row.get("category") or "").strip()
+                    subject_raw = row.get("subject") or row.get("subjects")
+                    isbn = str(row.get("isbn") or "").strip()
+                    price_raw = row.get("rate") or row.get("price")
+                    mrp_raw = row.get("mrp") or row.get("mrp price") or row.get("mrp_price")
+                    stock_raw = row.get("stock")
+                    description = row.get("description")
+                    published_year = row.get("published year") or row.get("published_year")
+                    binding = row.get("binding")
+                    pages = row.get("pages")
+                    weight = row.get("weight")
+                    readership = row.get("readership")
 
                     book, is_created = Book.objects.get_or_create(
                         title=title,
@@ -358,16 +534,40 @@ class BookAdmin(admin.ModelAdmin):
                     if isbn:
                         book.isbn = isbn
 
-                    if price_raw not in (None, ""):
-                        try:
-                            book.price = Decimal(str(price_raw))
-                        except (InvalidOperation, ValueError):
-                            pass
+                    parsed_price = _coerce_decimal(price_raw)
+                    if parsed_price is not None:
+                        book.price = parsed_price
+
+                    parsed_mrp = _coerce_decimal(mrp_raw)
+                    if parsed_mrp is not None:
+                        book.mrp_price = parsed_mrp
+
+                    parsed_stock = _coerce_int(stock_raw)
+                    if parsed_stock is not None:
+                        book.stock = max(parsed_stock, 0)
+
+                    if description not in (None, ""):
+                        book.description = str(description)
+                    if published_year not in (None, ""):
+                        book.published_year = str(published_year).strip()
+                    if binding not in (None, ""):
+                        book.binding = str(binding).strip()
+                    if pages not in (None, ""):
+                        book.pages = str(pages).strip()
+                    if weight not in (None, ""):
+                        book.weight = str(weight).strip()
+                    if readership not in (None, ""):
+                        book.readership = str(readership).strip()
+
+                    for flag_field in ("is_bestseller", "is_trending", "is_new_arrival", "is_featured"):
+                        parsed = _coerce_bool(row.get(flag_field))
+                        if parsed is not None:
+                            setattr(book, flag_field, parsed)
 
                     if not dry_run:
                         book.save()
 
-                    subjects = self._split_subjects(subject_raw)
+                    subjects = _split_multi(subject_raw)
                     if subjects and not dry_run:
                         subject_objs = []
                         for s in subjects:
@@ -752,7 +952,7 @@ class CouponAdmin(admin.ModelAdmin):
 
 
 @admin.register(UnaniTerm)
-class UnaniTermAdmin(admin.ModelAdmin):
+class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     list_display = ("english_term", "section", "is_published", "updated_at")
     search_fields = ("arabic_script", "transliteration", "english_term", "description")
     list_filter = ("section", "is_published")
@@ -761,6 +961,21 @@ class UnaniTermAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
     list_per_page = 50
     actions = ("publish_terms", "unpublish_terms")
+    change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
+    bulk_import_title = "Bulk Import Unani Terms"
+    bulk_import_help = (
+        "Required: english_term. Optional: description, transliteration, arabic_script, "
+        "section, slug, is_published."
+    )
+    bulk_import_columns = (
+        "english_term",
+        "description",
+        "transliteration",
+        "arabic_script",
+        "section",
+        "slug",
+        "is_published",
+    )
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
@@ -786,6 +1001,38 @@ class UnaniTermAdmin(admin.ModelAdmin):
     def unpublish_terms(self, request, queryset):
         count = queryset.update(is_published=False)
         self.message_user(request, f"{count} term(s) unpublished.")
+
+    def import_row(self, row_data):
+        english_term = str(row_data.get("english term") or row_data.get("english_term") or "").strip()
+        if not english_term:
+            raise ValueError("english_term is required.")
+
+        term, created = UnaniTerm.objects.get_or_create(
+            english_term=english_term,
+            defaults={"description": str(row_data.get("description") or "").strip()},
+        )
+
+        for field_name, headers in (
+            ("description", ("description",)),
+            ("transliteration", ("transliteration",)),
+            ("arabic_script", ("arabic script", "arabic_script")),
+            ("section", ("section",)),
+            ("slug", ("slug",)),
+        ):
+            value = None
+            for header in headers:
+                if row_data.get(header) not in (None, ""):
+                    value = str(row_data.get(header)).strip()
+                    break
+            if value is not None:
+                setattr(term, field_name, value)
+
+        parsed_publish = _coerce_bool(row_data.get("is published") if "is published" in row_data else row_data.get("is_published"))
+        if parsed_publish is not None:
+            term.is_published = parsed_publish
+
+        term.save()
+        return "created" if created else "updated"
 
 
 # ======================
@@ -973,11 +1220,30 @@ class IKSWalletTransactionAdmin(admin.ModelAdmin):
             obj.save(update_fields=["completed_at"])
 
 @admin.register(Subject)
-class SubjectAdmin(admin.ModelAdmin):
+class SubjectAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     list_display = ("name", "slug", "is_active")
     search_fields = ("name",)
     list_filter = ("is_active",)
     prepopulated_fields = {"slug": ("name",)}
+    change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
+    bulk_import_title = "Bulk Import Subjects"
+    bulk_import_help = "Required: name. Optional: slug, is_active."
+    bulk_import_columns = ("name", "slug", "is_active")
+
+    def import_row(self, row_data):
+        name = str(row_data.get("name") or "").strip()
+        if not name:
+            raise ValueError("name is required.")
+
+        subject, created = Subject.objects.get_or_create(name=name)
+        slug = str(row_data.get("slug") or "").strip()
+        if slug:
+            subject.slug = slug
+        parsed_active = _coerce_bool(row_data.get("is active") if "is active" in row_data else row_data.get("is_active"))
+        if parsed_active is not None:
+            subject.is_active = parsed_active
+        subject.save()
+        return "created" if created else "updated"
 
 
 @admin.register(PublishWithUsSubmission)
@@ -989,7 +1255,7 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Banner)
-class BannerAdmin(admin.ModelAdmin):
+class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     list_display = (
         "preview",
         "title",
@@ -1015,6 +1281,30 @@ class BannerAdmin(admin.ModelAdmin):
     )
     search_fields = ("title", "headline", "subheadline")
     ordering = ("order", "id")
+    change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
+    bulk_import_title = "Bulk Import Banners"
+    bulk_import_help = (
+        "Required for create: image. Recommended identifiers: id or title+order. "
+        "Category fields accept category names."
+    )
+    bulk_import_columns = (
+        "id",
+        "title",
+        "headline",
+        "subheadline",
+        "image",
+        "category",
+        "cta_text",
+        "cta_category",
+        "order",
+        "is_active",
+        "show_on_mobile",
+        "show_on_desktop",
+        "focal_x",
+        "focal_y",
+        "mobile_height",
+        "tablet_height",
+    )
 
     fieldsets = (
         ("Banner", {
@@ -1036,6 +1326,59 @@ class BannerAdmin(admin.ModelAdmin):
                 obj.image.url,
             )
         return "?"
+
+    def import_row(self, row_data):
+        banner_id = _coerce_int(row_data.get("id"))
+        title = str(row_data.get("title") or "").strip()
+        order_val = _coerce_int(row_data.get("order"), default=0)
+
+        banner = None
+        if banner_id:
+            banner = Banner.objects.filter(pk=banner_id).first()
+        if banner is None and title:
+            banner = Banner.objects.filter(title=title, order=order_val).first()
+
+        created = banner is None
+        if banner is None:
+            banner = Banner(order=order_val)
+
+        for field_name in ("title", "headline", "subheadline", "cta_text"):
+            value = row_data.get(field_name)
+            if value not in (None, ""):
+                setattr(banner, field_name, str(value).strip())
+
+        image_val = row_data.get("image")
+        if image_val not in (None, ""):
+            banner.image = str(image_val).strip()
+        elif created and not banner.image:
+            raise ValueError("image is required for new banner rows.")
+
+        category_name = str(row_data.get("category") or "").strip()
+        if category_name:
+            banner.category, _ = Category.objects.get_or_create(name=category_name)
+
+        cta_category_name = str(row_data.get("cta category") or row_data.get("cta_category") or "").strip()
+        if cta_category_name:
+            banner.cta_category, _ = Category.objects.get_or_create(name=cta_category_name)
+
+        int_fields = ("order", "focal_x", "focal_y", "mobile_height", "tablet_height")
+        for field_name in int_fields:
+            parsed = _coerce_int(row_data.get(field_name))
+            if parsed is not None:
+                setattr(banner, field_name, parsed)
+
+        bool_map = {
+            "is_active": row_data.get("is active") if "is active" in row_data else row_data.get("is_active"),
+            "show_on_mobile": row_data.get("show on mobile") if "show on mobile" in row_data else row_data.get("show_on_mobile"),
+            "show_on_desktop": row_data.get("show on desktop") if "show on desktop" in row_data else row_data.get("show_on_desktop"),
+        }
+        for field_name, value in bool_map.items():
+            parsed = _coerce_bool(value)
+            if parsed is not None:
+                setattr(banner, field_name, parsed)
+
+        banner.save()
+        return "created" if created else "updated"
 
 # ======================
 # CUSTOM ADMIN SITE

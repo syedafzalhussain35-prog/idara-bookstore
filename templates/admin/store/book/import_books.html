@@ -3,8 +3,9 @@
 
 {% block content %}
 <div class="content">
-    <h1>Import Books (XLSX)</h1>
-    <p>Expected columns: <strong>Book Title</strong>, <strong>Author</strong>, <strong>Category</strong>, <strong>Subject</strong>, <strong>Rate</strong>, <strong>ISBN</strong>.</p>
+    <h1>Import Books (CSV/XLSX)</h1>
+    <p>Required columns: <strong>Book Title</strong> (or <strong>Title</strong>) and <strong>Author</strong>.</p>
+    <p>Supported optional columns: <strong>Category</strong>, <strong>Subject/Subjects</strong>, <strong>Rate/Price</strong>, <strong>MRP/MRP Price</strong>, <strong>Stock</strong>, <strong>ISBN</strong>, <strong>Description</strong>, <strong>Published Year</strong>, <strong>Binding</strong>, <strong>Pages</strong>, <strong>Weight</strong>, <strong>Readership</strong>, <strong>is_bestseller</strong>, <strong>is_trending</strong>, <strong>is_new_arrival</strong>, <strong>is_featured</strong>.</p>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset class="module aligned">

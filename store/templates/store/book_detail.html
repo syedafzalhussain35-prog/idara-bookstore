@@ -32,7 +32,7 @@
                         <img id="mainImage"
                              class="img-fluid book-main-image"
                              src="{{ book.main_cover.url }}"
-                             style="max-height: 100%; object-fit: contain; transition: opacity 0.3s;"
+                             style="width: 100%; height: 100%; object-fit: contain; transition: opacity 0.3s;"
                              alt="{{ book.title }}">
                     {% else %}
                         <div class="text-muted text-center">
@@ -265,7 +265,7 @@
     </div>
     {% endif %}
 
-    <div class="row mt-5">
+    <div class="row mt-5 justify-content-center">
         <div class="col-lg-8">
             <hr class="mb-5">
             <h3 class="fw-bold mb-4"><i class="fas fa-comments text-magenta me-2"></i>Customer Reviews</h3>
