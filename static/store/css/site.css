@@ -818,7 +818,7 @@
         }
 
         .mobile-admin-link {
-            display: inline-flex !important;
+            display: none !important;
         }
 
         .user-actions .dropdown-menu,
