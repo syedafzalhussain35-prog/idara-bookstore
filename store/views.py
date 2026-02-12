@@ -1055,14 +1055,14 @@ def reorder_order(request, order_id):
 
 def _calculate_checkout_totals(cart):
     subtotal = cart.get_total()
-    discount_amount = Decimal("0.00")
+    catalog_savings = Decimal("0.00")
     for item in cart.items.select_related("book").all():
         if item.book.mrp_price and item.book.mrp_price > item.book.price:
-            discount_amount += (item.book.mrp_price - item.book.price) * item.quantity
+            catalog_savings += (item.book.mrp_price - item.book.price) * item.quantity
     for bitem in cart.bundle_items.select_related("bundle").all():
         original_total = bitem.bundle.original_total
         if original_total and original_total > bitem.bundle.bundle_price:
-            discount_amount += (original_total - bitem.bundle.bundle_price) * bitem.quantity
+            catalog_savings += (original_total - bitem.bundle.bundle_price) * bitem.quantity
 
     shipping_base = Decimal(str(getattr(settings, "SHIPPING_FLAT", 0)))
     shipping_per_kg = Decimal(str(getattr(settings, "SHIPPING_PER_KG", 0)))
@@ -1079,12 +1079,13 @@ def _calculate_checkout_totals(cart):
     shipping_amount = shipping_base + (total_weight * shipping_per_kg)
 
     gst_rate = Decimal(str(getattr(settings, "GST_RATE", 0)))
-    gst_amount = (subtotal - discount_amount) * gst_rate / Decimal("100") if gst_rate else Decimal("0.00")
-    total_cost = subtotal - discount_amount + gst_amount + shipping_amount
+    gst_amount = subtotal * gst_rate / Decimal("100") if gst_rate else Decimal("0.00")
+    total_cost = subtotal + gst_amount + shipping_amount
 
     return {
         "subtotal": subtotal,
-        "discount_amount": discount_amount,
+        "catalog_savings": catalog_savings,
+        "discount_amount": Decimal("0.00"),
         "gst_rate": gst_rate,
         "gst_amount": gst_amount,
         "shipping_amount": shipping_amount,
@@ -1123,12 +1124,14 @@ def _totals_with_coupon(base_totals, coupon):
     totals = dict(base_totals)
     coupon_discount = Decimal("0.00")
     if coupon:
-        coupon_discount = coupon.discount_amount_for_subtotal(totals["subtotal"])
-    combined_discount = totals["discount_amount"] + coupon_discount
-    taxable = max(totals["subtotal"] - combined_discount, Decimal("0.00"))
+        coupon_discount = min(
+            coupon.discount_amount_for_subtotal(totals["subtotal"]),
+            totals["subtotal"],
+        )
+    taxable = max(totals["subtotal"] - coupon_discount, Decimal("0.00"))
     gst_amount = taxable * totals["gst_rate"] / Decimal("100") if totals["gst_rate"] else Decimal("0.00")
     totals["coupon_discount"] = coupon_discount
-    totals["discount_amount"] = combined_discount
+    totals["discount_amount"] = coupon_discount
     totals["gst_amount"] = gst_amount
     totals["total_cost"] = taxable + totals["shipping_amount"] + gst_amount
     return totals
