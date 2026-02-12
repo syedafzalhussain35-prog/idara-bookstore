@@ -351,6 +351,20 @@
                                         <div>
                                             <span class="text-muted me-2">Total:</span>
                                             <span class="h5 fw-bold text-magenta">₹{{ order.total_cost }}</span>
+                                            {% if order.courier_service or order.consignment_number %}
+                                            <div class="small text-muted mt-2">
+                                                {% if order.courier_service %}
+                                                    Courier: {{ order.get_courier_service_display }}
+                                                {% endif %}
+                                                {% if order.consignment_number %}
+                                                    {% if order.courier_service %} | {% endif %}
+                                                    Consignment: <span class="fw-semibold">{{ order.consignment_number }}</span>
+                                                {% endif %}
+                                                {% if order.courier_service == 'india_post' and order.consignment_number %}
+                                                    | <a href="{{ order.tracking_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Track on India Post</a>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <small class="text-muted">

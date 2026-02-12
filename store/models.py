@@ -703,6 +703,27 @@ class Order(models.Model):
     )
 
     payment_method = models.CharField(max_length=30, default="razorpay")
+    COURIER_CHOICES = [
+        ("", "Not set"),
+        ("india_post", "India Post"),
+        ("delhivery", "Delhivery"),
+        ("dtdc", "DTDC"),
+        ("bluedart", "Blue Dart"),
+        ("other", "Other"),
+    ]
+    courier_service = models.CharField(
+        max_length=30,
+        choices=COURIER_CHOICES,
+        blank=True,
+        default="",
+        help_text="Select the courier used for this shipment.",
+    )
+    consignment_number = models.CharField(
+        max_length=80,
+        blank=True,
+        default="",
+        help_text="Tracking/consignment number shared with customer.",
+    )
     razorpay_order_id = models.CharField(max_length=100, blank=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True)
     razorpay_signature = models.CharField(max_length=200, blank=True)
@@ -732,6 +753,12 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} - {self.full_name}"
+
+    @property
+    def tracking_url(self):
+        if self.courier_service == "india_post" and self.consignment_number:
+            return "https://www.indiapost.gov.in/"
+        return ""
 
 
 class OrderItem(models.Model):

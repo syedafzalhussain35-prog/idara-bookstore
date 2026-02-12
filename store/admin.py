@@ -811,6 +811,9 @@ class OrderAdmin(admin.ModelAdmin):
         "packing_assignee",
         "shipping_assignee",
         "payment_method",
+        "courier_service",
+        "consignment_number",
+        "tracking_link",
         "is_paid",
         "invoice_link",
         "city",
@@ -818,8 +821,8 @@ class OrderAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = ("status", "is_paid", "created_at", "city", "packing_assignee", "shipping_assignee")
-    search_fields = ("full_name", "email", "city", "user__username")
+    list_filter = ("status", "is_paid", "created_at", "city", "packing_assignee", "shipping_assignee", "courier_service")
+    search_fields = ("full_name", "email", "city", "user__username", "consignment_number")
     readonly_fields = (
         "user",
         "created_at",
@@ -901,6 +904,15 @@ class OrderAdmin(admin.ModelAdmin):
             '<a href="/invoice/{}/" target="_blank">View</a>',
             obj.id,
         )
+
+    @admin.display(description="Tracking")
+    def tracking_link(self, obj):
+        if obj.courier_service == "india_post" and obj.consignment_number:
+            return format_html(
+                '<a href="{}" target="_blank" rel="noopener noreferrer">India Post</a>',
+                obj.tracking_url,
+            )
+        return "—"
 
 
 
