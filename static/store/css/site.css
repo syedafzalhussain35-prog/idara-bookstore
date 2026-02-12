@@ -161,7 +161,7 @@
     }
 
     .mobile-admin-link {
-        display: none !important;
+        display: inline-flex !important;
     }
 
     .username-mobile {
