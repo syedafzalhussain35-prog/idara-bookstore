@@ -10,76 +10,84 @@
 
 {% if is_homepage %}
 <section class="hero-section">
-    <div class="swiper mySwiper hero-swiper">
-        <div class="swiper-wrapper">
-            {% if banners %}
-                {% for banner in banners %}
-                <div class="swiper-slide">
-                    <div class="hero-slide" style="--banner-height-mobile: {{ banner.mobile_height }}px; --banner-height-tablet: {{ banner.tablet_height }}px;">
-                        {% if banner.category %}
-                        <a href="{% url 'category_books' banner.category.slug %}">
-                            <picture>
-                                {% if banner.has_webp %}
-                                <source type="image/webp" srcset="{{ banner.webp_url }}">
-                                {% endif %}
-                                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
-                            </picture>
-                        </a>
-                        {% else %}
-                            <picture>
-                                {% if banner.has_webp %}
-                                <source type="image/webp" srcset="{{ banner.webp_url }}">
-                                {% endif %}
-                                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
-                            </picture>
-                        {% endif %}
-                        {% if banner.headline or banner.subheadline or banner.cta_text %}
-                        <div class="hero-overlay">
-                            {% if banner.headline %}
-                            <h3>{{ banner.headline }}</h3>
+    <div class="hero-stage">
+        <aside class="hero-side-banner hero-side-left d-none d-xl-block" aria-hidden="true">
+            <img src="{% static 'store/images/banners/unnamed.jpg' %}" alt="">
+        </aside>
+        <div class="swiper mySwiper hero-swiper">
+            <div class="swiper-wrapper">
+                {% if banners %}
+                    {% for banner in banners %}
+                    <div class="swiper-slide">
+                        <div class="hero-slide" style="--banner-height-mobile: {{ banner.mobile_height }}px; --banner-height-tablet: {{ banner.tablet_height }}px;">
+                            {% if banner.category %}
+                            <a href="{% url 'category_books' banner.category.slug %}">
+                                <picture>
+                                    {% if banner.has_webp %}
+                                    <source type="image/webp" srcset="{{ banner.webp_url }}">
+                                    {% endif %}
+                                    <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                                </picture>
+                            </a>
+                            {% else %}
+                                <picture>
+                                    {% if banner.has_webp %}
+                                    <source type="image/webp" srcset="{{ banner.webp_url }}">
+                                    {% endif %}
+                                    <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Banner' }}" style="object-position: {{ banner.focal_x }}% {{ banner.focal_y }}%;">
+                                </picture>
                             {% endif %}
-                            {% if banner.subheadline %}
-                            <p>{{ banner.subheadline }}</p>
-                            {% endif %}
-                            {% if banner.cta_text and banner.cta_category %}
-                            <a href="{% url 'category_books' banner.cta_category.slug %}" class="btn btn-brand btn-sm rounded-pill">{{ banner.cta_text }}</a>
+                            {% if banner.headline or banner.subheadline or banner.cta_text %}
+                            <div class="hero-overlay">
+                                {% if banner.headline %}
+                                <h3>{{ banner.headline }}</h3>
+                                {% endif %}
+                                {% if banner.subheadline %}
+                                <p>{{ banner.subheadline }}</p>
+                                {% endif %}
+                                {% if banner.cta_text and banner.cta_category %}
+                                <a href="{% url 'category_books' banner.cta_category.slug %}" class="btn btn-brand btn-sm rounded-pill">{{ banner.cta_text }}</a>
+                                {% endif %}
+                            </div>
                             {% endif %}
                         </div>
-                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="swiper-slide">
+                    <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
+                        <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-            <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
-                    <img src="{% static 'store/images/banners/slide1.jpg' %}" alt="Idara banner 1">
+                <div class="swiper-slide">
+                    <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
+                        <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2">
+                    </div>
                 </div>
-            </div>
-            <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
-                    <img src="{% static 'store/images/banners/slide2.jpg' %}" alt="Idara banner 2">
+                <div class="swiper-slide">
+                    <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
+                        <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3">
+                    </div>
                 </div>
-            </div>
-            <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
-                    <img src="{% static 'store/images/banners/slide3.jpg' %}" alt="Idara banner 3">
+                <div class="swiper-slide">
+                    <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
+                        <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4">
+                    </div>
                 </div>
-            </div>
-            <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
-                    <img src="{% static 'store/images/banners/slide4.jpg' %}" alt="Idara banner 4">
+                <div class="swiper-slide">
+                    <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
+                        <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
+                    </div>
                 </div>
+                {% endif %}
             </div>
-            <div class="swiper-slide">
-                <div class="hero-slide" style="--banner-height-mobile: 360px; --banner-height-tablet: 420px;">
-                    <img src="{% static 'store/images/banners/slide5.jpg' %}" alt="Idara banner 5">
-                </div>
-            </div>
-            {% endif %}
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-pagination"></div>
         </div>
-        <div class="swiper-button-next"></div>
-        <div class="swiper-button-prev"></div>
-        <div class="swiper-pagination"></div>
+        <aside class="hero-side-banner hero-side-right d-none d-xl-block" aria-hidden="true">
+            <img src="{% static 'store/images/banners/unnamed2.jpg' %}" alt="">
+        </aside>
     </div>
 </section>
 {% endif %}
