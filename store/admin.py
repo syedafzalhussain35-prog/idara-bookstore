@@ -147,9 +147,19 @@ class BulkImportAdminMixin:
     bulk_import_title = "Bulk Import"
     bulk_import_help = ""
     bulk_import_columns = ()
+    bulk_import_sample_rows = ()
 
     def get_bulk_import_url_name(self):
         return f"{self.model._meta.app_label}_{self.model._meta.model_name}_import_data"
+
+    def get_bulk_import_sample_url_name(self):
+        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_sample_csv"
+
+    def get_bulk_import_sample_filename(self):
+        return f"{self.model._meta.model_name}_sample.csv"
+
+    def get_bulk_import_sample_rows(self):
+        return self.bulk_import_sample_rows
 
     def get_bulk_import_rows(self, request):
         if "file" not in request.FILES:
@@ -167,8 +177,46 @@ class BulkImportAdminMixin:
                 self.admin_site.admin_view(self.import_data_view),
                 name=self.get_bulk_import_url_name(),
             ),
+            path(
+                "import-data/sample-csv/",
+                self.admin_site.admin_view(self.download_sample_csv_view),
+                name=self.get_bulk_import_sample_url_name(),
+            ),
         ]
         return custom_urls + urls
+
+    def download_sample_csv_view(self, request):
+        columns = list(self.bulk_import_columns or ())
+        if not columns:
+            messages.error(request, "No sample columns configured for this importer.")
+            return render(request, self.bulk_import_template, {
+                "form": BulkImportForm(),
+                "title": self.bulk_import_title,
+                "bulk_import_help": self.bulk_import_help,
+                "bulk_import_columns": self.bulk_import_columns,
+                "sample_csv_url": reverse(f"admin:{self.get_bulk_import_sample_url_name()}"),
+                "changelist_url": reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
+                ),
+            })
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{self.get_bulk_import_sample_filename()}"'
+        writer = csv.writer(response)
+        writer.writerow(columns)
+
+        for row in self.get_bulk_import_sample_rows() or ():
+            if isinstance(row, dict):
+                writer.writerow([row.get(col, "") for col in columns])
+            elif isinstance(row, (list, tuple)):
+                values = list(row[:len(columns)])
+                if len(values) < len(columns):
+                    values += [""] * (len(columns) - len(values))
+                writer.writerow(values)
+            else:
+                writer.writerow([""] * len(columns))
+
+        return response
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
@@ -226,6 +274,7 @@ class BulkImportAdminMixin:
             "title": self.bulk_import_title,
             "bulk_import_help": self.bulk_import_help,
             "bulk_import_columns": self.bulk_import_columns,
+            "sample_csv_url": reverse(f"admin:{self.get_bulk_import_sample_url_name()}"),
             "changelist_url": reverse(
                 f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
             ),
@@ -246,6 +295,10 @@ class CategoryAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     bulk_import_title = "Bulk Import Categories"
     bulk_import_help = "Required: name. Optional: slug."
     bulk_import_columns = ("name", "slug")
+    bulk_import_sample_rows = (
+        {"name": "Unani Classics", "slug": "unani-classics"},
+        {"name": "Pharmacology", "slug": "pharmacology"},
+    )
 
     def import_row(self, row_data):
         name = str(row_data.get("name") or "").strip()
@@ -474,6 +527,11 @@ class BookAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path(
+                "import-books/sample-csv/",
+                self.admin_site.admin_view(self.download_books_sample_csv_view),
+                name="store_book_import_books_sample_csv",
+            ),
+            path(
                 "import-books/",
                 self.admin_site.admin_view(self.import_books_view),
                 name="store_book_import_books",
@@ -486,8 +544,60 @@ class BookAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
+    def download_books_sample_csv_view(self, request):
+        columns = [
+            "Book Title",
+            "Author",
+            "Category",
+            "Subject",
+            "Rate",
+            "MRP",
+            "Stock",
+            "ISBN",
+            "Description",
+            "Published Year",
+            "Binding",
+            "Pages",
+            "Weight",
+            "Readership",
+            "is_bestseller",
+            "is_trending",
+            "is_new_arrival",
+            "is_featured",
+        ]
+        sample_rows = [
+            [
+                "Makhzan-ul-Mufradat",
+                "Hakim Example",
+                "Unani Classics",
+                "Ilmul Advia / Materia Medica",
+                "450",
+                "600",
+                "25",
+                "9780000000001",
+                "Foundational Unani formulary reference.",
+                "2024",
+                "Paperback",
+                "420",
+                "0.45kg",
+                "UG/PG",
+                "true",
+                "false",
+                "true",
+                "false",
+            ]
+        ]
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="books_import_sample.csv"'
+        writer = csv.writer(response)
+        writer.writerow(columns)
+        for row in sample_rows:
+            writer.writerow(row)
+        return response
+
     def import_books_view(self, request):
         form = self.ImportBooksForm(request.POST or None, request.FILES or None)
+        sample_csv_url = reverse("admin:store_book_import_books_sample_csv")
         if request.method == "POST" and form.is_valid():
             dry_run = form.cleaned_data["dry_run"]
             file = form.cleaned_data["file"]
@@ -495,7 +605,10 @@ class BookAdmin(admin.ModelAdmin):
                 rows = _load_tabular_rows(file)
             except Exception as exc:
                 messages.error(request, str(exc))
-                return render(request, "admin/store/book/import_books.html", {"form": form})
+                return render(request, "admin/store/book/import_books.html", {
+                    "form": form,
+                    "sample_csv_url": sample_csv_url,
+                })
 
             created = 0
             updated = 0
@@ -590,7 +703,10 @@ class BookAdmin(admin.ModelAdmin):
                 + (" (dry run)" if dry_run else ""),
             )
 
-        return render(request, "admin/store/book/import_books.html", {"form": form})
+        return render(request, "admin/store/book/import_books.html", {
+            "form": form,
+            "sample_csv_url": sample_csv_url,
+        })
 
     def import_images_view(self, request):
         form = self.ImportImagesForm(request.POST or None)
@@ -977,6 +1093,17 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         "slug",
         "is_published",
     )
+    bulk_import_sample_rows = (
+        {
+            "english_term": "Tamamiyya Asbab",
+            "description": "Causes related to functions.",
+            "transliteration": "Tamamiyya Asbab",
+            "arabic_script": "اسباب تامیہ",
+            "section": "General Terms",
+            "slug": "tamamiyya-asbab",
+            "is_published": "true",
+        },
+    )
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
@@ -1254,6 +1381,10 @@ class SubjectAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     bulk_import_title = "Bulk Import Subjects"
     bulk_import_help = "Required: name. Optional: slug, is_active."
     bulk_import_columns = ("name", "slug", "is_active")
+    bulk_import_sample_rows = (
+        {"name": "Ilmul Advia", "slug": "ilmul-advia", "is_active": "true"},
+        {"name": "Tashreeh", "slug": "tashreeh", "is_active": "true"},
+    )
 
     def import_row(self, row_data):
         name = str(row_data.get("name") or "").strip()
@@ -1329,6 +1460,26 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         "focal_y",
         "mobile_height",
         "tablet_height",
+    )
+    bulk_import_sample_rows = (
+        {
+            "id": "",
+            "title": "Homepage Hero",
+            "headline": "Welcome to Idara",
+            "subheadline": "Discover curated Unani resources",
+            "image": "banners/sample-banner.jpg",
+            "category": "Unani Classics",
+            "cta_text": "Shop Now",
+            "cta_category": "Unani Classics",
+            "order": "1",
+            "is_active": "true",
+            "show_on_mobile": "true",
+            "show_on_desktop": "true",
+            "focal_x": "50",
+            "focal_y": "50",
+            "mobile_height": "360",
+            "tablet_height": "420",
+        },
     )
 
     fieldsets = (
