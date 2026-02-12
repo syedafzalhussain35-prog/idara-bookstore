@@ -2,10 +2,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic.base import RedirectView
 from store import views
 from store.admin import admin_site
 
 urlpatterns = [
+    path(
+        'favicon.ico',
+        RedirectView.as_view(url=f'{settings.STATIC_URL}favicon.png', permanent=True),
+    ),
 
     # ==================================================
     # ADMIN
