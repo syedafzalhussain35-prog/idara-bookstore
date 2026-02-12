@@ -47,7 +47,7 @@
 
 .uwc-grid {
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: 1fr;
     gap: 18px;
     margin-top: 18px;
 }
@@ -216,46 +216,6 @@
     padding: 0;
 }
 
-.uwc-table-wrap {
-    max-height: 630px;
-    overflow: auto;
-    border: 1px solid #ead5df;
-    border-radius: 12px;
-}
-
-.uwc-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
-}
-
-.uwc-table th,
-.uwc-table td {
-    border-bottom: 1px solid #f1dce7;
-    padding: 10px 12px;
-    text-align: left;
-}
-
-.uwc-table th {
-    position: sticky;
-    top: 0;
-    background: #fff4f9;
-    color: #632743;
-    z-index: 1;
-}
-
-.uwc-source {
-    margin-top: 10px;
-    font-size: 0.82rem;
-    color: #6e5862;
-}
-
-@media (max-width: 992px) {
-    .uwc-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 768px) {
     .uwc-hero {
         padding: 14px;
@@ -288,7 +248,7 @@
             {% if units %}
             <div class="uwc-grid">
                 <article class="uwc-card">
-                    <form id="uwcForm" autocomplete="off">
+                    <form id="uwcForm" autocomplete="off" data-no-loader>
                         <div class="uwc-mode" id="uwcMode">
                             <label class="is-active"><input type="radio" name="direction" value="to_grams" checked>Classical to grams</label>
                             <label><input type="radio" name="direction" value="to_breakdown">Grams to classical</label>
@@ -316,33 +276,6 @@
 
                     <div class="uwc-result" id="uwcResult"></div>
                     <div class="uwc-history" id="uwcHistory"></div>
-                </article>
-
-                <article class="uwc-card">
-                    <div class="uwc-inline-label">Admin Controlled Unit Table</div>
-                    <div class="uwc-table-wrap">
-                        <table class="uwc-table">
-                            <thead>
-                                <tr>
-                                    <th>S.N.</th>
-                                    <th>Classical weight</th>
-                                    <th>Metric weight</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for unit in units %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ unit.classical_weight }}</td>
-                                    <td>{{ unit.metric_weight }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% if source_note %}
-                    <div class="uwc-source">Source: {{ source_note }}</div>
-                    {% endif %}
                 </article>
             </div>
             {{ units_payload|json_script:"uwc-units-data" }}
