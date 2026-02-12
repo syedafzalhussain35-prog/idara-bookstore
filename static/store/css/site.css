@@ -818,7 +818,14 @@
         }
 
         .mobile-admin-link {
-            display: none !important;
+            display: inline-flex !important;
+            flex: 0 1 110px;
+            min-width: 110px;
+            max-width: 128px;
+            width: 100%;
+            min-height: 88px;
+            justify-content: center;
+            padding: 8px 10px;
         }
 
         .user-actions .dropdown-menu,
