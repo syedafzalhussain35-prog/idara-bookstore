@@ -171,6 +171,12 @@
     margin-bottom: 5px;
 }
 
+.term-field-label {
+    color: #6e5561;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+}
+
 .term-script-box {
     border: 1px solid #e6d6de;
     border-radius: 12px;
@@ -207,11 +213,6 @@
     font-size: 1.12rem;
     color: #231f22;
     line-height: 1.25;
-}
-
-.term-description {
-    margin: 0;
-    color: #51454c;
 }
 
 .term-open {
@@ -448,18 +449,16 @@
                         <div class="term-script-label">Arabic/Persian/Urdu</div>
                         <div class="term-script-box">
                             <div class="term-script">{{ item.arabic_script|default:"-" }}</div>
+                            <div class="term-field-label mt-2 mb-1">Transliteration</div>
                             <div class="term-transliteration">{{ item.transliteration|default:"-" }}</div>
                         </div>
                     </div>
                     <div class="term-actions">
-                        {% if item.section %}
-                        <span class="badge text-bg-light border">{{ item.section }}</span>
-                        {% endif %}
                         <a href="{% url 'dictionary_detail' item.slug %}" class="btn btn-sm btn-brand term-open">Open</a>
                     </div>
                 </div>
+                <div class="term-field-label">English term</div>
                 <h2 class="term-title">{{ item.english_term }}</h2>
-                <p class="term-description">{{ item.description|truncatechars:220 }}</p>
             </article>
             {% endfor %}
         </div>
