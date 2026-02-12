@@ -954,6 +954,25 @@ class IKSWalletTransaction(models.Model):
         return f"{self.wallet.user.username} | {self.tx_type} | {self.coins}"
 
 
+class ClassicalWeightUnit(models.Model):
+    classical_weight = models.CharField(max_length=100, unique=True)
+    metric_weight = models.CharField(max_length=50, help_text="Example: 170mg, 3.5gm")
+    grams_value = models.DecimalField(max_digits=12, decimal_places=6, validators=[MinValueValidator(Decimal("0.000001"))])
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    source_note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "Classical Weight Unit"
+        verbose_name_plural = "Classical Weight Units"
+
+    def __str__(self):
+        return f"{self.classical_weight} ({self.metric_weight})"
+
+
 def _apply_text_watermark(image_field, text):
     if not image_field or not text:
         return False

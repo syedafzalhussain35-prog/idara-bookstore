@@ -41,6 +41,19 @@
 
 .dictionary-search-input {
     font-family: "Amiri", "Poppins", serif;
+    min-height: 48px;
+    font-size: 1.02rem;
+}
+
+.dictionary-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dictionary-input-row .dictionary-search-input {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .dictionary-search .form-control:focus,
@@ -53,6 +66,13 @@
     border-color: #d8bcc9;
     color: #5e2642;
     background: #fff;
+    min-height: 44px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .script-toggle:hover {
@@ -246,24 +266,29 @@
     }
 
     .dictionary-search .input-group {
-        display: grid;
-        grid-template-columns: 92px 1fr;
-        gap: 0;
+        display: block;
     }
 
-    .dictionary-search .input-group .input-group-text {
-        border-radius: 12px 0 0 12px;
+    .dictionary-input-row {
+        align-items: stretch;
     }
 
-    .dictionary-search .input-group .form-control {
-        border-radius: 0 12px 12px 0;
-    }
-
-    .dictionary-search .input-group .script-toggle {
-        grid-column: 1 / -1;
-        margin-top: 8px;
+    .dictionary-input-row .dictionary-search-input {
+        min-height: 50px;
+        font-size: 1.05rem;
         border-radius: 12px;
-        min-height: 42px;
+    }
+
+    .dictionary-input-row .script-toggle {
+        width: 50px;
+        min-width: 50px;
+        border-radius: 12px;
+        padding: 0;
+        font-size: 1.05rem;
+    }
+
+    .dictionary-input-row .script-toggle .script-toggle-text {
+        display: none;
     }
 
     .alpha-strip-wrap {
@@ -319,10 +344,12 @@
 
             <form method="get" class="row g-2 dictionary-search align-items-start">
                 <div class="col-12 col-lg-6">
-                    <div class="input-group">
-                        <span class="input-group-text">Search</span>
+                    <div class="dictionary-input-row">
                         <input type="text" id="dictionarySearchInput" name="q" class="form-control dictionary-search-input" dir="auto" value="{{ query }}" placeholder="Search Urdu/Arabic/Persian term (recommended), transliteration, or English...">
-                        <button class="btn script-toggle" type="button" id="scriptKeyboardToggle">Script Keyboard</button>
+                        <button class="btn script-toggle" type="button" id="scriptKeyboardToggle" aria-label="Toggle script keyboard">
+                            <i class="fas fa-keyboard" aria-hidden="true"></i>
+                            <span class="script-toggle-text">Keyboard</span>
+                        </button>
                     </div>
                     <div class="small text-muted mt-1">Tip: search in script for best relevance.</div>
                 </div>

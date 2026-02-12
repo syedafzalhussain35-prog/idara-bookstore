@@ -41,6 +41,7 @@ from .models import (
     Banner,
     SearchQueryLog,
     UnaniTerm,
+    ClassicalWeightUnit,
 )
 from .email_utils import send_publish_with_us
 from .tasks import enqueue_order_confirmation, enqueue_order_alert
@@ -540,6 +541,26 @@ def dictionary_detail(request, slug):
         "term": term,
         "meta_title": f"{term.english_term} Meaning in Unani | IKS Dictionary",
         "meta_description": meta_description,
+    })
+
+
+def unani_weight_converter(request):
+    units = list(
+        ClassicalWeightUnit.objects.filter(is_active=True).order_by("display_order", "id")
+    )
+    units_payload = [
+        {
+            "name": unit.classical_weight,
+            "metric_weight": unit.metric_weight,
+            "grams_value": str(unit.grams_value),
+        }
+        for unit in units
+    ]
+    source_note = next((u.source_note.strip() for u in units if (u.source_note or "").strip()), "")
+    return render(request, "store/unani_weight_converter.html", {
+        "units": units,
+        "units_payload": units_payload,
+        "source_note": source_note,
     })
 
 

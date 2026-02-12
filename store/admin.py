@@ -40,6 +40,7 @@ from .models import (
     IKSCoinsSettings,
     IKSWallet,
     IKSWalletTransaction,
+    ClassicalWeightUnit,
     UnaniTerm,
 )
 from .admin_site import IdaraAdminSite
@@ -1035,6 +1036,30 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         return "created" if created else "updated"
 
 
+@admin.register(ClassicalWeightUnit)
+class ClassicalWeightUnitAdmin(admin.ModelAdmin):
+    list_display = ("classical_weight", "metric_weight", "grams_value", "display_order", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("classical_weight", "metric_weight", "source_note")
+    list_editable = ("display_order", "is_active")
+    ordering = ("display_order", "id")
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Unit", {
+            "fields": ("classical_weight", "metric_weight", "grams_value")
+        }),
+        ("Display", {
+            "fields": ("display_order", "is_active")
+        }),
+        ("Reference", {
+            "fields": ("source_note",)
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
 # ======================
 # SYLLABUS PDF ADMIN
 # ======================
@@ -1406,3 +1431,4 @@ admin_site.register(IKSCoinsSettings, IKSCoinsSettingsAdmin)
 admin_site.register(IKSWallet, IKSWalletAdmin)
 admin_site.register(IKSWalletTransaction, IKSWalletTransactionAdmin)
 admin_site.register(UnaniTerm, UnaniTermAdmin)
+admin_site.register(ClassicalWeightUnit, ClassicalWeightUnitAdmin)

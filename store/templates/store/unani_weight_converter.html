@@ -1,0 +1,530 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Unani Weight Converter{% endblock %}
+
+{% block extra_css %}
+<style>
+.uwc-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.uwc-hero {
+    background: linear-gradient(135deg, #fff8ef 0%, #ffeef5 55%, #f8f4ff 100%);
+    border: 1px solid #f0d8e6;
+    border-radius: 22px;
+    box-shadow: 0 20px 38px rgba(55, 24, 42, 0.08);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.uwc-hero::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    right: -80px;
+    top: -80px;
+    background: radial-gradient(circle, rgba(189, 24, 89, 0.16) 0%, rgba(189, 24, 89, 0) 70%);
+    pointer-events: none;
+}
+
+.uwc-title {
+    margin: 0;
+    color: #841a4a;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    line-height: 1.08;
+}
+
+.uwc-subtitle {
+    margin: 8px 0 0;
+    color: #5e4a53;
+    max-width: 740px;
+}
+
+.uwc-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.uwc-card {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid #edd9e4;
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.uwc-mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.uwc-mode label {
+    margin: 0;
+    font-weight: 600;
+    border: 1px solid #e6cddd;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.uwc-mode input {
+    margin-right: 6px;
+}
+
+.uwc-mode label.is-active {
+    background: #be1d63;
+    border-color: #be1d63;
+    color: #fff;
+}
+
+.uwc-inline-label {
+    font-size: 0.9rem;
+    color: #6a5360;
+    margin-bottom: 6px;
+}
+
+.uwc-input {
+    width: 100%;
+    border: 1px solid #ddc4d2;
+    border-radius: 12px;
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 1rem;
+}
+
+.uwc-input:focus {
+    outline: none;
+    border-color: #be1d63;
+    box-shadow: 0 0 0 0.2rem rgba(190, 29, 99, 0.14);
+}
+
+.uwc-unit-inputs {
+    margin-top: 10px;
+    max-height: 370px;
+    overflow: auto;
+    border: 1px solid #f0dbe5;
+    border-radius: 12px;
+    padding: 8px;
+    background: #fff;
+}
+
+.uwc-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) 120px minmax(90px, auto);
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.uwc-row:nth-child(odd) {
+    background: #fff7fb;
+}
+
+.uwc-row-title {
+    font-weight: 600;
+    color: #462535;
+}
+
+.uwc-row-metric {
+    font-size: 0.85rem;
+    color: #7a5d69;
+}
+
+.uwc-breakdown-grid {
+    margin-top: 10px;
+    max-height: 220px;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.uwc-check {
+    border: 1px solid #ead5df;
+    border-radius: 10px;
+    padding: 8px;
+    font-size: 0.9rem;
+    background: #fff;
+}
+
+.uwc-check label {
+    margin: 0;
+    font-weight: 500;
+}
+
+.uwc-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.uwc-btn {
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    padding: 9px 14px;
+    cursor: pointer;
+}
+
+.uwc-btn-primary {
+    background: #be1d63;
+    color: #fff;
+}
+
+.uwc-btn-ghost {
+    background: #fff;
+    color: #6a3450;
+    border-color: #ddc3d2;
+}
+
+.uwc-result {
+    margin-top: 12px;
+    border: 1px solid #edd8e3;
+    border-radius: 12px;
+    padding: 12px;
+    background: linear-gradient(180deg, #fff 0%, #fff8fc 100%);
+    min-height: 64px;
+}
+
+.uwc-result-error {
+    color: #b80f46;
+    font-weight: 600;
+}
+
+.uwc-history {
+    margin-top: 12px;
+    border-top: 1px dashed #e4cad8;
+    padding-top: 10px;
+    max-height: 250px;
+    overflow: auto;
+}
+
+.uwc-history ol {
+    margin: 8px 0 0 18px;
+    padding: 0;
+}
+
+.uwc-table-wrap {
+    max-height: 630px;
+    overflow: auto;
+    border: 1px solid #ead5df;
+    border-radius: 12px;
+}
+
+.uwc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.uwc-table th,
+.uwc-table td {
+    border-bottom: 1px solid #f1dce7;
+    padding: 10px 12px;
+    text-align: left;
+}
+
+.uwc-table th {
+    position: sticky;
+    top: 0;
+    background: #fff4f9;
+    color: #632743;
+    z-index: 1;
+}
+
+.uwc-source {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    color: #6e5862;
+}
+
+@media (max-width: 992px) {
+    .uwc-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .uwc-hero {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .uwc-mode {
+        grid-template-columns: 1fr;
+    }
+
+    .uwc-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .uwc-breakdown-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="uwc-shell">
+        <section class="uwc-hero">
+            <h1 class="uwc-title">Unani Weight Converter Pro</h1>
+            <p class="uwc-subtitle">Classical-to-metric conversions powered by admin-managed units. Edit values from admin anytime without touching code.</p>
+
+            {% if units %}
+            <div class="uwc-grid">
+                <article class="uwc-card">
+                    <form id="uwcForm" autocomplete="off">
+                        <div class="uwc-mode" id="uwcMode">
+                            <label class="is-active"><input type="radio" name="direction" value="to_grams" checked>Classical to grams</label>
+                            <label><input type="radio" name="direction" value="to_breakdown">Grams to classical</label>
+                        </div>
+
+                        <div id="uwcToGramsSection">
+                            <div class="uwc-inline-label">Enter any classical unit values</div>
+                            <div class="uwc-unit-inputs" id="uwcUnitInputs"></div>
+                        </div>
+
+                        <div id="uwcToBreakdownSection" style="display:none;">
+                            <label class="uwc-inline-label" for="uwcGramsInput">Enter grams</label>
+                            <input id="uwcGramsInput" class="uwc-input" type="number" min="0" step="any" placeholder="e.g. 240">
+                            <div class="uwc-inline-label mt-2">Include units in breakdown</div>
+                            <div class="uwc-breakdown-grid" id="uwcUnitChecks"></div>
+                        </div>
+
+                        <div class="uwc-actions">
+                            <button type="submit" class="uwc-btn uwc-btn-primary">Convert</button>
+                            <button type="button" class="uwc-btn uwc-btn-ghost" id="uwcCopyBtn">Copy Result</button>
+                            <button type="button" class="uwc-btn uwc-btn-ghost" id="uwcDownloadBtn">Download History</button>
+                            <button type="button" class="uwc-btn uwc-btn-ghost" id="uwcClearBtn">Clear History</button>
+                        </div>
+                    </form>
+
+                    <div class="uwc-result" id="uwcResult"></div>
+                    <div class="uwc-history" id="uwcHistory"></div>
+                </article>
+
+                <article class="uwc-card">
+                    <div class="uwc-inline-label">Admin Controlled Unit Table</div>
+                    <div class="uwc-table-wrap">
+                        <table class="uwc-table">
+                            <thead>
+                                <tr>
+                                    <th>S.N.</th>
+                                    <th>Classical weight</th>
+                                    <th>Metric weight</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit in units %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ unit.classical_weight }}</td>
+                                    <td>{{ unit.metric_weight }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if source_note %}
+                    <div class="uwc-source">Source: {{ source_note }}</div>
+                    {% endif %}
+                </article>
+            </div>
+            {{ units_payload|json_script:"uwc-units-data" }}
+            {% else %}
+            <div class="alert alert-light border mb-0 mt-3">
+                No active classical weight units found. Add units in admin and mark them active.
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+{% if units %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const units = JSON.parse(document.getElementById("uwc-units-data").textContent || "[]").map((item) => ({
+        name: item.name,
+        metric_weight: item.metric_weight,
+        grams_value: Number(item.grams_value),
+    }));
+
+    const form = document.getElementById("uwcForm");
+    const toGramsSection = document.getElementById("uwcToGramsSection");
+    const toBreakdownSection = document.getElementById("uwcToBreakdownSection");
+    const unitInputs = document.getElementById("uwcUnitInputs");
+    const unitChecks = document.getElementById("uwcUnitChecks");
+    const result = document.getElementById("uwcResult");
+    const historyWrap = document.getElementById("uwcHistory");
+    const modeWrap = document.getElementById("uwcMode");
+    const gramsInput = document.getElementById("uwcGramsInput");
+    const copyBtn = document.getElementById("uwcCopyBtn");
+    const downloadBtn = document.getElementById("uwcDownloadBtn");
+    const clearBtn = document.getElementById("uwcClearBtn");
+
+    const historyKey = "unani_weight_converter_history";
+
+    function fmt(value) {
+        const rounded = Number(value);
+        if (Number.isInteger(rounded)) return String(rounded);
+        return rounded.toFixed(6).replace(/\.?0+$/, "");
+    }
+
+    function renderModeChips() {
+        modeWrap.querySelectorAll("label").forEach((label) => {
+            const input = label.querySelector("input");
+            label.classList.toggle("is-active", !!input && input.checked);
+        });
+    }
+
+    function saveHistory(line) {
+        const existing = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        existing.push(line);
+        const trimmed = existing.slice(-50);
+        localStorage.setItem(historyKey, JSON.stringify(trimmed));
+    }
+
+    function renderHistory() {
+        const existing = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        if (!existing.length) {
+            historyWrap.innerHTML = "";
+            return;
+        }
+        historyWrap.innerHTML = "<strong>Conversion History</strong><ol>" + existing.map((x) => "<li>" + x + "</li>").join("") + "</ol>";
+    }
+
+    function showError(msg) {
+        result.innerHTML = '<div class="uwc-result-error">' + msg + "</div>";
+    }
+
+    units.forEach((unit, index) => {
+        const row = document.createElement("div");
+        row.className = "uwc-row";
+        row.innerHTML =
+            '<div class="uwc-row-title">' + unit.name + '</div>' +
+            '<input type="number" min="0" step="any" class="uwc-input" id="uwc-input-' + index + '">' +
+            '<div class="uwc-row-metric">(' + unit.metric_weight + ")</div>";
+        unitInputs.appendChild(row);
+
+        const chkWrap = document.createElement("div");
+        chkWrap.className = "uwc-check";
+        chkWrap.innerHTML =
+            '<input type="checkbox" id="uwc-check-' + index + '" checked> ' +
+            '<label for="uwc-check-' + index + '">' + unit.name + "</label>";
+        unitChecks.appendChild(chkWrap);
+    });
+
+    form.querySelectorAll('input[name="direction"]').forEach((input) => {
+        input.addEventListener("change", () => {
+            const mode = form.querySelector('input[name="direction"]:checked').value;
+            const toGrams = mode === "to_grams";
+            toGramsSection.style.display = toGrams ? "block" : "none";
+            toBreakdownSection.style.display = toGrams ? "none" : "block";
+            result.innerHTML = "";
+            renderModeChips();
+        });
+    });
+
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const mode = form.querySelector('input[name="direction"]:checked').value;
+
+        if (mode === "to_grams") {
+            let total = 0;
+            const parts = [];
+            units.forEach((unit, idx) => {
+                const val = Number(document.getElementById("uwc-input-" + idx).value || 0);
+                if (val > 0) {
+                    total += val * unit.grams_value;
+                    parts.push(fmt(val) + " " + unit.name);
+                }
+            });
+            if (!parts.length) {
+                showError("Please enter at least one unit value.");
+                return;
+            }
+            const line = parts.join(" + ") + " = <strong>" + fmt(total) + " grams</strong>";
+            result.innerHTML = line;
+            saveHistory(line);
+            renderHistory();
+            return;
+        }
+
+        const grams = Number(gramsInput.value || 0);
+        if (!Number.isFinite(grams) || grams <= 0) {
+            showError("Please enter a positive grams value.");
+            return;
+        }
+
+        const enabled = units
+            .map((u, idx) => ({ unit: u, idx }))
+            .filter(({ idx }) => document.getElementById("uwc-check-" + idx).checked);
+        if (!enabled.length) {
+            showError("Select at least one unit for breakdown.");
+            return;
+        }
+
+        let rem = grams;
+        const parts = [];
+        enabled.forEach(({ unit }) => {
+            if (rem >= unit.grams_value) {
+                const qty = Math.floor(rem / unit.grams_value);
+                rem = Number((rem - qty * unit.grams_value).toFixed(8));
+                if (qty > 0) parts.push(qty + " " + unit.name + (qty > 1 ? "s" : ""));
+            }
+        });
+
+        if (rem > 0) {
+            parts.push(fmt(rem) + " grams leftover");
+        }
+
+        const line = "<strong>" + fmt(grams) + " grams</strong> = " + (parts.length ? parts.join(" + ") : "0 grams");
+        result.innerHTML = line;
+        saveHistory(line);
+        renderHistory();
+    });
+
+    copyBtn.addEventListener("click", function () {
+        const txt = (result.textContent || "").trim();
+        if (!txt) return;
+        navigator.clipboard.writeText(txt);
+    });
+
+    downloadBtn.addEventListener("click", function () {
+        const items = JSON.parse(localStorage.getItem(historyKey) || "[]");
+        if (!items.length) return;
+        const blob = new Blob([items.join("\r\n")], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "unani_weight_converter_history.txt";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+    });
+
+    clearBtn.addEventListener("click", function () {
+        localStorage.removeItem(historyKey);
+        renderHistory();
+    });
+
+    renderModeChips();
+    renderHistory();
+});
+</script>
+{% endif %}
+{% endblock %}
