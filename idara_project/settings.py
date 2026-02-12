@@ -317,6 +317,7 @@ CATEGORY_CACHE_TTL = int(os.getenv("CATEGORY_CACHE_TTL", "180"))
 GST_RATE = Decimal(os.getenv("GST_RATE", "0"))
 SHIPPING_FLAT = Decimal(os.getenv("SHIPPING_FLAT", "0"))
 SHIPPING_PER_KG = Decimal(os.getenv("SHIPPING_PER_KG", "0"))
+DEFAULT_BOOK_WEIGHT_KG = Decimal(os.getenv("DEFAULT_BOOK_WEIGHT_KG", "0"))
 
 # ==================================================
 # RAZORPAY

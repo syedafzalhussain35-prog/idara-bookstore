@@ -1066,16 +1066,21 @@ def _calculate_checkout_totals(cart):
 
     shipping_base = Decimal(str(getattr(settings, "SHIPPING_FLAT", 0)))
     shipping_per_kg = Decimal(str(getattr(settings, "SHIPPING_PER_KG", 0)))
+    default_book_weight = Decimal(str(getattr(settings, "DEFAULT_BOOK_WEIGHT_KG", 0)))
     total_weight = Decimal("0.00")
     for item in cart.items.select_related("book").all():
         raw = (item.book.weight or "").strip()
+        item_weight = None
         if raw:
             match = re.search(r"(\\d+(?:\\.\\d+)?)", raw)
             if match:
                 try:
-                    total_weight += Decimal(match.group(1)) * item.quantity
+                    item_weight = Decimal(match.group(1))
                 except (InvalidOperation, ValueError, TypeError):
-                    pass
+                    item_weight = None
+        if item_weight is None:
+            item_weight = default_book_weight
+        total_weight += item_weight * item.quantity
     shipping_amount = shipping_base + (total_weight * shipping_per_kg)
 
     gst_rate = Decimal(str(getattr(settings, "GST_RATE", 0)))
