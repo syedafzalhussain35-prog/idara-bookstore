@@ -776,6 +776,10 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.book.title} × {self.quantity}"
 
+    @property
+    def line_total(self):
+        return self.price * self.quantity
+
 # ======================
 # WISHLIST ❤️
 # ======================

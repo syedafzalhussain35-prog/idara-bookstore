@@ -4,7 +4,7 @@
 {% block extra_css %}
 <style>
 .dictionary-shell {
-    max-width: 1220px;
+    max-width: 1040px;
     margin: 0 auto;
 }
 
@@ -39,9 +39,14 @@
     border-color: #e7ceda;
 }
 
+.dictionary-search {
+    --search-control-height: 50px;
+}
+
 .dictionary-search-input {
     font-family: "Amiri", "Poppins", serif;
-    min-height: 48px;
+    min-height: var(--search-control-height);
+    height: var(--search-control-height);
     font-size: 1.02rem;
 }
 
@@ -66,7 +71,8 @@
     border-color: #d8bcc9;
     color: #5e2642;
     background: #fff;
-    min-height: 44px;
+    min-height: var(--search-control-height);
+    height: var(--search-control-height);
     padding: 0 12px;
     display: inline-flex;
     align-items: center;
@@ -78,6 +84,32 @@
 .script-toggle:hover {
     border-color: #be1d63;
     color: #be1d63;
+}
+
+.dictionary-search .form-select,
+.dictionary-search .btn {
+    min-height: var(--search-control-height);
+    height: var(--search-control-height);
+}
+
+.dictionary-search .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.dictionary-reset {
+    border: 1px solid #d8bcc9;
+    color: #5e2642;
+    background: #fff;
+}
+
+.dictionary-reset:hover {
+    border-color: #be1d63;
+    color: #be1d63;
+    background: #fff;
 }
 
 .script-keyboard {
@@ -158,9 +190,20 @@
     padding: 14px;
 }
 
+.term-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: start;
+}
+
+.term-main {
+    min-width: 0;
+}
+
 .term-head {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: flex-start;
     gap: 12px;
 }
@@ -205,7 +248,9 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    justify-content: flex-start;
     gap: 8px;
+    min-width: 120px;
 }
 
 .term-title {
@@ -218,7 +263,25 @@
 .term-open {
     border-radius: 999px;
     font-weight: 600;
-    padding: 5px 12px;
+    padding: 7px 14px;
+}
+
+.term-section {
+    font-size: 0.82rem;
+    color: #6e5561;
+    text-align: right;
+}
+
+.term-section-badge {
+    margin-top: 2px;
+    border: 1px solid #ead1dd;
+    background: #fff7fb;
+    color: #6e2a4a;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    line-height: 1.2;
 }
 
 .dictionary-pagination .page-link {
@@ -252,18 +315,13 @@
         margin-bottom: 12px;
     }
 
-    .dictionary-search .col-8,
-    .dictionary-search .col-4 {
+    .dictionary-search > [class*="col-"] {
         width: 100%;
         flex: 0 0 auto;
     }
 
-    .dictionary-search .col-4.d-flex {
-        display: block !important;
-    }
-
-    .dictionary-search .btn-brand {
-        min-height: 46px;
+    .dictionary-search {
+        --search-control-height: 48px;
     }
 
     .dictionary-search .input-group {
@@ -275,7 +333,8 @@
     }
 
     .dictionary-input-row .dictionary-search-input {
-        min-height: 50px;
+        min-height: var(--search-control-height);
+        height: var(--search-control-height);
         font-size: 1.05rem;
         border-radius: 12px;
     }
@@ -317,11 +376,20 @@
         flex-direction: column;
     }
 
+    .term-layout {
+        grid-template-columns: 1fr;
+    }
+
     .term-actions {
         width: 100%;
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
+        min-width: 0;
+    }
+
+    .term-section {
+        text-align: left;
     }
 
     .term-script-box {
@@ -362,8 +430,11 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-4 col-lg-3 d-flex">
-                    <button class="btn btn-brand w-100 py-2 align-self-start" type="submit">Apply</button>
+                <div class="col-6 col-lg-2 d-flex">
+                    <button class="btn btn-brand w-100" type="submit">Apply</button>
+                </div>
+                <div class="col-6 col-lg-1 d-flex">
+                    <a href="{% url 'dictionary_list' %}" class="btn dictionary-reset w-100">Reset</a>
                 </div>
                 {% if selected_letter %}
                 <input type="hidden" name="letter" value="{{ selected_letter }}">
@@ -444,21 +515,31 @@
         <div class="term-results">
             {% for item in page_obj.object_list %}
             <article class="term-card">
-                <div class="term-head">
-                    <div class="term-script-wrap">
-                        <div class="term-script-label">Arabic/Persian/Urdu</div>
-                        <div class="term-script-box">
-                            <div class="term-script">{{ item.arabic_script|default:"-" }}</div>
-                            <div class="term-field-label mt-2 mb-1">Transliteration</div>
-                            <div class="term-transliteration">{{ item.transliteration|default:"-" }}</div>
+                <div class="term-layout">
+                    <div class="term-main">
+                        <div class="term-head">
+                            <div class="term-script-wrap">
+                                <div class="term-script-label">Arabic/Persian/Urdu</div>
+                                <div class="term-script-box">
+                                    <div class="term-script">{{ item.arabic_script|default:"-" }}</div>
+                                    <div class="term-field-label mt-2 mb-1">Transliteration</div>
+                                    <div class="term-transliteration">{{ item.transliteration|default:"-" }}</div>
+                                </div>
+                            </div>
                         </div>
+                        <div class="term-field-label">English term</div>
+                        <h2 class="term-title">{{ item.english_term }}</h2>
                     </div>
                     <div class="term-actions">
+                        {% if item.section %}
+                        <div class="term-section">
+                            Section
+                            <div class="term-section-badge">{{ item.section }}</div>
+                        </div>
+                        {% endif %}
                         <a href="{% url 'dictionary_detail' item.slug %}" class="btn btn-sm btn-brand term-open">Open</a>
                     </div>
                 </div>
-                <div class="term-field-label">English term</div>
-                <h2 class="term-title">{{ item.english_term }}</h2>
             </article>
             {% endfor %}
         </div>

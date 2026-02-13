@@ -3,95 +3,529 @@
 
 {% block title %}Invoice #{{ order.id }} | Idara Kitab Ul Shifa{% endblock %}
 
+{% block extra_css %}
+<style>
+.invoice-page {
+    max-width: 1040px;
+    margin: 0 auto;
+}
+
+.invoice-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.invoice-code {
+    margin: 0;
+    color: #b5145a;
+    font-weight: 700;
+}
+
+.invoice-sheet {
+    border: 1px solid #e7d7df;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(29, 10, 20, 0.08);
+    overflow: hidden;
+}
+
+.company-contact {
+    padding: 10px 24px;
+    border-bottom: 1px solid #ecd9e3;
+    text-align: center;
+    font-weight: 600;
+    color: #36222c;
+    font-size: 0.94rem;
+}
+
+.invoice-header {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    border-bottom: 2px solid #ece1e7;
+}
+
+.brand-block {
+    padding: 18px 20px;
+    border-right: 1px solid #ece1e7;
+}
+
+.brand-logo {
+    max-width: 420px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.brand-meta {
+    margin: 0;
+    color: #342430;
+    line-height: 1.45;
+    font-size: 0.96rem;
+    font-weight: 500;
+}
+
+.bank-block {
+    padding: 16px 20px;
+}
+
+.bank-label {
+    display: inline-block;
+    border: 1px solid #c6adb8;
+    color: #4f3140;
+    padding: 2px 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.bank-title {
+    margin: 0 0 8px;
+    font-size: 1.55rem;
+    line-height: 1.1;
+    color: #3c2532;
+    font-weight: 700;
+}
+
+.bank-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+}
+
+.bank-text {
+    margin: 0;
+    color: #3e2935;
+    line-height: 1.42;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.qr-box {
+    width: 126px;
+    height: 126px;
+    border: 2px dashed #d7bfc9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #7a616d;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: #fffafb;
+}
+
+.qr-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.invoice-body {
+    padding: 18px 20px 16px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.info-card {
+    border: 1px solid #ecdce4;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fff;
+}
+
+.info-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #7b1b48;
+    border-bottom: 1px solid #ebdce4;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+}
+
+.info-text {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.info-row span:first-child {
+    color: #5f4552;
+    font-weight: 600;
+}
+
+.info-row span:last-child {
+    font-weight: 600;
+    color: #22181d;
+    text-align: right;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: #eaf6eb;
+    color: #1f6c34;
+}
+
+.invoice-items {
+    margin-bottom: 14px;
+}
+
+.invoice-items .table {
+    margin-bottom: 0;
+}
+
+.invoice-items thead th {
+    background: #2f2f32;
+    color: #fff;
+    font-weight: 700;
+    border-color: #2f2f32;
+}
+
+.invoice-items tbody td {
+    border-color: #ebe2e7;
+    vertical-align: middle;
+}
+
+.invoice-items .text-end,
+.invoice-items .text-center {
+    white-space: nowrap;
+}
+
+.invoice-summary {
+    display: grid;
+    grid-template-columns: 1.35fr 0.95fr;
+    gap: 16px;
+    padding-top: 4px;
+}
+
+.words-label {
+    margin: 0 0 8px;
+    font-weight: 700;
+    color: #39252f;
+}
+
+.words-box {
+    border: 1px solid #ebdce4;
+    border-radius: 10px;
+    background: #f8f5f7;
+    padding: 8px 10px;
+    color: #4d3c45;
+    font-style: italic;
+}
+
+.terms-title {
+    margin: 14px 0 8px;
+    font-weight: 700;
+    color: #39252f;
+}
+
+.terms-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #3f3139;
+}
+
+.terms-list li {
+    margin-bottom: 4px;
+}
+
+.totals-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.totals-table td {
+    padding: 4px 0;
+}
+
+.totals-table td:last-child {
+    text-align: right;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.grand-total td {
+    background: #9f0f67;
+    color: #fff;
+    font-weight: 700;
+    padding: 7px 10px;
+}
+
+.grand-total td:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.grand-total td:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.invoice-footer {
+    display: grid;
+    grid-template-columns: 1.4fr 0.8fr;
+    gap: 12px;
+    margin-top: 12px;
+    border-top: 2px solid #e8dbe2;
+    padding-top: 10px;
+}
+
+.tax-note {
+    border: 1px solid #dcc8d2;
+    border-radius: 8px;
+    color: #45303b;
+    font-weight: 700;
+    display: inline-block;
+    padding: 5px 10px;
+    margin-bottom: 8px;
+}
+
+.sign-box {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+.sign-line {
+    width: 220px;
+    border-top: 1px solid #6e5864;
+    margin-top: 26px;
+    padding-top: 6px;
+    color: #4b3943;
+}
+
+@media (max-width: 991px) {
+    .invoice-header,
+    .info-grid,
+    .invoice-summary,
+    .invoice-footer,
+    .bank-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-block {
+        border-right: 0;
+        border-bottom: 1px solid #ece1e7;
+    }
+
+    .sign-box {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+@media print {
+    body {
+        background: #fff !important;
+    }
+
+    .invoice-toolbar {
+        display: none !important;
+    }
+
+    .invoice-page {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .invoice-sheet {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .invoice-body {
+        padding-bottom: 6px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <h2 class="fw-bold text-magenta mb-0">Invoice #{{ order.id }}</h2>
-        <button class="btn btn-brand-outline btn-sm rounded-pill px-3" onclick="window.print()">
-            Print / Save PDF
-        </button>
-    </div>
-
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5 class="fw-bold">Idara Kitab Ul Shifa</h5>
-                    <p class="text-muted mb-0">Order Date: {{ order.created_at|date:"d M Y" }}</p>
-                    <p class="text-muted">Status: {{ order.status }}</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <h6 class="fw-bold mb-1">Bill To</h6>
-                    <p class="mb-0">{{ order.full_name }}</p>
-                    <p class="mb-0">{{ order.email }}</p>
-                    <p class="mb-0">{{ order.mobile }}</p>
-                    <p class="mb-0">{{ order.address }}</p>
-                    <p class="mb-0">{{ order.city }} - {{ order.zip_code }}</p>
-                </div>
-            </div>
-
-            <hr class="my-4">
-
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Item</th>
-                            <th class="text-center">Qty</th>
-                            <th class="text-end">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in order.items.all %}
-                        <tr>
-                            <td>{{ item.book.title }}</td>
-                            <td class="text-center">{{ item.quantity }}</td>
-                            <td class="text-end">₹{{ item.price }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="row justify-content-end">
-                <div class="col-md-5">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Subtotal</span>
-                        <span>₹{{ order.subtotal }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Discount</span>
-                        <span>
-                            {% if order.discount_amount > 0 %}
-                                ₹{{ order.discount_amount }}
-                            {% else %}
-                                ₹0
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">GST ({{ order.gst_rate }}%)</span>
-                        <span>₹{{ order.gst_amount }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Shipping</span>
-                        <span>
-                            {% if order.shipping_amount > 0 %}
-                                ₹{{ order.shipping_amount }}
-                            {% else %}
-                                ₹0
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="d-flex justify-content-between fw-bold">
-                        <span>Total</span>
-                        <span>₹{{ order.total_cost }}</span>
-                    </div>
-                </div>
-            </div>
+<div class="container py-4 py-md-5">
+    <div class="invoice-page">
+        <div class="invoice-toolbar">
+            <h2 class="invoice-code">Invoice #{{ order.id }}</h2>
+            <button class="btn btn-brand-outline btn-sm rounded-pill px-3" onclick="window.print()">
+                Print / Save PDF
+            </button>
         </div>
+
+        <section class="invoice-sheet">
+            <div class="company-contact">
+                +91 8376996940 | idara.kitabulshifa@gmail.com
+            </div>
+
+            <header class="invoice-header">
+                <div class="brand-block">
+                    <img src="{% static 'store/images/logo2.png' %}" alt="Idara Kitab Ul Shifa" class="brand-logo">
+                    <p class="brand-meta">
+                        2075, First Floor, Masjid Mazar Wali, Gali Nahar Khan, Kucha Chelan, Darya Ganj, New Delhi - 110002<br>
+                        Email: idara.asad@gmail.com<br>
+                        Mobile: +91 9312273887, 8700875706<br>
+                        GSTIN/UIN: 07AFGPH7777C2ZB
+                    </p>
+                </div>
+                <div class="bank-block">
+                    <div class="bank-label">TAX INVOICE</div>
+                    <h3 class="bank-title">Payment Bank Details</h3>
+                    <div class="bank-grid">
+                        <p class="bank-text">
+                            STATE BANK OF INDIA<br>
+                            Name: IDARA KITAB UL SHIFA<br>
+                            A/c: 39700731855<br>
+                            IFSC: SBIN0001270<br>
+                            Branch code: 1270<br>
+                            Bank Branch: Darya Ganj, New Delhi - 110002<br>
+                            UPI ID: 9312273887@okbizaxis
+                        </p>
+                        <div class="qr-box">
+                            QR CODE
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="invoice-body">
+                <div class="info-grid">
+                    <section class="info-card">
+                        <div class="info-title">Bill To</div>
+                        <p class="info-text">
+                            <strong>{{ order.full_name|default:"Cash Customer" }}</strong><br>
+                            {% if order.email %}{{ order.email }}<br>{% endif %}
+                            {% if order.mobile %}{{ order.mobile }}<br>{% endif %}
+                            {{ order.address }}<br>
+                            {{ order.city }}{% if order.zip_code %} - {{ order.zip_code }}{% endif %}
+                        </p>
+                    </section>
+                    <section class="info-card">
+                        <div class="info-title d-flex justify-content-between">
+                            <span>Invoice Details</span>
+                            <span>INV-{{ order.id|stringformat:"04d" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Date</span>
+                            <span>{{ order.created_at|date:"Y-m-d" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Status</span>
+                            <span><span class="status-badge">{{ order.status }}</span></span>
+                        </div>
+                        <div class="info-row">
+                            <span>Payment Mode</span>
+                            <span>{{ order.payment_method|default:"-"|title }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Tracking ID</span>
+                            <span>{{ order.consignment_number|default:"-" }}</span>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="invoice-items table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width:56px;">#</th>
+                                <th>Item Name</th>
+                                <th class="text-center" style="width:90px;">Qty</th>
+                                <th class="text-end" style="width:130px;">Rate</th>
+                                <th class="text-end" style="width:140px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ item.book.title }}</td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">&#8377;{{ item.price }}</td>
+                                <td class="text-end">&#8377;{{ item.line_total }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3 text-muted">No line items found for this invoice.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="invoice-summary">
+                    <div>
+                        <p class="words-label">Amount In Words:</p>
+                        <div class="words-box">Rupees {{ order.total_cost }} only</div>
+
+                        <p class="terms-title">Terms and Conditions:</p>
+                        <ol class="terms-list">
+                            <li>Goods once sold will not be taken back or exchanged.</li>
+                            <li>Please report any discrepancy within 15 days of receipt of books.</li>
+                            <li>All disputes are subject to Delhi jurisdiction only.</li>
+                        </ol>
+                    </div>
+                    <div>
+                        <table class="totals-table">
+                            <tr>
+                                <td>Subtotal:</td>
+                                <td>&#8377;{{ order.subtotal }}</td>
+                            </tr>
+                            <tr>
+                                <td>Discount:</td>
+                                <td>&#8377;{{ order.discount_amount }}</td>
+                            </tr>
+                            <tr>
+                                <td>GST ({{ order.gst_rate }}%):</td>
+                                <td>&#8377;{{ order.gst_amount }}</td>
+                            </tr>
+                            <tr>
+                                <td>Shipping:</td>
+                                <td>&#8377;{{ order.shipping_amount }}</td>
+                            </tr>
+                            <tr class="grand-total">
+                                <td>Grand Total:</td>
+                                <td>&#8377;{{ order.total_cost }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+
+                <footer class="invoice-footer">
+                    <div>
+                        <div class="tax-note">We are exempted from Goods &amp; Service Taxes under HSN code 49011010</div>
+                        <div class="text-muted small">
+                            Courier and payment references are available upon request.
+                        </div>
+                    </div>
+                    <div class="sign-box">
+                        <div class="text-muted">Authorised Signatory For</div>
+                        <div class="fw-bold">Idara Kitab Ul Shifa</div>
+                        <div class="sign-line">Authorized Signatory</div>
+                    </div>
+                </footer>
+            </div>
+        </section>
     </div>
 </div>
-
-
 {% endblock %}
