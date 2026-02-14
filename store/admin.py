@@ -12,7 +12,7 @@ import re
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponse
 import csv
-from io import TextIOWrapper
+from io import StringIO
 
 from .models import (
     Book,
@@ -102,10 +102,21 @@ def _load_tabular_rows(uploaded_file):
     name = (getattr(uploaded_file, "name", "") or "").lower()
     if name.endswith(".csv"):
         uploaded_file.seek(0)
-        wrapper = TextIOWrapper(uploaded_file.file, encoding="utf-8-sig")
-        reader = csv.reader(wrapper)
+        raw = uploaded_file.read()
+        if isinstance(raw, str):
+            csv_text = raw
+        else:
+            csv_text = None
+            for encoding in ("utf-8-sig", "cp1252", "latin-1"):
+                try:
+                    csv_text = raw.decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            if csv_text is None:
+                raise ValueError("Could not decode CSV. Save the file as UTF-8 CSV and try again.")
+        reader = csv.reader(StringIO(csv_text))
         rows = list(reader)
-        wrapper.detach()
     elif name.endswith(".xlsx"):
         try:
             from openpyxl import load_workbook
