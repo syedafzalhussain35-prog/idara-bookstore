@@ -329,6 +329,13 @@ class Banner(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self._ensure_webp()
+        # Keep homepage banner lists fresh after admin updates/uploads.
+        from django.core.cache import cache
+        cache.delete_many([
+            "home:banners:mobile",
+            "home:banners:mobile:fallback",
+            "home:banners:desktop",
+        ])
 
 # ======================
 # BUNDLES

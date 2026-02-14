@@ -1735,7 +1735,7 @@ footer {
     .hero-section {
         width: 100%;
         padding: 12px 0 28px;
-        overflow: clip;
+        overflow-x: hidden;
         background: linear-gradient(135deg, #f6f9ff 0%, #fdf3f8 60%, #f8fbff 100%);
     }
 
@@ -1773,21 +1773,23 @@ footer {
         max-width: 1320px;
         min-width: 0;
         margin: 0 auto;
-        padding: 0 8px;
+        padding: 0 14px;
         position: relative;
         box-sizing: border-box;
-        overflow: hidden;
+        overflow: visible;
     }
 
     .hero-swiper .swiper-wrapper {
         align-items: center;
         min-width: 0;
+        will-change: transform;
     }
 
     .hero-swiper .swiper-slide {
         width: 100%;
         min-width: 0;
         padding: 0 4px;
+        transition: transform 0.5s ease;
     }
 
     .hero-swiper .swiper-pagination {

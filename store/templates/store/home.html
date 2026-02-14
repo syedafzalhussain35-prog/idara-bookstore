@@ -11,7 +11,7 @@
 {% if is_homepage %}
 <section class="hero-section">
     <div class="hero-stage">
-        <div class="swiper mySwiper hero-swiper">
+        <div class="swiper mySwiper hero-swiper" data-slides-count="{% if banners %}{{ banners|length }}{% else %}5{% endif %}">
             <div class="swiper-wrapper">
                 {% if banners %}
                     {% for banner in banners %}
@@ -297,26 +297,47 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
-    new Swiper(".mySwiper", {
-        loop: true,
-        centeredSlides: false,
-        slidesPerView: 1,
-        spaceBetween: 0,
-        autoplay: { delay: 3500, disableOnInteraction: false },
-        pagination: { el: ".swiper-pagination", clickable: true },
-        navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
-        breakpoints: {
-            992: {
-                centeredSlides: true,
-                slidesPerView: 1.16,
-                spaceBetween: 18
-            },
-            1200: {
-                centeredSlides: true,
-                slidesPerView: 1.22,
-                spaceBetween: 22
+    const heroSwiperEl = document.querySelector(".hero-swiper");
+    if (heroSwiperEl) {
+        const slideCount = Number(heroSwiperEl.dataset.slidesCount || 0);
+        const canLoop = slideCount > 1;
+        const showSidePeeks = slideCount > 2;
+
+        new Swiper(heroSwiperEl, {
+            loop: canLoop,
+            loopAdditionalSlides: showSidePeeks ? 3 : 0,
+            centeredSlides: false,
+            slidesPerView: 1,
+            spaceBetween: 0,
+            speed: 850,
+            autoplay: canLoop ? { delay: 4200, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
+            pagination: { el: ".swiper-pagination", clickable: true },
+            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+            watchOverflow: true,
+            observer: true,
+            observeParents: true,
+            roundLengths: true,
+            breakpoints: {
+                992: showSidePeeks ? {
+                    centeredSlides: true,
+                    slidesPerView: 1.12,
+                    spaceBetween: 18
+                } : {
+                    centeredSlides: false,
+                    slidesPerView: 1,
+                    spaceBetween: 0
+                },
+                1200: showSidePeeks ? {
+                    centeredSlides: true,
+                    slidesPerView: 1.18,
+                    spaceBetween: 22
+                } : {
+                    centeredSlides: false,
+                    slidesPerView: 1,
+                    spaceBetween: 0
+                }
             }
-        }
-    });
+        });
+    }
 </script>
 {% endblock %}
