@@ -629,6 +629,9 @@ class BookAdmin(admin.ModelAdmin):
             updated = 0
             errors = 0
             error_messages = []
+            matched_by_system_id = 0
+            matched_by_isbn = 0
+            matched_by_title_author = 0
 
             with transaction.atomic():
                 for row in rows:
@@ -666,21 +669,38 @@ class BookAdmin(admin.ModelAdmin):
 
                         book = None
                         is_created = False
+                        match_reason = None
                         if system_id:
+                            # When System ID is present, match only by System ID.
                             book = Book.objects.filter(system_id=system_id).first()
-                        if not book and isbn:
-                            book = Book.objects.filter(isbn=isbn).first()
-
-                        if not book:
-                            book, is_created = Book.objects.get_or_create(
-                                title=title,
-                                author=author,
-                                defaults={
-                                    "system_id": system_id or None,
-                                    "isbn": isbn or "",
-                                    "price": Decimal("0.00"),
-                                },
-                            )
+                            if book:
+                                match_reason = "system_id"
+                            else:
+                                book = Book(
+                                    title=title,
+                                    author=author,
+                                    system_id=system_id,
+                                    isbn=isbn or "",
+                                    price=Decimal("0.00"),
+                                )
+                                is_created = True
+                        else:
+                            if isbn:
+                                book = Book.objects.filter(isbn=isbn).first()
+                                if book:
+                                    match_reason = "isbn"
+                            if not book:
+                                book, is_created = Book.objects.get_or_create(
+                                    title=title,
+                                    author=author,
+                                    defaults={
+                                        "system_id": None,
+                                        "isbn": isbn or "",
+                                        "price": Decimal("0.00"),
+                                    },
+                                )
+                                if not is_created:
+                                    match_reason = "title_author"
 
                         book.title = title
                         book.author = author
@@ -738,6 +758,12 @@ class BookAdmin(admin.ModelAdmin):
                             created += 1
                         else:
                             updated += 1
+                            if match_reason == "system_id":
+                                matched_by_system_id += 1
+                            elif match_reason == "isbn":
+                                matched_by_isbn += 1
+                            elif match_reason == "title_author":
+                                matched_by_title_author += 1
                     except Exception as exc:
                         errors += 1
                         error_messages.append(f"Row {row.get('_row_number', '?')}: {exc}")
@@ -748,7 +774,11 @@ class BookAdmin(admin.ModelAdmin):
 
             messages.success(
                 request,
-                f"Import completed. Created: {created}, Updated: {updated}, Errors: {errors}"
+                "Import completed. "
+                f"Created: {created}, Updated: {updated}, Errors: {errors}. "
+                f"Updated by System ID: {matched_by_system_id}, "
+                f"by ISBN: {matched_by_isbn}, "
+                f"by Title+Author: {matched_by_title_author}"
                 + (" (dry run)" if dry_run else ""),
             )
             for item in error_messages[:20]:
