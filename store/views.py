@@ -1544,6 +1544,8 @@ def shipping_policy(request): return render(request, 'store/policies/shipping.ht
 def privacy_policy(request): return render(request, 'store/policies/privacy.html')
 def terms_policy(request): return render(request, 'store/policies/terms.html')
 def returns_policy(request): return render(request, 'store/policies/returns.html')
+def disclaimer_policy(request): return render(request, 'store/policies/disclaimer.html')
+def payment_policy(request): return render(request, 'store/policies/payment.html')
 
 def publish_with_us(request):
     if request.method == "POST":

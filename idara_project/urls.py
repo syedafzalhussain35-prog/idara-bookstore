@@ -52,6 +52,8 @@ urlpatterns = [
     path('privacy/', views.privacy_policy, name='privacy_policy'),
     path('terms/', views.terms_policy, name='terms_policy'),
     path('returns/', views.returns_policy, name='returns_policy'),
+    path('disclaimer/', views.disclaimer_policy, name='disclaimer_policy'),
+    path('payment-policy/', views.payment_policy, name='payment_policy'),
     path('publish-with-us/', views.publish_with_us, name='publish_with_us'),
 
     # ==================================================

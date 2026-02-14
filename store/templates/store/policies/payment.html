@@ -1,0 +1,46 @@
+{% extends "store/base.html" %}
+{% block title %}Payment Policy{% endblock %}
+
+{% block content %}
+<div class="container py-5 policy-page">
+    <h1 class="mb-3">Payment Policy</h1>
+    <p><strong>Effective Date:</strong> 1 January 2026</p>
+    <p>This Payment Policy outlines the terms governing payments made on the website of IDARA KITAB UL SHIFA.</p>
+
+    <h4>1. Accepted Payment Methods</h4>
+    <p>We accept secure payments through trusted payment gateways, including UPI, credit cards, debit cards, net banking, and wallets (if available). Payments are processed via Razorpay or other authorized payment partners.</p>
+
+    <h4>2. Payment Security</h4>
+    <ul>
+        <li>We do not store full card details on our servers.</li>
+        <li>Transactions are encrypted using industry-standard security protocols.</li>
+        <li>Payment information is handled directly by the payment gateway.</li>
+    </ul>
+    <p>Users should ensure they are on secure networks when making payments.</p>
+
+    <h4>3. Order Confirmation</h4>
+    <p>Orders are confirmed only after successful payment. If payment fails but amount is debited, reversal is usually completed by the bank or gateway within 3-7 working days.</p>
+
+    <h4>4. Pricing &amp; Currency</h4>
+    <ul>
+        <li>All prices are listed in Indian Rupees (INR) unless stated otherwise.</li>
+        <li>Prices are subject to change without prior notice.</li>
+        <li>Applicable taxes and shipping charges (if any) are shown at checkout.</li>
+    </ul>
+
+    <h4>5. Failed or Declined Transactions</h4>
+    <p>We are not responsible for transactions declined due to incorrect details, insufficient balance, bank authorization failure, gateway issues, or network problems. Customers should contact their bank or payment provider in such cases.</p>
+
+    <h4>6. Fraud Prevention</h4>
+    <p>IDARA KITAB UL SHIFA reserves the right to cancel suspicious orders, request additional verification, or refuse service in cases of suspected fraud.</p>
+
+    <h4>7. Refunds</h4>
+    <p>Refunds, if applicable, are processed according to our <a href="{% url 'refund_policy' %}">Refund &amp; Return Policy</a> and credited to the original payment method.</p>
+
+    <h4>8. Contact Us</h4>
+    <p>
+        Email: <a href="mailto:idara.asad@gmail.com">idara.asad@gmail.com</a><br>
+        Phone: +91 9312273887
+    </p>
+</div>
+{% endblock %}
