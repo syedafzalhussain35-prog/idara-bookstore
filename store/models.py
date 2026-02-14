@@ -54,6 +54,7 @@ class Book(models.Model):
 
     title = models.CharField(max_length=200, db_index=True)
     author = models.CharField(max_length=200, db_index=True)
+    system_id = models.CharField(max_length=80, blank=True, null=True, unique=True, db_index=True)
     description = models.TextField(blank=True, null=True)
     isbn = models.CharField(max_length=20, blank=True)
     published_year = models.CharField(max_length=10, blank=True)

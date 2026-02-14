@@ -344,6 +344,7 @@ class BundleAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     list_display = (
+        "system_id",
         "title",
         "author",
         "price",
@@ -365,7 +366,7 @@ class BookAdmin(admin.ModelAdmin):
         "is_new_arrival",
         "is_featured",
     )
-    search_fields = ("title", "author", "description")
+    search_fields = ("system_id", "isbn", "title", "author", "description")
     list_select_related = ("category",)
 
     list_editable = (
@@ -385,7 +386,7 @@ class BookAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic Information", {
-            "fields": ("category", "subjects", "title", "author", "description")
+            "fields": ("system_id", "category", "subjects", "title", "author", "description")
         }),
         ("Specifications", {
             "fields": ("isbn", "published_year", "binding", "pages", "weight", "readership")
@@ -510,16 +511,17 @@ class BookAdmin(admin.ModelAdmin):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="books.csv"'
         writer = csv.writer(response)
-        writer.writerow(["ID", "Title", "Author", "Category", "Price", "MRP", "Stock"])
+        writer.writerow(["System ID", "Book Title", "Author", "Category", "Subject", "Rate", "Stock", "ISBN"])
         for book in queryset:
             writer.writerow([
-                book.id,
+                book.system_id or "",
                 book.title,
                 book.author,
                 book.category.name if book.category else "",
+                " / ".join(book.subjects.values_list("name", flat=True)),
                 book.price,
-                book.mrp_price or "",
                 book.stock,
+                book.isbn or "",
             ])
         return response
 
@@ -546,14 +548,14 @@ class BookAdmin(admin.ModelAdmin):
 
     def download_books_sample_csv_view(self, request):
         columns = [
+            "System ID",
             "Book Title",
             "Author",
             "Category",
             "Subject",
             "Rate",
-            "MRP",
             "Stock",
-            "ISBN",
+            "ISBN No",
             "Description",
             "Published Year",
             "Binding",
@@ -567,12 +569,12 @@ class BookAdmin(admin.ModelAdmin):
         ]
         sample_rows = [
             [
+                "z7YrLMOPjbxmVdIM9U3g",
                 "Makhzan-ul-Mufradat",
                 "Hakim Example",
                 "Unani Classics",
                 "Ilmul Advia / Materia Medica",
                 "450",
-                "600",
                 "25",
                 "9780000000001",
                 "Foundational Unani formulary reference.",
@@ -616,15 +618,27 @@ class BookAdmin(admin.ModelAdmin):
 
             with transaction.atomic():
                 for row in rows:
+                    system_id = str(
+                        row.get("system id")
+                        or row.get("systemid")
+                        or row.get("system id.")
+                        or ""
+                    ).strip()
                     title = str(row.get("book title") or row.get("title") or "").strip()
                     author = str(row.get("author") or "").strip()
                     if not title or not author:
                         errors += 1
                         continue
 
-                    category_name = str(row.get("category") or "").strip()
+                    category_name = str(row.get("category") or row.get("caetgory") or "").strip()
                     subject_raw = row.get("subject") or row.get("subjects")
-                    isbn = str(row.get("isbn") or "").strip()
+                    isbn = str(
+                        row.get("isbn")
+                        or row.get("isbn no")
+                        or row.get("isbn no.")
+                        or row.get("isbn number")
+                        or ""
+                    ).strip()
                     price_raw = row.get("rate") or row.get("price")
                     mrp_raw = row.get("mrp") or row.get("mrp price") or row.get("mrp_price")
                     stock_raw = row.get("stock")
@@ -635,15 +649,33 @@ class BookAdmin(admin.ModelAdmin):
                     weight = row.get("weight")
                     readership = row.get("readership")
 
-                    book, is_created = Book.objects.get_or_create(
-                        title=title,
-                        author=author,
-                        defaults={"isbn": isbn or "", "price": Decimal("0.00")},
-                    )
+                    book = None
+                    is_created = False
+                    if system_id:
+                        book = Book.objects.filter(system_id=system_id).first()
+                    if not book and isbn:
+                        book = Book.objects.filter(isbn=isbn).first()
+
+                    if not book:
+                        book, is_created = Book.objects.get_or_create(
+                            title=title,
+                            author=author,
+                            defaults={
+                                "system_id": system_id or None,
+                                "isbn": isbn or "",
+                                "price": Decimal("0.00"),
+                            },
+                        )
+
+                    book.title = title
+                    book.author = author
 
                     if category_name:
                         category, _ = Category.objects.get_or_create(name=category_name)
                         book.category = category
+
+                    if system_id:
+                        book.system_id = system_id
 
                     if isbn:
                         book.isbn = isbn
