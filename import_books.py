@@ -21,7 +21,7 @@ def import_data():
             # 1. Get the data from CSV columns
             title = row['Book Title'].strip()
             author = row['Author'].strip()
-            price = row['Rate'].strip()
+            price = (row.get('Price') or '').strip()
             
             # Combine Category and Subject for description
             category = row['Category'] if row['Category'] else ""

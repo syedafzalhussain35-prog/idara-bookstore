@@ -389,7 +389,7 @@ class BookAdmin(admin.ModelAdmin):
             "fields": ("system_id", "category", "subjects", "title", "author", "description")
         }),
         ("Specifications", {
-            "fields": ("isbn", "published_year", "binding", "pages", "weight", "readership")
+            "fields": ("isbn", "published_year", "binding", "pages", "weight")
         }),
         ("Pricing", {
             "fields": ("price", "mrp_price", "discount_display")
@@ -511,7 +511,7 @@ class BookAdmin(admin.ModelAdmin):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="books.csv"'
         writer = csv.writer(response)
-        writer.writerow(["System ID", "Book Title", "Author", "Category", "Subject", "Rate", "Stock", "ISBN"])
+        writer.writerow(["System ID", "Book Title", "Author", "Category", "Subject", "Price", "MRP", "Stock", "ISBN"])
         for book in queryset:
             writer.writerow([
                 book.system_id or "",
@@ -520,6 +520,7 @@ class BookAdmin(admin.ModelAdmin):
                 book.category.name if book.category else "",
                 " / ".join(book.subjects.values_list("name", flat=True)),
                 book.price,
+                book.mrp_price or "",
                 book.stock,
                 book.isbn or "",
             ])
@@ -553,7 +554,8 @@ class BookAdmin(admin.ModelAdmin):
             "Author",
             "Category",
             "Subject",
-            "Rate",
+            "Price",
+            "MRP",
             "Stock",
             "ISBN No",
             "Description",
@@ -561,7 +563,6 @@ class BookAdmin(admin.ModelAdmin):
             "Binding",
             "Pages",
             "Weight",
-            "Readership",
             "is_bestseller",
             "is_trending",
             "is_new_arrival",
@@ -575,6 +576,7 @@ class BookAdmin(admin.ModelAdmin):
                 "Unani Classics",
                 "Ilmul Advia / Materia Medica",
                 "450",
+                "600",
                 "25",
                 "9780000000001",
                 "Foundational Unani formulary reference.",
@@ -642,7 +644,7 @@ class BookAdmin(admin.ModelAdmin):
                             or row.get("isbn number")
                             or ""
                         ).strip()
-                        price_raw = row.get("rate") or row.get("price")
+                        price_raw = row.get("price") or row.get("selling price")
                         mrp_raw = row.get("mrp") or row.get("mrp price") or row.get("mrp_price")
                         stock_raw = row.get("stock")
                         description = row.get("description")
@@ -650,7 +652,6 @@ class BookAdmin(admin.ModelAdmin):
                         binding = row.get("binding")
                         pages = row.get("pages")
                         weight = row.get("weight")
-                        readership = row.get("readership")
 
                         book = None
                         is_created = False
@@ -705,8 +706,6 @@ class BookAdmin(admin.ModelAdmin):
                             book.pages = str(pages).strip()
                         if weight not in (None, ""):
                             book.weight = str(weight).strip()
-                        if readership not in (None, ""):
-                            book.readership = str(readership).strip()
 
                         for flag_field in ("is_bestseller", "is_trending", "is_new_arrival", "is_featured"):
                             parsed = _coerce_bool(row.get(flag_field))

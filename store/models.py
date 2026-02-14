@@ -63,7 +63,6 @@ class Book(models.Model):
     binding = models.CharField(max_length=50, blank=True)
     pages = models.CharField(max_length=20, blank=True)
     weight = models.CharField(max_length=20, blank=True)
-    readership = models.TextField(blank=True)
     subjects = models.ManyToManyField("Subject", blank=True, related_name="books")
 
     price = models.DecimalField(
