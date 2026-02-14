@@ -11,9 +11,6 @@
 {% if is_homepage %}
 <section class="hero-section">
     <div class="hero-stage">
-        <aside class="hero-side-banner hero-side-left d-none d-xl-block" aria-hidden="true">
-            <img src="{% static 'store/images/banners/unnamed.jpg' %}" alt="">
-        </aside>
         <div class="swiper mySwiper hero-swiper">
             <div class="swiper-wrapper">
                 {% if banners %}
@@ -85,9 +82,6 @@
             <div class="swiper-button-prev"></div>
             <div class="swiper-pagination"></div>
         </div>
-        <aside class="hero-side-banner hero-side-right d-none d-xl-block" aria-hidden="true">
-            <img src="{% static 'store/images/banners/unnamed2.jpg' %}" alt="">
-        </aside>
     </div>
 </section>
 {% endif %}
@@ -311,6 +305,18 @@
         autoplay: { delay: 3500, disableOnInteraction: false },
         pagination: { el: ".swiper-pagination", clickable: true },
         navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+        breakpoints: {
+            992: {
+                centeredSlides: true,
+                slidesPerView: 1.16,
+                spaceBetween: 18
+            },
+            1200: {
+                centeredSlides: true,
+                slidesPerView: 1.22,
+                spaceBetween: 22
+            }
+        }
     });
 </script>
 {% endblock %}

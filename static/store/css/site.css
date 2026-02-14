@@ -1743,10 +1743,7 @@ footer {
         max-width: 1680px;
         margin: 0 auto;
         padding: 0 14px;
-        display: grid;
-        grid-template-columns: 180px minmax(0, 1fr) 180px;
-        align-items: stretch;
-        gap: 12px;
+        display: block;
     }
 
     .hero-side-banner {
@@ -1776,7 +1773,7 @@ footer {
         max-width: 1320px;
         min-width: 0;
         margin: 0 auto;
-        padding: 0;
+        padding: 0 8px;
         position: relative;
         box-sizing: border-box;
         overflow: hidden;
@@ -1790,7 +1787,7 @@ footer {
     .hero-swiper .swiper-slide {
         width: 100%;
         min-width: 0;
-        padding: 0;
+        padding: 0 4px;
     }
 
     .hero-swiper .swiper-pagination {
@@ -1898,12 +1895,6 @@ footer {
         .hero-slide {
             aspect-ratio: 4 / 3;
             border-radius: 16px;
-        }
-    }
-
-    @media (max-width: 1400px) {
-        .hero-stage {
-            grid-template-columns: 150px minmax(0, 1fr) 150px;
         }
     }
 
@@ -2045,6 +2036,10 @@ footer {
             padding: 0;
         }
 
+        .hero-swiper .swiper-slide {
+            padding: 0;
+        }
+
         .hero-side-banner {
             display: none;
         }
@@ -2060,6 +2055,13 @@ footer {
 
         .subject-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 992px) {
+        .hero-swiper {
+            max-width: 1520px;
+            padding: 0 10px;
         }
     }
 
