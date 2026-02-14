@@ -30,12 +30,18 @@
                                 <p class="fw-bold mb-2" style="color: var(--primary-magenta);">₹{{ item.book.price }}</p>
 
                                 <div class="d-flex gap-2">
-                                    <a href="{% url 'add_to_cart' item.book.id %}" class="btn btn-sm btn-dark flex-grow-1">
-                                        <i class="fas fa-shopping-cart"></i> Add
-                                    </a>
-                                    <a href="{% url 'remove_from_wishlist' item.book.id %}" class="btn btn-sm btn-outline-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                    <form action="{% url 'add_to_cart' item.book.id %}" method="post" class="flex-grow-1">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-dark w-100">
+                                            <i class="fas fa-shopping-cart"></i> Add
+                                        </button>
+                                    </form>
+                                    <form action="{% url 'remove_from_wishlist' item.book.id %}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

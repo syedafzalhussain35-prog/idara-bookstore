@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import messages
 from django.urls import path, reverse
 from django.shortcuts import render
-from django.db import transaction
+from django.db import transaction, models as dj_models
 from django.db.models import Sum, Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
 import re
@@ -281,16 +281,30 @@ class BulkImportAdminMixin:
         }
         return render(request, self.bulk_import_template, context)
 
+
+class EfficientAdminMixin:
+    save_on_top = True
+    list_per_page = 40
+    actions_on_top = False
+    actions_on_bottom = True
+    actions_selection_counter = False
+
 # ======================
 # CATEGORY ADMIN
 # ======================
 
 @admin.register(Category)
-class CategoryAdmin(BulkImportAdminMixin, admin.ModelAdmin):
-    list_display = ("name", "slug")
+class CategoryAdmin(BulkImportAdminMixin, EfficientAdminMixin, admin.ModelAdmin):
+    list_display = ("name", "slug", "books_count")
+    list_display_links = ("name",)
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ("name",)
+    search_fields = ("name", "slug")
     ordering = ("name",)
+    readonly_fields = ("books_count",)
+    fieldsets = (
+        ("Category", {"fields": ("name", "slug")}),
+        ("Insights", {"fields": ("books_count",), "classes": ("collapse",)}),
+    )
     change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
     bulk_import_title = "Bulk Import Categories"
     bulk_import_help = "Required: name. Optional: slug."
@@ -299,6 +313,12 @@ class CategoryAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         {"name": "Unani Classics", "slug": "unani-classics"},
         {"name": "Pharmacology", "slug": "pharmacology"},
     )
+
+    @admin.display(description="Books")
+    def books_count(self, obj):
+        if not obj:
+            return 0
+        return obj.books.count()
 
     def import_row(self, row_data):
         name = str(row_data.get("name") or "").strip()
@@ -320,7 +340,7 @@ class CategoryAdmin(BulkImportAdminMixin, admin.ModelAdmin):
 
 class BookImageInline(admin.TabularInline):
     model = BookImage
-    extra = 1
+    extra = 0
 
 
 class BundleBookInline(admin.TabularInline):
@@ -342,7 +362,7 @@ class BundleAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(Book)
-class BookAdmin(admin.ModelAdmin):
+class BookAdmin(EfficientAdminMixin, admin.ModelAdmin):
     list_display = (
         "title",
         "author",
@@ -367,6 +387,7 @@ class BookAdmin(admin.ModelAdmin):
     )
     search_fields = ("title", "author", "description")
     list_select_related = ("category",)
+    autocomplete_fields = ("category", "subjects")
 
     list_editable = (
         "price",
@@ -378,7 +399,7 @@ class BookAdmin(admin.ModelAdmin):
         "is_featured",
     )
 
-    readonly_fields = ("discount_display",)
+    readonly_fields = ("discount_display", "is_watermarked")
     inlines = [BookImageInline]
 
     change_list_template = "admin/store/book/change_list.html"
@@ -388,7 +409,8 @@ class BookAdmin(admin.ModelAdmin):
             "fields": ("category", "subjects", "title", "author", "description")
         }),
         ("Specifications", {
-            "fields": ("isbn", "published_year", "binding", "pages", "weight", "readership")
+            "fields": ("isbn", "published_year", "binding", "pages", "weight", "readership"),
+            "classes": ("collapse",),
         }),
         ("Pricing", {
             "fields": ("price", "mrp_price", "discount_display")
@@ -400,14 +422,18 @@ class BookAdmin(admin.ModelAdmin):
             "fields": ("is_bestseller", "is_trending", "is_new_arrival", "is_featured")
         }),
         ("Images", {
-            "fields": ("main_cover",)
+            "fields": ("main_cover", "is_watermarked")
         }),
         ("Book Files", {
-            "fields": ("toc_pdf", "sample_pdf")
+            "fields": ("toc_pdf", "sample_pdf"),
+            "classes": ("collapse",),
         }),
     )
 
     ordering = ("title",)
+    formfield_overrides = {
+        dj_models.TextField: {"widget": forms.Textarea(attrs={"rows": 4})},
+    }
 
     class PriceUpdateActionForm(ActionForm):
         percentage = forms.DecimalField(
@@ -798,31 +824,25 @@ class OrderItemInline(admin.TabularInline):
 # ======================
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(EfficientAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
+        "created_at",
         "full_name",
-        "email_link",
+        "city",
+        "status",
+        "is_paid",
         "total_cost_display",
-        "sub_status",
-        "coins_redeemed",
-        "coins_earned_final",
-        "coin_status",
-        "packing_assignee",
-        "shipping_assignee",
-        "payment_method",
         "courier_service",
         "consignment_number",
         "tracking_link",
-        "is_paid",
+        "packing_assignee",
         "invoice_link",
-        "city",
-        "status",
-        "created_at",
     )
 
     list_filter = ("status", "is_paid", "created_at", "city", "packing_assignee", "shipping_assignee", "courier_service")
     search_fields = ("full_name", "email", "city", "user__username", "consignment_number")
+    list_select_related = ("user", "packing_assignee", "shipping_assignee")
     readonly_fields = (
         "user",
         "created_at",
@@ -846,6 +866,16 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
     ordering = ("-created_at",)
     actions = ("export_orders_csv", "force_credit_coins", "cancel_pending_coin_credit")
+    fieldsets = (
+        ("Customer", {"fields": ("user", "full_name", "email", "mobile")}),
+        ("Address", {"fields": ("address", "city", "zip_code")}),
+        ("Status Workflow", {"fields": ("status", "sub_status", "customer_note", "internal_comment")}),
+        ("Logistics", {"fields": ("packing_assignee", "shipping_assignee", "courier_service", "consignment_number")}),
+        ("Payment & Billing", {"fields": ("is_paid", "payment_method", "coupon", "subtotal", "discount_amount", "gst_rate", "gst_amount", "shipping_amount", "total_cost")}),
+        ("Gateway Details", {"fields": ("razorpay_order_id", "razorpay_payment_id", "razorpay_signature"), "classes": ("collapse",)}),
+        ("Coins", {"fields": ("coins_redeemed", "coins_earned_estimate", "coins_earned_final", "coin_status"), "classes": ("collapse",)}),
+        ("Timestamps", {"fields": ("created_at",), "classes": ("collapse",)}),
+    )
 
     def save_model(self, request, obj, form, change):
         original = None
@@ -1081,15 +1111,24 @@ class CouponAdmin(admin.ModelAdmin):
 
 
 @admin.register(UnaniTerm)
-class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
-    list_display = ("english_term", "section", "is_published", "updated_at")
+class UnaniTermAdmin(BulkImportAdminMixin, EfficientAdminMixin, admin.ModelAdmin):
+    list_display = ("english_term", "arabic_preview", "transliteration", "section", "is_published", "updated_at")
     search_fields = ("arabic_script", "transliteration", "english_term", "description")
     list_filter = ("section", "is_published")
     prepopulated_fields = {"slug": ("english_term",)}
     ordering = ("english_term",)
     readonly_fields = ("created_at", "updated_at")
-    list_per_page = 50
+    list_per_page = 60
+    list_editable = ("is_published",)
     actions = ("publish_terms", "unpublish_terms")
+    formfield_overrides = {
+        dj_models.TextField: {"widget": forms.Textarea(attrs={"rows": 6})},
+    }
+    fieldsets = (
+        ("Term", {"fields": ("english_term", "transliteration", "arabic_script", "section", "is_published")}),
+        ("Definition", {"fields": ("description",)}),
+        ("Meta", {"fields": ("slug", "created_at", "updated_at"), "classes": ("collapse",)}),
+    )
     change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
     bulk_import_title = "Bulk Import Unani Terms"
     bulk_import_help = (
@@ -1116,6 +1155,11 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
             "is_published": "true",
         },
     )
+
+    @admin.display(description="Arabic/Persian/Urdu")
+    def arabic_preview(self, obj):
+        text = (obj.arabic_script or "-").strip()
+        return text[:28] + ("..." if len(text) > 28 else "")
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
@@ -1384,11 +1428,18 @@ class IKSWalletTransactionAdmin(admin.ModelAdmin):
             obj.save(update_fields=["completed_at"])
 
 @admin.register(Subject)
-class SubjectAdmin(BulkImportAdminMixin, admin.ModelAdmin):
-    list_display = ("name", "slug", "is_active")
-    search_fields = ("name",)
+class SubjectAdmin(BulkImportAdminMixin, EfficientAdminMixin, admin.ModelAdmin):
+    list_display = ("name", "slug", "books_count", "is_active")
+    list_display_links = ("name",)
+    search_fields = ("name", "slug")
     list_filter = ("is_active",)
+    list_editable = ("is_active",)
     prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("books_count",)
+    fieldsets = (
+        ("Subject", {"fields": ("name", "slug", "is_active")}),
+        ("Insights", {"fields": ("books_count",), "classes": ("collapse",)}),
+    )
     change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
     bulk_import_title = "Bulk Import Subjects"
     bulk_import_help = "Required: name. Optional: slug, is_active."
@@ -1397,6 +1448,12 @@ class SubjectAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         {"name": "Ilmul Advia", "slug": "ilmul-advia", "is_active": "true"},
         {"name": "Tashreeh", "slug": "tashreeh", "is_active": "true"},
     )
+
+    @admin.display(description="Books")
+    def books_count(self, obj):
+        if not obj:
+            return 0
+        return obj.books.count()
 
     def import_row(self, row_data):
         name = str(row_data.get("name") or "").strip()
@@ -1423,32 +1480,27 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Banner)
-class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+class BannerAdmin(BulkImportAdminMixin, EfficientAdminMixin, admin.ModelAdmin):
     list_display = (
         "preview",
         "title",
+        "headline",
         "category",
         "order",
         "is_active",
         "show_on_mobile",
         "show_on_desktop",
-        "focal_x",
-        "focal_y",
-        "mobile_height",
-        "tablet_height",
     )
     list_editable = (
         "order",
         "is_active",
         "show_on_mobile",
         "show_on_desktop",
-        "focal_x",
-        "focal_y",
-        "mobile_height",
-        "tablet_height",
     )
-    search_fields = ("title", "headline", "subheadline")
+    search_fields = ("title", "headline", "subheadline", "category__name", "cta_text")
+    list_filter = ("is_active", "show_on_mobile", "show_on_desktop", "category")
     ordering = ("order", "id")
+    autocomplete_fields = ("category", "cta_category")
     change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
     bulk_import_title = "Bulk Import Banners"
     bulk_import_help = (
@@ -1496,13 +1548,17 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
 
     fieldsets = (
         ("Banner", {
-            "fields": ("title", "headline", "subheadline", "image", "category", "order", "is_active", "show_on_mobile", "show_on_desktop")
+            "fields": ("title", "headline", "subheadline", "image", "category")
         }),
         ("CTA", {
             "fields": ("cta_text", "cta_category")
         }),
+        ("Visibility", {
+            "fields": ("order", "is_active", "show_on_mobile", "show_on_desktop")
+        }),
         ("Mobile & Crop", {
-            "fields": ("focal_x", "focal_y", "mobile_height", "tablet_height")
+            "fields": ("focal_x", "focal_y", "mobile_height", "tablet_height"),
+            "classes": ("collapse",),
         }),
     )
 

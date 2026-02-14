@@ -1147,8 +1147,24 @@
             height: 90px;
         }
 
+        .action-row {
+            display: flex;
+            flex-wrap: nowrap !important;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .action-row form,
+        .action-row > button {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
         .action-row .btn {
             width: 100%;
+            white-space: nowrap;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
         }
 
         .breadcrumb .breadcrumb-item.active {
@@ -1760,7 +1776,7 @@ footer {
         max-width: 1320px;
         min-width: 0;
         margin: 0 auto;
-        padding: 0 56px;
+        padding: 0 8px;
         position: relative;
         box-sizing: border-box;
         overflow: hidden;
@@ -1772,9 +1788,9 @@ footer {
     }
 
     .hero-swiper .swiper-slide {
-        width: 100%;
+        width: auto;
         min-width: 0;
-        padding: 0;
+        padding: 0 6px;
     }
 
     .hero-swiper .swiper-pagination {
@@ -1876,7 +1892,7 @@ footer {
 
     @media (max-width: 576px) {
         .hero-swiper {
-            padding: 0 10px;
+            padding: 0;
         }
 
         .hero-slide {

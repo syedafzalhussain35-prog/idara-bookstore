@@ -12,7 +12,6 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
-from django.utils.crypto import get_random_string
 from django.conf import settings
 from django.core.cache import cache
 import logging
@@ -768,6 +767,7 @@ def wishlist_toggle(request, book_id):
 
 
 @login_required
+@require_POST
 def add_to_wishlist(request, book_id):
     Wishlist.objects.get_or_create(
         user=request.user,
@@ -777,6 +777,7 @@ def add_to_wishlist(request, book_id):
 
 
 @login_required
+@require_POST
 def remove_from_wishlist(request, book_id):
     Wishlist.objects.filter(user=request.user, book_id=book_id).delete()
     return redirect(request.META.get('HTTP_REFERER', 'wishlist'))
@@ -924,6 +925,7 @@ def _get_or_create_cart(request):
     return cart
 
 
+@require_POST
 def add_to_cart(request, book_id):
     book = get_object_or_404(Book, id=book_id)
     cart = _get_or_create_cart(request)
@@ -961,6 +963,7 @@ def cart_detail(request):
     })
 
 
+@require_POST
 def update_cart_item(request, item_id, action):
     cart = _get_or_create_cart(request)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
@@ -983,6 +986,7 @@ def update_cart_item(request, item_id, action):
     return redirect("cart_detail")
 
 
+@require_POST
 def update_bundle_item(request, item_id, action):
     cart = _get_or_create_cart(request)
     item = get_object_or_404(CartBundleItem, id=item_id, cart=cart)
@@ -1006,12 +1010,14 @@ def update_bundle_item(request, item_id, action):
     return redirect("cart_detail")
 
 
+@require_POST
 def remove_from_cart(request, item_id):
     cart = _get_or_create_cart(request)
     CartItem.objects.filter(id=item_id, cart=cart).delete()
     return redirect('cart_detail')
 
 
+@require_POST
 def add_bundle_to_cart(request, bundle_id):
     bundle = get_object_or_404(Bundle, id=bundle_id, is_active=True)
     cart = _get_or_create_cart(request)
@@ -1037,6 +1043,7 @@ def add_bundle_to_cart(request, bundle_id):
     return redirect('cart_detail')
 
 
+@require_POST
 def remove_bundle_from_cart(request, item_id):
     cart = _get_or_create_cart(request)
     CartBundleItem.objects.filter(id=item_id, cart=cart).delete()
@@ -1266,18 +1273,7 @@ def razorpay_create_order(request):
     if not full_name or not email:
         return JsonResponse({"ok": False, "error": "Name and email are required."}, status=400)
 
-    user = None
-    if request.user.is_authenticated:
-        user = request.user
-    else:
-        user, created = User.objects.get_or_create(email=email, defaults={"username": email})
-        if created:
-            password = get_random_string(10)
-            user.set_password(password)
-            user.save()
-        cart.user = user
-        cart.save(update_fields=["user"])
-        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    user = request.user if request.user.is_authenticated else None
 
     base_totals = _calculate_checkout_totals(cart)
     coupon_code = (request.POST.get("coupon_code") or "").strip()
@@ -1425,44 +1421,57 @@ def razorpay_verify_payment(request):
     if not all([order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature]):
         return JsonResponse({"ok": False, "error": "Missing payment details."}, status=400)
 
-    order = get_object_or_404(Order, id=order_id, razorpay_order_id=razorpay_order_id)
-
-    try:
-        client.utility.verify_payment_signature({
-            "razorpay_order_id": razorpay_order_id,
-            "razorpay_payment_id": razorpay_payment_id,
-            "razorpay_signature": razorpay_signature,
-        })
-    except Exception:
-        return JsonResponse({"ok": False, "error": "Payment verification failed."}, status=400)
-
-    order.is_paid = True
-    order.status = "Processing"
-    order.razorpay_payment_id = razorpay_payment_id
-    order.razorpay_signature = razorpay_signature
-    order.save(update_fields=["is_paid", "status", "razorpay_payment_id", "razorpay_signature"])
-    apply_redemption_for_order(order)
-
-    partial_backorder = []
-    for item in order.items.select_related("book").all():
-        available = max(item.book.stock, 0)
-        allocated = min(item.quantity, available)
-        backordered = max(item.quantity - allocated, 0)
-        if allocated:
-            item.book.stock -= allocated
-            item.book.save(update_fields=["stock"])
-        item.allocated_quantity = allocated
-        item.backordered_quantity = backordered
-        item.save(update_fields=["allocated_quantity", "backordered_quantity"])
-        if backordered:
-            partial_backorder.append(f"{item.book.title} ({backordered})")
-
-    if partial_backorder:
-        order.sub_status = "Partially allocated, waiting for stock"
-        order.internal_comment = (
-            "Partial allocation at payment: " + ", ".join(partial_backorder[:6])
+    with transaction.atomic():
+        order = (
+            Order.objects.select_for_update()
+            .filter(id=order_id, razorpay_order_id=razorpay_order_id)
+            .first()
         )
-        order.save(update_fields=["sub_status", "internal_comment"])
+        if not order:
+            return JsonResponse({"ok": False, "error": "Order not found."}, status=404)
+
+        if order.is_paid:
+            token = signing.dumps({"order_id": order.id, "email": order.email})
+            success_url = reverse("order_success", args=[order.id]) + f"?token={token}"
+            return JsonResponse({"ok": True, "redirect_url": success_url})
+
+        try:
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature,
+            })
+        except Exception:
+            return JsonResponse({"ok": False, "error": "Payment verification failed."}, status=400)
+
+        order.is_paid = True
+        order.status = "Processing"
+        order.razorpay_payment_id = razorpay_payment_id
+        order.razorpay_signature = razorpay_signature
+        order.save(update_fields=["is_paid", "status", "razorpay_payment_id", "razorpay_signature"])
+        apply_redemption_for_order(order)
+
+        partial_backorder = []
+        for item in order.items.select_related("book").all():
+            book = Book.objects.select_for_update().get(pk=item.book_id)
+            available = max(book.stock, 0)
+            allocated = min(item.quantity, available)
+            backordered = max(item.quantity - allocated, 0)
+            if allocated:
+                book.stock = available - allocated
+                book.save(update_fields=["stock"])
+            item.allocated_quantity = allocated
+            item.backordered_quantity = backordered
+            item.save(update_fields=["allocated_quantity", "backordered_quantity"])
+            if backordered:
+                partial_backorder.append(f"{item.book.title} ({backordered})")
+
+        if partial_backorder:
+            order.sub_status = "Partially allocated, waiting for stock"
+            order.internal_comment = (
+                "Partial allocation at payment: " + ", ".join(partial_backorder[:6])
+            )
+            order.save(update_fields=["sub_status", "internal_comment"])
 
     if order.user_id:
         cart = Cart.objects.filter(user_id=order.user_id).first()

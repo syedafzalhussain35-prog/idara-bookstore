@@ -46,16 +46,25 @@
                                     <td class="p-3" data-label="Price">₹{{ item.book.price }}</td>
                                     <td class="p-3" data-label="Quantity">
                                         <div class="qty-controls">
-                                            <a class="qty-btn" href="{% url 'update_cart_item' item.id 'minus' %}">-</a>
+                                            <form action="{% url 'update_cart_item' item.id 'minus' %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="qty-btn">-</button>
+                                            </form>
                                             <span class="qty-value">{{ item.quantity }}</span>
-                                            <a class="qty-btn" href="{% url 'update_cart_item' item.id 'plus' %}">+</a>
+                                            <form action="{% url 'update_cart_item' item.id 'plus' %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="qty-btn">+</button>
+                                            </form>
                                         </div>
                                     </td>
                                     <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ item.total_price }}</td>
                                     <td class="p-3 text-end" data-label="Action">
-                                        <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger" title="Remove Item">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </a>
+                                        <form action="{% url 'remove_from_cart' item.id %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove Item">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -76,16 +85,25 @@
                                     <td class="p-3" data-label="Price">₹{{ bitem.bundle.bundle_price }}</td>
                                     <td class="p-3" data-label="Quantity">
                                         <div class="qty-controls">
-                                            <a class="qty-btn" href="{% url 'update_bundle_item' bitem.id 'minus' %}">-</a>
+                                            <form action="{% url 'update_bundle_item' bitem.id 'minus' %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="qty-btn">-</button>
+                                            </form>
                                             <span class="qty-value">{{ bitem.quantity }}</span>
-                                            <a class="qty-btn" href="{% url 'update_bundle_item' bitem.id 'plus' %}">+</a>
+                                            <form action="{% url 'update_bundle_item' bitem.id 'plus' %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="qty-btn">+</button>
+                                            </form>
                                         </div>
                                     </td>
                                     <td class="p-3 fw-bold" data-label="Total" style="color: var(--primary-magenta);">₹{{ bitem.total_price }}</td>
                                     <td class="p-3 text-end" data-label="Action">
-                                        <a href="{% url 'remove_bundle_from_cart' bitem.id %}" class="btn btn-sm btn-outline-danger" title="Remove Bundle">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </a>
+                                        <form action="{% url 'remove_bundle_from_cart' bitem.id %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove Bundle">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}

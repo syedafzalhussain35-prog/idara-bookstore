@@ -1,10 +1,12 @@
 from decimal import Decimal
+from unittest.mock import Mock, patch
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.template.loader import get_template
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
-from .models import Book, Review
+from .models import Book, Order, OrderItem, Review
 from .views import _apply_price_rating_filters, _to_decimal
 
 
@@ -67,3 +69,81 @@ class MobileHeaderRenderTests(TestCase):
     def test_anonymous_login_mobile_target_present(self):
         html = self._render(AnonymousUser())
         self.assertIn('data-mobile-href="/accounts/login/?next=/"', html)
+
+
+class CheckoutSecurityTests(TestCase):
+    def setUp(self):
+        self.book = Book.objects.create(title="Secure Book", author="Author", price=Decimal("250.00"), stock=10)
+        self.existing_user = User.objects.create_user(
+            username="existing",
+            email="existing@example.com",
+            password="pass12345",
+        )
+
+    def test_add_to_cart_rejects_get(self):
+        response = self.client.get(reverse("add_to_cart", args=[self.book.id]))
+        self.assertEqual(response.status_code, 405)
+
+    @patch("store.views._get_razorpay_client")
+    @override_settings(RAZORPAY_ENABLED=True, RAZORPAY_KEY_ID="key", RAZORPAY_KEY_SECRET="secret")
+    def test_guest_razorpay_create_order_does_not_login_existing_user(self, mock_client_factory):
+        mock_client = Mock()
+        mock_client.order.create.return_value = {"id": "order_test_1"}
+        mock_client_factory.return_value = mock_client
+
+        self.client.post(reverse("add_to_cart", args=[self.book.id]))
+        response = self.client.post(
+            reverse("razorpay_create_order"),
+            data={
+                "full_name": "Guest User",
+                "email": "existing@example.com",
+                "mobile": "9876543210",
+                "address": "Street 1",
+                "city": "Delhi",
+                "zip_code": "110001",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        order = Order.objects.latest("id")
+        self.assertIsNone(order.user)
+
+    @patch("store.views._get_razorpay_client")
+    @override_settings(RAZORPAY_ENABLED=True, RAZORPAY_KEY_ID="key", RAZORPAY_KEY_SECRET="secret")
+    def test_razorpay_verify_payment_is_idempotent(self, mock_client_factory):
+        mock_client = Mock()
+        mock_client.utility.verify_payment_signature.return_value = None
+        mock_client_factory.return_value = mock_client
+
+        order = Order.objects.create(
+            full_name="Test Buyer",
+            email="buyer@example.com",
+            mobile="9876543210",
+            address="Address",
+            city="Delhi",
+            zip_code="110001",
+            subtotal=Decimal("250.00"),
+            total_cost=Decimal("250.00"),
+            razorpay_order_id="rzp_order_123",
+            status="Pending",
+            is_paid=False,
+        )
+        OrderItem.objects.create(order=order, book=self.book, price=self.book.price, quantity=2)
+
+        payload = {
+            "order_id": str(order.id),
+            "razorpay_order_id": "rzp_order_123",
+            "razorpay_payment_id": "rzp_pay_123",
+            "razorpay_signature": "sig_123",
+        }
+
+        first = self.client.post(reverse("razorpay_verify_payment"), data=payload)
+        self.assertEqual(first.status_code, 200)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock, 8)
+
+        second = self.client.post(reverse("razorpay_verify_payment"), data=payload)
+        self.assertEqual(second.status_code, 200)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock, 8)

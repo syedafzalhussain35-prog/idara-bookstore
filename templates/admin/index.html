@@ -120,6 +120,26 @@
         background: #eef4ff;
     }
 
+    .sc-more-tools {
+        margin-top: 10px;
+        border-top: 1px dashed var(--sc-border);
+        padding-top: 8px;
+    }
+
+    .sc-more-tools summary {
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+        color: #355280;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        list-style: none;
+    }
+
+    .sc-more-tools summary::-webkit-details-marker {
+        display: none;
+    }
+
     .sc-kv {
         list-style: none;
         margin: 0;
@@ -288,9 +308,9 @@
         </div>
         <div class="sc-hero-actions">
             <a class="sc-chip" href="/admin/store/book/add/">Add Book</a>
-            <a class="sc-chip" href="/admin/store/banner/add/">Add Banner</a>
             <a class="sc-chip" href="/admin/store/order/">Orders</a>
-            <a class="sc-chip" href="/admin/store/sitesettings/">Site Settings</a>
+            <a class="sc-chip" href="/admin/store/unaniterm/">Terms</a>
+            <a class="sc-chip" href="/admin/store/banner/">Banners</a>
         </div>
     </div>
 
@@ -300,19 +320,26 @@
                 <h3 class="sc-title">Quick Actions</h3>
                 <div class="sc-action-grid">
                     <a class="sc-action" href="/admin/store/book/add/">Add Book</a>
+                    <a class="sc-action" href="/admin/store/unaniterm/add/">Add Term</a>
+                    <a class="sc-action" href="/admin/store/order/?status__exact=Pending">Process Orders</a>
                     <a class="sc-action" href="/admin/store/banner/add/">Add Banner</a>
-                    <a class="sc-action" href="/admin/store/galleryitem/add/">Add Gallery Item</a>
-                    <a class="sc-action" href="/admin/store/coupon/add/">Create Coupon</a>
-                    <a class="sc-action" href="/admin/store/subject/add/">Add Subject</a>
-                    <a class="sc-action" href="/admin/store/syllabuspdf/add/">Add Syllabus PDF</a>
                 </div>
+                <details class="sc-more-tools">
+                    <summary>Advanced tools</summary>
+                    <div class="sc-action-grid mt-2">
+                        <a class="sc-action" href="/admin/store/category/add/">Add Category</a>
+                        <a class="sc-action" href="/admin/store/subject/add/">Add Subject</a>
+                        <a class="sc-action" href="/admin/store/coupon/add/">Create Coupon</a>
+                        <a class="sc-action" href="/admin/store/galleryitem/add/">Add Gallery Item</a>
+                    </div>
+                </details>
             </div>
 
             <div class="sc-card">
                 <h3 class="sc-title">Operations Queue</h3>
                 <ul class="sc-kv">
                     <li><a href="/admin/store/order/?status__exact=Pending">Pending Orders</a><span class="sc-pill warn">{{ pending_orders }}</span></li>
-                    <li><a href="/admin/store/order/?status__in=Processing&Packed&Shipped">In Fulfillment</a><span class="sc-pill">{{ processing_orders }}</span></li>
+                    <li><a href="/admin/store/order/?status__in=Processing&status__in=Packed&status__in=Shipped">In Fulfillment</a><span class="sc-pill">{{ processing_orders }}</span></li>
                     <li><a href="/admin/store/order/?is_paid__exact=0">Unpaid Orders</a><span class="sc-pill bad">{{ unpaid_orders }}</span></li>
                     <li><a href="/admin/store/book/?stock__lte=5">Low Stock Books</a><span class="sc-pill bad">{{ low_stock_total }}</span></li>
                     <li><a href="/admin/store/publishwithussubmission/">Publish Submissions</a><span class="sc-pill">{{ submissions_total }}</span></li>

@@ -50,6 +50,106 @@
 
         <!-- ================= RIGHT PROFILE + ORDER HISTORY ================= -->
         <div class="col-md-8">
+            <h4 class="fw-bold mb-3 text-magenta">Order History</h4>
+
+            {% if orders %}
+                <div class="row g-3">
+                    {% for order in orders %}
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap order-card-header">
+                                        <div>
+                                            <h5 class="fw-bold mb-1">Order #{{ order.id }}</h5>
+                                            <small class="text-muted">Placed on {{ order.created_at|date:"d M Y" }}</small>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-2
+                                            {% if order.is_paid %}
+                                                bg-success
+                                            {% else %}
+                                                bg-warning text-dark
+                                            {% endif %}
+                                        ">
+                                            {% if order.is_paid %}Paid{% else %}Pending Payment{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="status-steps mt-2">
+                                        <span class="status-step {% if order.status == 'Pending' or order.status == 'Processing' or order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Processing</span>
+                                        <span class="status-step {% if order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Packed</span>
+                                        <span class="status-step {% if order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Shipped</span>
+                                        <span class="status-step {% if order.status == 'Delivered' %}active{% endif %}">Delivered</span>
+                                        {% if order.status == 'Cancelled' %}
+                                            <span class="status-step active">Cancelled</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mt-3">
+                                        {% for item in order.items.all %}
+                                            <div class="d-flex justify-content-between small border-bottom py-2">
+                                                <span>{{ item.quantity }} × {{ item.book.title }}</span>
+                                                <span class="fw-bold">₹{{ item.price }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div>
+                                            <span class="text-muted me-2">Total:</span>
+                                            <span class="h5 fw-bold text-magenta">₹{{ order.total_cost }}</span>
+                                            {% if order.courier_service or order.consignment_number %}
+                                            <div class="small text-muted mt-2">
+                                                {% if order.courier_service %}
+                                                    Courier: {{ order.get_courier_service_display }}
+                                                {% endif %}
+                                                {% if order.consignment_number %}
+                                                    {% if order.courier_service %} | {% endif %}
+                                                    Consignment: <span class="fw-semibold">{{ order.consignment_number }}</span>
+                                                {% endif %}
+                                                {% if order.courier_service == 'india_post' and order.consignment_number %}
+                                                    | <a href="{{ order.tracking_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Track on India Post</a>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">
+                                                Status: {{ order.status }}{% if order.sub_status %} - {{ order.sub_status }}{% endif %}
+                                            </small>
+                                            <form method="post" action="{% url 'reorder_order' order.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-brand-outline">
+                                                    Reorder
+                                                </button>
+                                            </form>
+                                            <a href="{% url 'invoice' order.id %}" class="btn btn-sm btn-outline-dark">
+                                                Invoice
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <!-- Empty Orders -->
+                <div class="card shadow-sm border-0 text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5 class="fw-bold">No orders yet</h5>
+                        <p class="text-muted mb-3">
+                            Once you place an order, it will appear here.
+                        </p>
+                        <a href="{% url 'home' %}"
+                           class="btn btn-sm text-white fw-bold px-4"
+                           style="background-color:var(--primary-magenta);">
+                            Browse Books
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
             <!-- Profile Settings -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white border-0 pb-0">
@@ -305,105 +405,6 @@
                 </div>
             </div>
 
-            <h4 class="fw-bold mb-3 text-magenta">Order History</h4>
-
-            {% if orders %}
-                <div class="row g-3">
-                    {% for order in orders %}
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start flex-wrap order-card-header">
-                                        <div>
-                                            <h5 class="fw-bold mb-1">Order #{{ order.id }}</h5>
-                                            <small class="text-muted">Placed on {{ order.created_at|date:"d M Y" }}</small>
-                                        </div>
-                                        <span class="badge rounded-pill px-3 py-2
-                                            {% if order.is_paid %}
-                                                bg-success
-                                            {% else %}
-                                                bg-warning text-dark
-                                            {% endif %}
-                                        ">
-                                            {% if order.is_paid %}Paid{% else %}Pending Payment{% endif %}
-                                        </span>
-                                    </div>
-                                    <div class="status-steps mt-2">
-                                        <span class="status-step {% if order.status == 'Pending' or order.status == 'Processing' or order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Processing</span>
-                                        <span class="status-step {% if order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Packed</span>
-                                        <span class="status-step {% if order.status == 'Shipped' or order.status == 'Delivered' %}active{% endif %}">Shipped</span>
-                                        <span class="status-step {% if order.status == 'Delivered' %}active{% endif %}">Delivered</span>
-                                        {% if order.status == 'Cancelled' %}
-                                            <span class="status-step active">Cancelled</span>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="mt-3">
-                                        {% for item in order.items.all %}
-                                            <div class="d-flex justify-content-between small border-bottom py-2">
-                                                <span>{{ item.quantity }} × {{ item.book.title }}</span>
-                                                <span class="fw-bold">₹{{ item.price }}</span>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-
-                                    <div class="d-flex justify-content-between align-items-center mt-3">
-                                        <div>
-                                            <span class="text-muted me-2">Total:</span>
-                                            <span class="h5 fw-bold text-magenta">₹{{ order.total_cost }}</span>
-                                            {% if order.courier_service or order.consignment_number %}
-                                            <div class="small text-muted mt-2">
-                                                {% if order.courier_service %}
-                                                    Courier: {{ order.get_courier_service_display }}
-                                                {% endif %}
-                                                {% if order.consignment_number %}
-                                                    {% if order.courier_service %} | {% endif %}
-                                                    Consignment: <span class="fw-semibold">{{ order.consignment_number }}</span>
-                                                {% endif %}
-                                                {% if order.courier_service == 'india_post' and order.consignment_number %}
-                                                    | <a href="{{ order.tracking_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Track on India Post</a>
-                                                {% endif %}
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <small class="text-muted">
-                                                Status: {{ order.status }}{% if order.sub_status %} - {{ order.sub_status }}{% endif %}
-                                            </small>
-                                            <form method="post" action="{% url 'reorder_order' order.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-brand-outline">
-                                                    Reorder
-                                                </button>
-                                            </form>
-                                            <a href="{% url 'invoice' order.id %}" class="btn btn-sm btn-outline-dark">
-                                                Invoice
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-
-            {% else %}
-                <!-- Empty Orders -->
-                <div class="card shadow-sm border-0 text-center py-5">
-                    <div class="card-body">
-                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                        <h5 class="fw-bold">No orders yet</h5>
-                        <p class="text-muted mb-3">
-                            Once you place an order, it will appear here.
-                        </p>
-                        <a href="{% url 'home' %}"
-                           class="btn btn-sm text-white fw-bold px-4"
-                           style="background-color:var(--primary-magenta);">
-                            Browse Books
-                        </a>
-                    </div>
-                </div>
-            {% endif %}
         </div>
 
     </div>

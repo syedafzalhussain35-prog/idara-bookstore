@@ -291,3 +291,104 @@ fieldset.module h2 {
     height: auto;
   }
 }
+
+/* Productivity-first admin layout */
+.change-form .module h2 {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.change-form fieldset.module.aligned .form-row {
+  padding: 10px 12px;
+}
+
+.change-form .aligned label {
+  width: 170px;
+}
+
+.change-form .aligned .field-box {
+  max-width: 980px;
+}
+
+.change-form textarea {
+  min-height: 120px;
+}
+
+.change-form .related-widget-wrapper-link {
+  opacity: 0.28;
+  transition: opacity 0.18s ease;
+}
+
+.change-form .related-widget-wrapper:hover .related-widget-wrapper-link {
+  opacity: 1;
+}
+
+.change-form .submit-row {
+  position: sticky;
+  bottom: 10px;
+  z-index: 20;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+}
+
+#changelist .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#changelist .actions select,
+#changelist .actions input,
+#changelist .actions button {
+  min-height: 34px;
+}
+
+.object-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.object-tools li {
+  margin-left: 0 !important;
+}
+
+.object-tools a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (min-width: 1200px) {
+  .change-form .aligned {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .change-form .aligned .form-row {
+    border: 1px solid var(--seller-border);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .change-form .aligned .form-row.field-description,
+  .change-form .aligned .form-row.field-readership,
+  .change-form .aligned .form-row.field-topic_definition,
+  .change-form .aligned .form-row.field-overview,
+  .change-form .aligned .form-row.field-reasons,
+  .change-form .aligned .form-row.field-unique_features,
+  .change-form .aligned .form-row.field-competition,
+  .change-form .aligned .form-row.field-toc,
+  .change-form .aligned .form-row.field-market,
+  .change-form .aligned .form-row.field-societies,
+  .change-form .aligned .form-row.field-journals,
+  .change-form .aligned .form-row.field-textbook_details,
+  .change-form .aligned .form-row.field-previous_works,
+  .change-form .aligned .form-row.field-why_better,
+  .change-form .aligned .form-row.field-reviewers {
+    grid-column: span 2;
+  }
+}
