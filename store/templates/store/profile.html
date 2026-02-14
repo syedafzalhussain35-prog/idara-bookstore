@@ -50,14 +50,18 @@
 
         <!-- ================= RIGHT PROFILE + ORDER HISTORY ================= -->
         <div class="col-md-8">
-            <h4 class="fw-bold mb-3 text-magenta">Order History</h4>
-
-            {% if orders %}
-                <div class="row g-3">
-                    {% for order in orders %}
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h4 class="fw-bold text-magenta mb-0">Order History</h4>
+                    <p class="text-muted small mb-0">Track status, reorder quickly, and open invoices</p>
+                </div>
+                <div class="card-body">
+                    {% if orders %}
+                        <div class="row g-3">
+                            {% for order in orders %}
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start flex-wrap order-card-header">
                                         <div>
                                             <h5 class="fw-bold mb-1">Order #{{ order.id }}</h5>
@@ -126,29 +130,30 @@
                                             </a>
                                         </div>
                                     </div>
+                                        </div>
+                                    </div>
                                 </div>
+                            {% endfor %}
+                        </div>
+
+                    {% else %}
+                        <div class="card shadow-sm border-0 text-center py-5">
+                            <div class="card-body">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <h5 class="fw-bold">No orders yet</h5>
+                                <p class="text-muted mb-3">
+                                    Once you place an order, it will appear here.
+                                </p>
+                                <a href="{% url 'home' %}"
+                                   class="btn btn-sm text-white fw-bold px-4"
+                                   style="background-color:var(--primary-magenta);">
+                                    Browse Books
+                                </a>
                             </div>
                         </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
-
-            {% else %}
-                <!-- Empty Orders -->
-                <div class="card shadow-sm border-0 text-center py-5">
-                    <div class="card-body">
-                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                        <h5 class="fw-bold">No orders yet</h5>
-                        <p class="text-muted mb-3">
-                            Once you place an order, it will appear here.
-                        </p>
-                        <a href="{% url 'home' %}"
-                           class="btn btn-sm text-white fw-bold px-4"
-                           style="background-color:var(--primary-magenta);">
-                            Browse Books
-                        </a>
-                    </div>
-                </div>
-            {% endif %}
+            </div>
 
             <!-- Profile Settings -->
             <div class="card shadow-sm border-0 mb-4">

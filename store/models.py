@@ -7,6 +7,7 @@ from django.conf import settings
 from decimal import Decimal
 import os
 from io import BytesIO
+from urllib.parse import urlsplit, urlunsplit
 from django.core.files.base import ContentFile
 
 
@@ -133,7 +134,7 @@ class Book(models.Model):
         super().save(*args, **kwargs)
         self._apply_watermark_if_needed()
 
-    def _cloudinary_raw_url(self, url):
+    def _cloudinary_file_url(self, url):
         if not url:
             return ""
         raw = str(url).strip()
@@ -146,14 +147,12 @@ class Book(models.Model):
                     clean = token
                     break
         clean = clean.strip("[]()'\",")
+        if clean.startswith("http://"):
+            clean = "https://" + clean[len("http://"):]
 
-        if "/image/upload/" in clean:
-            clean = clean.replace("/image/upload/", "/raw/upload/")
-
-        # TOC/sample fields are PDFs; add extension when public_id is extensionless.
-        tail = clean.rsplit("/", 1)[-1]
-        if "/raw/upload/" in clean and "." not in tail:
-            clean = clean + ".pdf"
+        # Strip query/hash noise if accidentally persisted with the URL.
+        parts = urlsplit(clean)
+        clean = urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
 
         return clean
 
@@ -161,13 +160,13 @@ class Book(models.Model):
     def toc_pdf_url(self):
         if not self.toc_pdf:
             return ""
-        return self._cloudinary_raw_url(self.toc_pdf.url)
+        return self._cloudinary_file_url(self.toc_pdf.url)
 
     @property
     def sample_pdf_url(self):
         if not self.sample_pdf:
             return ""
-        return self._cloudinary_raw_url(self.sample_pdf.url)
+        return self._cloudinary_file_url(self.sample_pdf.url)
 
 
 class BookImage(models.Model):
