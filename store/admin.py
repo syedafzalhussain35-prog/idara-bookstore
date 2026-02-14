@@ -615,116 +615,123 @@ class BookAdmin(admin.ModelAdmin):
             created = 0
             updated = 0
             errors = 0
+            error_messages = []
 
             with transaction.atomic():
                 for row in rows:
-                    system_id = str(
-                        row.get("system id")
-                        or row.get("systemid")
-                        or row.get("system id.")
-                        or ""
-                    ).strip()
-                    title = str(row.get("book title") or row.get("title") or "").strip()
-                    author = str(row.get("author") or "").strip()
-                    if not title or not author:
+                    try:
+                        system_id = str(
+                            row.get("system id")
+                            or row.get("systemid")
+                            or row.get("system id.")
+                            or ""
+                        ).strip()
+                        title = str(row.get("book title") or row.get("title") or "").strip()
+                        author = str(row.get("author") or "").strip()
+                        if not title or not author:
+                            errors += 1
+                            error_messages.append(f"Row {row.get('_row_number', '?')}: title and author are required.")
+                            continue
+
+                        category_name = str(row.get("category") or row.get("caetgory") or "").strip()
+                        subject_raw = row.get("subject") or row.get("subjects")
+                        isbn = str(
+                            row.get("isbn")
+                            or row.get("isbn no")
+                            or row.get("isbn no.")
+                            or row.get("isbn number")
+                            or ""
+                        ).strip()
+                        price_raw = row.get("rate") or row.get("price")
+                        mrp_raw = row.get("mrp") or row.get("mrp price") or row.get("mrp_price")
+                        stock_raw = row.get("stock")
+                        description = row.get("description")
+                        published_year = row.get("published year") or row.get("published_year")
+                        binding = row.get("binding")
+                        pages = row.get("pages")
+                        weight = row.get("weight")
+                        readership = row.get("readership")
+
+                        book = None
+                        is_created = False
+                        if system_id:
+                            book = Book.objects.filter(system_id=system_id).first()
+                        if not book and isbn:
+                            book = Book.objects.filter(isbn=isbn).first()
+
+                        if not book:
+                            book, is_created = Book.objects.get_or_create(
+                                title=title,
+                                author=author,
+                                defaults={
+                                    "system_id": system_id or None,
+                                    "isbn": isbn or "",
+                                    "price": Decimal("0.00"),
+                                },
+                            )
+
+                        book.title = title
+                        book.author = author
+
+                        if category_name:
+                            category, _ = Category.objects.get_or_create(name=category_name)
+                            book.category = category
+
+                        if system_id:
+                            book.system_id = system_id
+
+                        if isbn:
+                            book.isbn = isbn
+
+                        parsed_price = _coerce_decimal(price_raw)
+                        if parsed_price is not None:
+                            book.price = parsed_price
+
+                        parsed_mrp = _coerce_decimal(mrp_raw)
+                        if parsed_mrp is not None:
+                            book.mrp_price = parsed_mrp
+
+                        parsed_stock = _coerce_int(stock_raw)
+                        if parsed_stock is not None:
+                            book.stock = max(parsed_stock, 0)
+
+                        if description not in (None, ""):
+                            book.description = str(description)
+                        if published_year not in (None, ""):
+                            book.published_year = str(published_year).strip()
+                        if binding not in (None, ""):
+                            book.binding = str(binding).strip()
+                        if pages not in (None, ""):
+                            book.pages = str(pages).strip()
+                        if weight not in (None, ""):
+                            book.weight = str(weight).strip()
+                        if readership not in (None, ""):
+                            book.readership = str(readership).strip()
+
+                        for flag_field in ("is_bestseller", "is_trending", "is_new_arrival", "is_featured"):
+                            parsed = _coerce_bool(row.get(flag_field))
+                            if parsed is not None:
+                                setattr(book, flag_field, parsed)
+
+                        if not dry_run:
+                            book.save()
+
+                        subjects = _split_multi(subject_raw)
+                        if subjects and not dry_run:
+                            subject_objs = []
+                            for s in subjects:
+                                obj, _ = Subject.objects.get_or_create(name=s)
+                                subject_objs.append(obj)
+                            book.subjects.set(subject_objs)
+
+                        if is_created:
+                            created += 1
+                        else:
+                            updated += 1
+                    except Exception as exc:
                         errors += 1
+                        error_messages.append(f"Row {row.get('_row_number', '?')}: {exc}")
                         continue
-
-                    category_name = str(row.get("category") or row.get("caetgory") or "").strip()
-                    subject_raw = row.get("subject") or row.get("subjects")
-                    isbn = str(
-                        row.get("isbn")
-                        or row.get("isbn no")
-                        or row.get("isbn no.")
-                        or row.get("isbn number")
-                        or ""
-                    ).strip()
-                    price_raw = row.get("rate") or row.get("price")
-                    mrp_raw = row.get("mrp") or row.get("mrp price") or row.get("mrp_price")
-                    stock_raw = row.get("stock")
-                    description = row.get("description")
-                    published_year = row.get("published year") or row.get("published_year")
-                    binding = row.get("binding")
-                    pages = row.get("pages")
-                    weight = row.get("weight")
-                    readership = row.get("readership")
-
-                    book = None
-                    is_created = False
-                    if system_id:
-                        book = Book.objects.filter(system_id=system_id).first()
-                    if not book and isbn:
-                        book = Book.objects.filter(isbn=isbn).first()
-
-                    if not book:
-                        book, is_created = Book.objects.get_or_create(
-                            title=title,
-                            author=author,
-                            defaults={
-                                "system_id": system_id or None,
-                                "isbn": isbn or "",
-                                "price": Decimal("0.00"),
-                            },
-                        )
-
-                    book.title = title
-                    book.author = author
-
-                    if category_name:
-                        category, _ = Category.objects.get_or_create(name=category_name)
-                        book.category = category
-
-                    if system_id:
-                        book.system_id = system_id
-
-                    if isbn:
-                        book.isbn = isbn
-
-                    parsed_price = _coerce_decimal(price_raw)
-                    if parsed_price is not None:
-                        book.price = parsed_price
-
-                    parsed_mrp = _coerce_decimal(mrp_raw)
-                    if parsed_mrp is not None:
-                        book.mrp_price = parsed_mrp
-
-                    parsed_stock = _coerce_int(stock_raw)
-                    if parsed_stock is not None:
-                        book.stock = max(parsed_stock, 0)
-
-                    if description not in (None, ""):
-                        book.description = str(description)
-                    if published_year not in (None, ""):
-                        book.published_year = str(published_year).strip()
-                    if binding not in (None, ""):
-                        book.binding = str(binding).strip()
-                    if pages not in (None, ""):
-                        book.pages = str(pages).strip()
-                    if weight not in (None, ""):
-                        book.weight = str(weight).strip()
-                    if readership not in (None, ""):
-                        book.readership = str(readership).strip()
-
-                    for flag_field in ("is_bestseller", "is_trending", "is_new_arrival", "is_featured"):
-                        parsed = _coerce_bool(row.get(flag_field))
-                        if parsed is not None:
-                            setattr(book, flag_field, parsed)
-
-                    if not dry_run:
-                        book.save()
-
-                    subjects = _split_multi(subject_raw)
-                    if subjects and not dry_run:
-                        subject_objs = []
-                        for s in subjects:
-                            obj, _ = Subject.objects.get_or_create(name=s)
-                            subject_objs.append(obj)
-                        book.subjects.set(subject_objs)
-
-                    if is_created:
-                        created += 1
-                    else:
-                        updated += 1
 
                 if dry_run:
                     transaction.set_rollback(True)
@@ -734,6 +741,10 @@ class BookAdmin(admin.ModelAdmin):
                 f"Import completed. Created: {created}, Updated: {updated}, Errors: {errors}"
                 + (" (dry run)" if dry_run else ""),
             )
+            for item in error_messages[:20]:
+                messages.error(request, item)
+            if len(error_messages) > 20:
+                messages.error(request, f"Additional errors not shown: {len(error_messages) - 20}")
 
         return render(request, "admin/store/book/import_books.html", {
             "form": form,

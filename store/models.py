@@ -26,11 +26,13 @@ class Category(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base_slug = slugify(self.name)
+            max_len = self._meta.get_field("slug").max_length or 50
+            base_slug = (slugify(self.name) or "category")[:max_len]
             slug = base_slug
             counter = 1
             while Category.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{counter}"
+                suffix = f"-{counter}"
+                slug = f"{base_slug[:max_len - len(suffix)]}{suffix}"
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
@@ -212,11 +214,13 @@ class Subject(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base_slug = slugify(self.name)
+            max_len = self._meta.get_field("slug").max_length or 50
+            base_slug = (slugify(self.name) or "subject")[:max_len]
             slug = base_slug
             counter = 1
             while Subject.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{counter}"
+                suffix = f"-{counter}"
+                slug = f"{base_slug[:max_len - len(suffix)]}{suffix}"
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
