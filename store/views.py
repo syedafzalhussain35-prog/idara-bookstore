@@ -594,8 +594,8 @@ def subject_books(request, slug):
         rating_raw=rating,
     )
 
-    paginator = Paginator(books_qs, BOOKS_PER_PAGE)
-    books = paginator.get_page(request.GET.get('page'))
+    books = books_qs.distinct()
+    books_count = books.count()
 
     wishlist_ids = []
     if request.user.is_authenticated:
