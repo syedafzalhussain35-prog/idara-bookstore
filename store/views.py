@@ -322,12 +322,6 @@ def offers_view(request):
 # ==================================================
 
 def category_books(request, slug):
-    if not request.user.is_authenticated:
-        cache_key = f"category:{slug}:{request.GET.urlencode() or 'all'}"
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-
     category = get_object_or_404(Category, slug=slug)
     books_qs = Book.objects.filter(category=category)
 
@@ -360,6 +354,10 @@ def category_books(request, slug):
     sort = request.GET.get('sort')
     if sort == 'newest':
         books_qs = books_qs.order_by('-created_at')
+    elif sort == 'alpha_asc':
+        books_qs = books_qs.order_by('title')
+    elif sort == 'alpha_desc':
+        books_qs = books_qs.order_by('-title')
     elif sort == 'price_low':
         books_qs = books_qs.order_by('price')
     elif sort == 'price_high':
@@ -378,7 +376,7 @@ def category_books(request, slug):
 
     subjects = Subject.objects.filter(is_active=True).order_by('name')
 
-    response = render(request, 'store/category_books.html', {
+    return render(request, 'store/category_books.html', {
         'category': category,
         'books': books,
         'books_count': books_count,
@@ -392,9 +390,6 @@ def category_books(request, slug):
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })
-    if not request.user.is_authenticated:
-        cache.set(cache_key, response, getattr(settings, "CATEGORY_CACHE_TTL", 120))
-    return response
 
 
 # ==================================================
@@ -577,12 +572,6 @@ def unani_weight_converter(request):
 # ==================================================
 
 def subject_books(request, slug):
-    if not request.user.is_authenticated:
-        cache_key = f"subject:{slug}:{request.GET.urlencode() or 'all'}"
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-
     subject = get_object_or_404(Subject, slug=slug, is_active=True)
     books_qs = Book.objects.filter(subjects=subject)
 
@@ -614,7 +603,7 @@ def subject_books(request, slug):
             user=request.user
         ).values_list('book_id', flat=True)
 
-    response = render(request, 'store/subject_books.html', {
+    return render(request, 'store/subject_books.html', {
         'subject': subject,
         'books': books,
         'books_count': books_count,
@@ -627,9 +616,6 @@ def subject_books(request, slug):
         'wishlist_ids': wishlist_ids,
         'is_homepage': False,
     })
-    if not request.user.is_authenticated:
-        cache.set(cache_key, response, getattr(settings, "CATEGORY_CACHE_TTL", 120))
-    return response
 
 
 # ==================================================

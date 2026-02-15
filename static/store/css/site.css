@@ -1336,6 +1336,37 @@
     font-size: 0.85rem;
 }
 
+.category-filters-inline {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.category-filters-inline .filter-item {
+    flex: 0 0 auto;
+}
+
+.category-filters-inline .filter-item.sort,
+.category-filters-inline .filter-item.subject,
+.category-filters-inline .filter-item.rating {
+    width: 220px;
+}
+
+.category-filters-inline .filter-item.author {
+    width: 340px;
+}
+
+.category-filters-inline .filter-item.action {
+    width: 160px;
+}
+
+.category-filters-inline .btn {
+    white-space: nowrap;
+}
+
 @media (max-width: 768px) {
     .breadcrumb.breadcrumb-nowrap {
         display: flex;
@@ -2043,20 +2074,6 @@ footer {
     .subject-label {
         font-weight: 600;
         font-size: 0.95rem;
-    }
-
-    .subject-dropdown {
-        border-top: 1px dashed #eccddd;
-        padding-top: 14px;
-    }
-
-    .subject-dropdown-title {
-        font-size: 0.85rem;
-        color: #8f5f74;
-        font-weight: 600;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        margin-bottom: 10px;
     }
 
     @media (max-width: 991px) {
