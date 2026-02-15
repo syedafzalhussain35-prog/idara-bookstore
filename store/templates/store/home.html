@@ -91,7 +91,15 @@
     <div class="subject-section mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold text-magenta">Explore by Category</h3>
-            <a href="{% url 'home' %}" class="btn btn-brand-outline btn-sm rounded-pill px-3">View All</a>
+            <button
+                type="button"
+                class="btn btn-brand-outline btn-sm rounded-pill px-3 js-view-toggle"
+                data-target-id="all-categories-panel"
+                aria-expanded="false"
+                aria-controls="all-categories-panel"
+            >
+                View All
+            </button>
         </div>
         <div class="subject-grid">
             {% for cat in nav_categories|slice:":8" %}
@@ -106,6 +114,23 @@
                 <span class="subject-label">{{ cat.name }}</span>
             </a>
             {% endfor %}
+        </div>
+        <div id="all-categories-panel" class="subject-dropdown mt-3" hidden>
+            <div class="subject-dropdown-title">All Categories</div>
+            <div class="subject-grid">
+                {% for cat in nav_categories %}
+                <a href="{% url 'category_books' cat.slug %}" class="subject-pill">
+                    <span class="subject-icon">
+                        {% if cat.image %}
+                            <img src="{{ cat.image.url }}" alt="{{ cat.name }}">
+                        {% else %}
+                            <i class="fas fa-book-open"></i>
+                        {% endif %}
+                    </span>
+                    <span class="subject-label">{{ cat.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -223,7 +248,15 @@
         <div class="subject-section mb-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold text-magenta">Shop Subjectwise</h3>
-                <a href="{% url 'home' %}" class="btn btn-brand-outline btn-sm rounded-pill px-3">View All</a>
+                <button
+                    type="button"
+                    class="btn btn-brand-outline btn-sm rounded-pill px-3 js-view-toggle"
+                    data-target-id="all-subjects-panel"
+                    aria-expanded="false"
+                    aria-controls="all-subjects-panel"
+                >
+                    View All
+                </button>
             </div>
             <div class="subject-grid">
                 {% for subject in subjects %}
@@ -238,6 +271,23 @@
                     <span class="subject-label">{{ subject.name }}</span>
                 </a>
                 {% endfor %}
+            </div>
+            <div id="all-subjects-panel" class="subject-dropdown mt-3" hidden>
+                <div class="subject-dropdown-title">All Subjects</div>
+                <div class="subject-grid">
+                    {% for subject in all_subjects %}
+                    <a href="{% url 'subject_books' subject.slug %}" class="subject-pill">
+                        <span class="subject-icon">
+                            {% if subject.icon %}
+                                <img src="{{ subject.icon.url }}" alt="{{ subject.name }}">
+                            {% else %}
+                                <i class="fas fa-book-open"></i>
+                            {% endif %}
+                        </span>
+                        <span class="subject-label">{{ subject.name }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -297,30 +347,63 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
+    document.querySelectorAll(".js-view-toggle").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const targetId = btn.dataset.targetId;
+            const panel = document.getElementById(targetId);
+            if (!panel) return;
+
+            const isHidden = panel.hasAttribute("hidden");
+            if (isHidden) {
+                panel.removeAttribute("hidden");
+                btn.setAttribute("aria-expanded", "true");
+                btn.textContent = "Hide";
+            } else {
+                panel.setAttribute("hidden", "");
+                btn.setAttribute("aria-expanded", "false");
+                btn.textContent = "View All";
+            }
+        });
+    });
+
     const heroSwiperEl = document.querySelector(".hero-swiper");
     if (heroSwiperEl) {
         const slideCount = Number(heroSwiperEl.dataset.slidesCount || 0);
         const canLoop = slideCount > 1;
-        const showSidePeeks = slideCount > 2;
+        const showSidePeeks = slideCount > 1;
+        const heroPaginationEl = heroSwiperEl.querySelector(".swiper-pagination");
+        const heroNextEl = heroSwiperEl.querySelector(".swiper-button-next");
+        const heroPrevEl = heroSwiperEl.querySelector(".swiper-button-prev");
 
         new Swiper(heroSwiperEl, {
             loop: canLoop,
-            loopAdditionalSlides: showSidePeeks ? 3 : 0,
+            loopAdditionalSlides: showSidePeeks ? Math.max(3, slideCount) : 0,
+            loopedSlides: showSidePeeks ? slideCount : 0,
             centeredSlides: false,
             slidesPerView: 1,
             spaceBetween: 0,
             speed: 850,
             autoplay: canLoop ? { delay: 4200, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
-            pagination: { el: ".swiper-pagination", clickable: true },
-            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+            pagination: { el: heroPaginationEl, clickable: true },
+            navigation: { nextEl: heroNextEl, prevEl: heroPrevEl },
             watchOverflow: true,
+            watchSlidesProgress: true,
             observer: true,
             observeParents: true,
             roundLengths: true,
             breakpoints: {
+                768: showSidePeeks ? {
+                    centeredSlides: true,
+                    slidesPerView: 1.08,
+                    spaceBetween: 14
+                } : {
+                    centeredSlides: false,
+                    slidesPerView: 1,
+                    spaceBetween: 0
+                },
                 992: showSidePeeks ? {
                     centeredSlides: true,
-                    slidesPerView: 1.12,
+                    slidesPerView: 1.18,
                     spaceBetween: 18
                 } : {
                     centeredSlides: false,
@@ -329,8 +412,8 @@
                 },
                 1200: showSidePeeks ? {
                     centeredSlides: true,
-                    slidesPerView: 1.18,
-                    spaceBetween: 22
+                    slidesPerView: 1.28,
+                    spaceBetween: 24
                 } : {
                     centeredSlides: false,
                     slidesPerView: 1,

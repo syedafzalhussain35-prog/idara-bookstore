@@ -794,15 +794,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const nextLink = document.querySelector(".pagination-container a[rel='next']");
 
     if (!grid || !loader || !nextLink) return;
+    if (!("IntersectionObserver" in window)) return;
+
+    let nextUrl = nextLink.getAttribute("href");
+    if (!nextUrl) return;
 
     document.body.classList.add("js-infinite");
-    let nextUrl = nextLink.getAttribute("href");
     let loading = false;
+    loader.style.display = "block";
 
     const loadNext = () => {
         if (!nextUrl || loading) return;
         loading = true;
-        loader.style.display = "block";
 
         fetch(nextUrl, { headers: { "X-Requested-With": "XMLHttpRequest" } })
             .then((res) => res.text())
@@ -819,10 +822,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     observer.disconnect();
                 }
             })
-            .catch(() => {})
+            .catch(() => {
+                // Fallback to regular pagination when auto-load fails.
+                document.body.classList.remove("js-infinite");
+                loader.style.display = "none";
+                observer.disconnect();
+            })
             .finally(() => {
                 loading = false;
-                if (nextUrl) loader.style.display = "none";
             });
     };
 
@@ -830,7 +837,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (entries[0].isIntersecting) {
             loadNext();
         }
-    }, { rootMargin: "200px" });
+    }, { rootMargin: "200px 0px 200px 0px" });
 
     observer.observe(loader);
 });

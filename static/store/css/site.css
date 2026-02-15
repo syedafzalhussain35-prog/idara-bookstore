@@ -1744,6 +1744,7 @@ footer {
         margin: 0 auto;
         padding: 0 14px;
         display: block;
+        overflow: visible;
     }
 
     .hero-side-banner {
@@ -1770,10 +1771,10 @@ footer {
 
     .hero-swiper {
         width: 100%;
-        max-width: 1320px;
+        max-width: 1520px;
         min-width: 0;
         margin: 0 auto;
-        padding: 0 14px;
+        padding: 0 18px;
         position: relative;
         box-sizing: border-box;
         overflow: visible;
@@ -1789,7 +1790,14 @@ footer {
         width: 100%;
         min-width: 0;
         padding: 0 4px;
-        transition: transform 0.5s ease;
+        transition: transform 0.45s ease, opacity 0.45s ease;
+        opacity: 0.56;
+        transform: scale(0.92);
+    }
+
+    .hero-swiper .swiper-slide-active {
+        opacity: 1;
+        transform: scale(1);
     }
 
     .hero-swiper .swiper-pagination {
@@ -1892,6 +1900,11 @@ footer {
     @media (max-width: 576px) {
         .hero-swiper {
             padding: 0;
+        }
+
+        .hero-swiper .swiper-slide {
+            opacity: 1;
+            transform: none;
         }
 
         .hero-slide {
@@ -2030,6 +2043,20 @@ footer {
     .subject-label {
         font-weight: 600;
         font-size: 0.95rem;
+    }
+
+    .subject-dropdown {
+        border-top: 1px dashed #eccddd;
+        padding-top: 14px;
+    }
+
+    .subject-dropdown-title {
+        font-size: 0.85rem;
+        color: #8f5f74;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
     }
 
     @media (max-width: 991px) {

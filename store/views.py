@@ -59,6 +59,7 @@ from .coins import (
 logger = logging.getLogger(__name__)
 
 RECENTLY_VIEWED_LIMIT = 10
+BOOKS_PER_PAGE = 24
 DICTIONARY_SCRIPT_LETTERS = [
     "ا", "آ", "ب", "پ", "ت", "ٹ", "ث", "ج", "چ", "ح", "خ",
     "د", "ڈ", "ذ", "ر", "ڑ", "ز", "ژ", "س", "ش", "ص", "ض",
@@ -255,6 +256,12 @@ def home(request):
         cache_ttl,
     )
     subjects = list(_ordered_by_ids(Subject, subject_ids))
+    all_subject_ids = _cache_get_ids(
+        "home:all_subjects",
+        Subject.objects.filter(is_active=True).order_by("name"),
+        cache_ttl,
+    )
+    all_subjects = list(_ordered_by_ids(Subject, all_subject_ids))
 
     popular_ids = _cache_get_ids(
         "home:popular",
@@ -298,6 +305,7 @@ def home(request):
         'recently_viewed': recently_viewed,
         'bundles': bundles,
         'subjects': subjects,
+        'all_subjects': all_subjects,
         'wishlist_ids': wishlist_ids,
         'coupons': coupons,
         'is_homepage': True,
@@ -359,8 +367,8 @@ def category_books(request, slug):
     elif sort == 'bestseller':
         books_qs = books_qs.filter(is_bestseller=True)
 
-    paginator = Paginator(books_qs, 12)
-    books = paginator.get_page(request.GET.get('page'))
+    books = books_qs
+    books_count = books_qs.count()
 
     wishlist_ids = []
     if request.user.is_authenticated:
@@ -373,6 +381,7 @@ def category_books(request, slug):
     response = render(request, 'store/category_books.html', {
         'category': category,
         'books': books,
+        'books_count': books_count,
         'query': query,
         'subject_slug': subject_slug,
         'min_price': min_price,
@@ -435,8 +444,8 @@ def search(request):
             ip_address=ip or None,
         )
 
-    paginator = Paginator(books_qs, 12)
-    books = paginator.get_page(request.GET.get('page'))
+    books = books_qs.distinct()
+    books_count = books.count()
 
     wishlist_ids = []
     if request.user.is_authenticated:
@@ -596,7 +605,7 @@ def subject_books(request, slug):
         rating_raw=rating,
     )
 
-    paginator = Paginator(books_qs, 12)
+    paginator = Paginator(books_qs, BOOKS_PER_PAGE)
     books = paginator.get_page(request.GET.get('page'))
 
     wishlist_ids = []
@@ -608,6 +617,7 @@ def subject_books(request, slug):
     response = render(request, 'store/subject_books.html', {
         'subject': subject,
         'books': books,
+        'books_count': books_count,
         'query': query,
         'category_slug': category_slug,
         'min_price': min_price,
