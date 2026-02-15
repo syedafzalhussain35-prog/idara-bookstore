@@ -379,13 +379,16 @@
 
         const heroSwiper = new Swiper(heroSwiperEl, {
             loop: canLoop,
-            loopAdditionalSlides: showSidePeeks ? Math.max(3, slideCount) : 0,
-            loopedSlides: showSidePeeks ? slideCount : 0,
             centeredSlides: false,
             slidesPerView: 1,
             spaceBetween: 0,
             speed: 850,
-            autoplay: canLoop ? { delay: 4200, disableOnInteraction: false, pauseOnMouseEnter: false } : false,
+            autoplay: canLoop ? {
+                delay: 4200,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: false,
+                waitForTransition: true,
+            } : false,
             pagination: { el: heroPaginationEl, clickable: true },
             navigation: { nextEl: heroNextEl, prevEl: heroPrevEl },
             watchOverflow: true,
@@ -433,11 +436,23 @@
                 }
             });
 
+            heroSwiper.on("touchEnd", () => {
+                if (!heroSwiper.autoplay.running) {
+                    heroSwiper.autoplay.start();
+                }
+            });
+
             document.addEventListener("visibilitychange", () => {
                 if (document.visibilityState === "visible" && !heroSwiper.autoplay.running) {
                     heroSwiper.autoplay.start();
                 }
             });
+
+            setInterval(() => {
+                if (!document.hidden && heroSwiper.autoplay && !heroSwiper.autoplay.running) {
+                    heroSwiper.autoplay.start();
+                }
+            }, 5000);
         }
     }
 </script>
