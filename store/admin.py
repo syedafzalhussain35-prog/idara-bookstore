@@ -9,6 +9,8 @@ from django.db import transaction
 from django.db.models import Sum, Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
 import re
+import tempfile
+import zipfile
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponse
 import csv
@@ -573,7 +575,12 @@ class BookAdmin(admin.ModelAdmin):
 
     class ImportImagesForm(forms.Form):
         root_path = forms.CharField(
+            required=False,
             help_text="Server path containing folders named 'Title (Author)'."
+        )
+        archive_file = forms.FileField(
+            required=False,
+            help_text="Optional: upload a ZIP containing 'Title (Author)' folders.",
         )
         replace_existing = forms.BooleanField(
             required=False,
@@ -581,6 +588,16 @@ class BookAdmin(admin.ModelAdmin):
             help_text="Replace existing images for matched books.",
         )
         dry_run = forms.BooleanField(required=False, initial=False, help_text="Validate only.")
+
+        def clean(self):
+            cleaned = super().clean()
+            root_path = (cleaned.get("root_path") or "").strip()
+            archive_file = cleaned.get("archive_file")
+            if not root_path and not archive_file:
+                raise forms.ValidationError("Provide either a server root path or a ZIP file.")
+            if archive_file and not str(getattr(archive_file, "name", "")).lower().endswith(".zip"):
+                raise forms.ValidationError("Uploaded file must be a .zip archive.")
+            return cleaned
 
     def save_model(self, request, obj, form, change):
         original = None
@@ -1042,69 +1059,97 @@ class BookAdmin(admin.ModelAdmin):
             "sample_csv_url": sample_csv_url,
         })
 
+    def _import_images_from_root(self, root, replace_existing=False, dry_run=False):
+        from django.core.files import File
+
+        created = 0
+        skipped = 0
+        errors = 0
+        error_messages = []
+
+        for folder in sorted(root.iterdir(), key=lambda p: p.name.lower()):
+            if not folder.is_dir():
+                continue
+            match = re.match(r"^(.*)\((.*)\)$", folder.name)
+            if not match:
+                skipped += 1
+                continue
+            title = match.group(1).strip()
+            author = match.group(2).strip()
+            if not title or not author:
+                skipped += 1
+                continue
+
+            book = Book.objects.filter(title=title, author=author).first()
+            if not book:
+                skipped += 1
+                continue
+
+            try:
+                if replace_existing and not dry_run:
+                    if book.main_cover:
+                        book.main_cover.delete(save=False)
+                    book.images.all().delete()
+
+                image_files = sorted(
+                    [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}],
+                    key=lambda p: (not p.stem.isdigit(), int(p.stem) if p.stem.isdigit() else p.stem.lower()),
+                )
+
+                if not image_files:
+                    skipped += 1
+                    continue
+
+                if not dry_run:
+                    # 1.jpg as main cover
+                    main = image_files[0]
+                    with main.open("rb") as fh:
+                        book.main_cover.save(main.name, File(fh), save=True)
+
+                    for extra in image_files[1:]:
+                        with extra.open("rb") as fh:
+                            BookImage.objects.create(book=book, image=File(fh, name=extra.name))
+
+                created += 1
+            except Exception as exc:
+                errors += 1
+                error_messages.append(f"{folder.name}: {exc}")
+
+        return created, skipped, errors, error_messages
+
     def import_images_view(self, request):
-        form = self.ImportImagesForm(request.POST or None)
+        form = self.ImportImagesForm(request.POST or None, request.FILES or None)
         if request.method == "POST" and form.is_valid():
             root_path = form.cleaned_data["root_path"].strip()
+            archive_file = form.cleaned_data.get("archive_file")
             replace_existing = form.cleaned_data["replace_existing"]
             dry_run = form.cleaned_data["dry_run"]
 
             from pathlib import Path
-            from django.core.files import File
-
-            root = Path(root_path)
-            if not root.exists() or not root.is_dir():
-                messages.error(request, "Root path does not exist or is not a directory.")
-                return render(request, "admin/store/book/import_images.html", {"form": form})
-
-            created = 0
-            skipped = 0
-            errors = 0
-
             with transaction.atomic():
-                for folder in root.iterdir():
-                    if not folder.is_dir():
-                        continue
-                    match = re.match(r"^(.*)\((.*)\)$", folder.name)
-                    if not match:
-                        skipped += 1
-                        continue
-                    title = match.group(1).strip()
-                    author = match.group(2).strip()
-                    if not title or not author:
-                        skipped += 1
-                        continue
-
-                    book = Book.objects.filter(title=title, author=author).first()
-                    if not book:
-                        skipped += 1
-                        continue
-
-                    if replace_existing and not dry_run:
-                        if book.main_cover:
-                            book.main_cover.delete(save=False)
-                        book.images.all().delete()
-
-                    image_files = sorted(
-                        [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}],
-                        key=lambda p: p.stem,
+                if archive_file:
+                    try:
+                        with tempfile.TemporaryDirectory() as temp_dir:
+                            with zipfile.ZipFile(archive_file) as zf:
+                                zf.extractall(temp_dir)
+                            root = Path(temp_dir)
+                            top_dirs = [p for p in root.iterdir() if p.is_dir()]
+                            if len(top_dirs) == 1:
+                                root = top_dirs[0]
+                            created, skipped, errors, error_messages = self._import_images_from_root(
+                                root, replace_existing=replace_existing, dry_run=dry_run
+                            )
+                    except zipfile.BadZipFile:
+                        messages.error(request, "Invalid ZIP file. Please upload a valid .zip archive.")
+                        return render(request, "admin/store/book/import_images.html", {"form": form})
+                else:
+                    root = Path(root_path)
+                    if not root.exists() or not root.is_dir():
+                        messages.error(request, "Root path does not exist or is not a directory.")
+                        return render(request, "admin/store/book/import_images.html", {"form": form})
+                    created, skipped, errors, error_messages = self._import_images_from_root(
+                        root, replace_existing=replace_existing, dry_run=dry_run
                     )
-
-                    if not image_files:
-                        skipped += 1
-                        continue
-
-                    if not dry_run:
-                        # 1.jpg as main cover
-                        main = image_files[0]
-                        with main.open("rb") as fh:
-                            book.main_cover.save(main.name, File(fh), save=True)
-
-                        for extra in image_files[1:]:
-                            with extra.open("rb") as fh:
-                                BookImage.objects.create(book=book, image=File(fh, name=extra.name))
-
-                    created += 1
 
                 if dry_run:
                     transaction.set_rollback(True)
@@ -1114,6 +1159,10 @@ class BookAdmin(admin.ModelAdmin):
                 f"Image import completed. Updated: {created}, Skipped: {skipped}, Errors: {errors}"
                 + (" (dry run)" if dry_run else ""),
             )
+            for item in error_messages[:20]:
+                messages.error(request, item)
+            if len(error_messages) > 20:
+                messages.error(request, f"Additional errors not shown: {len(error_messages) - 20}")
 
         return render(request, "admin/store/book/import_images.html", {"form": form})
 # ======================

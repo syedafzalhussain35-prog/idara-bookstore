@@ -4,7 +4,8 @@
 <div class="content">
     <h1>Import Book Images</h1>
     <p>Folder format: <code>Title (Author)</code> with files <code>1.jpg,2.jpg,...</code>. <code>1</code> becomes main cover.</p>
-    <form method="post">
+    <p>You can provide a server <code>Root path</code> or upload a <code>.zip</code> file containing those folders.</p>
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset class="module aligned">
             {{ form.as_p }}
