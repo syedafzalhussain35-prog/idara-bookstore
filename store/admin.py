@@ -1126,33 +1126,44 @@ class BookAdmin(admin.ModelAdmin):
             dry_run = form.cleaned_data["dry_run"]
 
             from pathlib import Path
-            with transaction.atomic():
-                if archive_file:
-                    try:
-                        with tempfile.TemporaryDirectory() as temp_dir:
-                            with zipfile.ZipFile(archive_file) as zf:
-                                zf.extractall(temp_dir)
-                            root = Path(temp_dir)
-                            top_dirs = [p for p in root.iterdir() if p.is_dir()]
-                            if len(top_dirs) == 1:
-                                root = top_dirs[0]
-                            created, skipped, errors, error_messages = self._import_images_from_root(
-                                root, replace_existing=replace_existing, dry_run=dry_run
-                            )
-                    except zipfile.BadZipFile:
-                        messages.error(request, "Invalid ZIP file. Please upload a valid .zip archive.")
-                        return render(request, "admin/store/book/import_images.html", {"form": form})
-                else:
-                    root = Path(root_path)
-                    if not root.exists() or not root.is_dir():
-                        messages.error(request, "Root path does not exist or is not a directory.")
-                        return render(request, "admin/store/book/import_images.html", {"form": form})
-                    created, skipped, errors, error_messages = self._import_images_from_root(
-                        root, replace_existing=replace_existing, dry_run=dry_run
-                    )
+            try:
+                with transaction.atomic():
+                    if archive_file:
+                        try:
+                            with tempfile.TemporaryDirectory() as temp_dir:
+                                with zipfile.ZipFile(archive_file) as zf:
+                                    zf.extractall(temp_dir)
+                                root = Path(temp_dir)
+                                top_dirs = [p for p in root.iterdir() if p.is_dir()]
+                                if len(top_dirs) == 1:
+                                    root = top_dirs[0]
+                                created, skipped, errors, error_messages = self._import_images_from_root(
+                                    root, replace_existing=replace_existing, dry_run=dry_run
+                                )
+                        except zipfile.BadZipFile:
+                            messages.error(request, "Invalid ZIP file. Please upload a valid .zip archive.")
+                            return render(request, "admin/store/book/import_images.html", {"form": form})
+                    else:
+                        root = Path(root_path)
+                        if not root.exists() or not root.is_dir():
+                            messages.error(request, "Root path does not exist or is not a directory.")
+                            return render(request, "admin/store/book/import_images.html", {"form": form})
+                        created, skipped, errors, error_messages = self._import_images_from_root(
+                            root, replace_existing=replace_existing, dry_run=dry_run
+                        )
 
-                if dry_run:
-                    transaction.set_rollback(True)
+                    if dry_run:
+                        transaction.set_rollback(True)
+            except OSError as exc:
+                messages.error(
+                    request,
+                    f"Import failed due to server storage/file limits: {exc}. "
+                    "Try a smaller ZIP batch.",
+                )
+                return render(request, "admin/store/book/import_images.html", {"form": form})
+            except Exception as exc:
+                messages.error(request, f"Import failed: {exc}")
+                return render(request, "admin/store/book/import_images.html", {"form": form})
 
             messages.success(
                 request,
