@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from django import forms
 from django.contrib import messages
 from django.urls import path, reverse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db import transaction
 from django.db.models import Sum, Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
@@ -166,11 +166,45 @@ class BulkImportAdminMixin:
     def get_bulk_import_sample_url_name(self):
         return f"{self.model._meta.app_label}_{self.model._meta.model_name}_sample_csv"
 
+    def get_bulk_export_url_name(self):
+        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_export_data"
+
+    def get_bulk_export_xlsx_url_name(self):
+        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_export_data_xlsx"
+
     def get_bulk_import_sample_filename(self):
         return f"{self.model._meta.model_name}_sample.csv"
 
+    def get_bulk_export_filename(self):
+        return f"{self.model._meta.model_name}_export.csv"
+
+    def get_bulk_export_xlsx_filename(self):
+        return f"{self.model._meta.model_name}_export.xlsx"
+
     def get_bulk_import_sample_rows(self):
         return self.bulk_import_sample_rows
+
+    def get_bulk_export_queryset(self, request):
+        return self.model.objects.all().order_by("id")
+
+    def _default_export_value(self, obj, field_name):
+        if not hasattr(obj, field_name):
+            return ""
+        value = getattr(obj, field_name)
+        if callable(value):
+            value = value()
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if value is None:
+            return ""
+        return str(value)
+
+    def get_bulk_export_row(self, obj, columns):
+        row = []
+        for col in columns:
+            field_name = str(col or "").strip().lower().replace(" ", "_")
+            row.append(self._default_export_value(obj, field_name))
+        return row
 
     def get_bulk_import_rows(self, request):
         if "file" not in request.FILES:
@@ -192,6 +226,16 @@ class BulkImportAdminMixin:
                 "import-data/sample-csv/",
                 self.admin_site.admin_view(self.download_sample_csv_view),
                 name=self.get_bulk_import_sample_url_name(),
+            ),
+            path(
+                "export-data/",
+                self.admin_site.admin_view(self.export_data_view),
+                name=self.get_bulk_export_url_name(),
+            ),
+            path(
+                "export-data-xlsx/",
+                self.admin_site.admin_view(self.export_data_xlsx_view),
+                name=self.get_bulk_export_xlsx_url_name(),
             ),
         ]
         return custom_urls + urls
@@ -233,7 +277,62 @@ class BulkImportAdminMixin:
         extra_context = extra_context or {}
         extra_context["import_button_label"] = "Bulk Import"
         extra_context["import_button_url"] = reverse(f"admin:{self.get_bulk_import_url_name()}")
+        extra_context["export_button_label"] = "Export All CSV"
+        extra_context["export_button_url"] = reverse(f"admin:{self.get_bulk_export_url_name()}")
+        extra_context["export_xlsx_button_label"] = "Export All XLSX"
+        extra_context["export_xlsx_button_url"] = reverse(f"admin:{self.get_bulk_export_xlsx_url_name()}")
         return super().changelist_view(request, extra_context=extra_context)
+
+    def export_data_view(self, request):
+        columns = list(self.bulk_import_columns or ())
+        if not columns:
+            messages.error(request, "No export columns configured for this section.")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
+                )
+            )
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{self.get_bulk_export_filename()}"'
+        writer = csv.writer(response)
+        writer.writerow(columns)
+        for obj in self.get_bulk_export_queryset(request):
+            writer.writerow(self.get_bulk_export_row(obj, columns))
+        return response
+
+    def export_data_xlsx_view(self, request):
+        columns = list(self.bulk_import_columns or ())
+        if not columns:
+            messages.error(request, "No export columns configured for this section.")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
+                )
+            )
+        try:
+            from openpyxl import Workbook
+        except Exception:
+            messages.error(request, "openpyxl is not installed on this server.")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
+                )
+            )
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Export"
+        ws.append(columns)
+        for obj in self.get_bulk_export_queryset(request):
+            ws.append(self.get_bulk_export_row(obj, columns))
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{self.get_bulk_export_xlsx_filename()}"'
+        wb.save(response)
+        return response
 
     def import_data_view(self, request):
         form = BulkImportForm(request.POST or None, request.FILES or None)
@@ -541,6 +640,16 @@ class BookAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path(
+                "export-books-xlsx/",
+                self.admin_site.admin_view(self.download_books_export_xlsx_view),
+                name="store_book_export_books_xlsx",
+            ),
+            path(
+                "export-books/",
+                self.admin_site.admin_view(self.download_books_export_csv_view),
+                name="store_book_export_books",
+            ),
+            path(
                 "import-books/sample-csv/",
                 self.admin_site.admin_view(self.download_books_sample_csv_view),
                 name="store_book_import_books_sample_csv",
@@ -557,6 +666,116 @@ class BookAdmin(admin.ModelAdmin):
             ),
         ]
         return custom_urls + urls
+
+    def download_books_export_csv_view(self, request):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="books_export.csv"'
+        writer = csv.writer(response)
+        writer.writerow([
+            "System ID",
+            "Book Title",
+            "Author",
+            "Category",
+            "Subject",
+            "Price",
+            "MRP",
+            "Stock",
+            "ISBN No",
+            "Description",
+            "Published Year",
+            "Binding",
+            "Pages",
+            "Weight",
+            "is_bestseller",
+            "is_trending",
+            "is_new_arrival",
+            "is_featured",
+        ])
+
+        books = Book.objects.select_related("category").prefetch_related("subjects").order_by("title", "id")
+        for book in books:
+            writer.writerow([
+                book.system_id or "",
+                book.title,
+                book.author,
+                book.category.name if book.category else "",
+                " / ".join(book.subjects.values_list("name", flat=True)),
+                book.price,
+                book.mrp_price or "",
+                book.stock,
+                book.isbn or "",
+                book.description or "",
+                book.published_year or "",
+                book.binding or "",
+                book.pages or "",
+                book.weight or "",
+                "true" if book.is_bestseller else "false",
+                "true" if book.is_trending else "false",
+                "true" if book.is_new_arrival else "false",
+                "true" if book.is_featured else "false",
+            ])
+        return response
+
+    def download_books_export_xlsx_view(self, request):
+        try:
+            from openpyxl import Workbook
+        except Exception:
+            messages.error(request, "openpyxl is not installed on this server.")
+            return redirect(reverse("admin:store_book_changelist"))
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Books"
+        ws.append([
+            "System ID",
+            "Book Title",
+            "Author",
+            "Category",
+            "Subject",
+            "Price",
+            "MRP",
+            "Stock",
+            "ISBN No",
+            "Description",
+            "Published Year",
+            "Binding",
+            "Pages",
+            "Weight",
+            "is_bestseller",
+            "is_trending",
+            "is_new_arrival",
+            "is_featured",
+        ])
+
+        books = Book.objects.select_related("category").prefetch_related("subjects").order_by("title", "id")
+        for book in books:
+            ws.append([
+                book.system_id or "",
+                book.title,
+                book.author,
+                book.category.name if book.category else "",
+                " / ".join(book.subjects.values_list("name", flat=True)),
+                str(book.price),
+                str(book.mrp_price) if book.mrp_price is not None else "",
+                book.stock,
+                book.isbn or "",
+                book.description or "",
+                book.published_year or "",
+                book.binding or "",
+                book.pages or "",
+                book.weight or "",
+                "true" if book.is_bestseller else "false",
+                "true" if book.is_trending else "false",
+                "true" if book.is_new_arrival else "false",
+                "true" if book.is_featured else "false",
+            ])
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="books_export.xlsx"'
+        wb.save(response)
+        return response
 
     def download_books_sample_csv_view(self, request):
         columns = [
@@ -1259,13 +1478,27 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(ClassicalWeightUnit)
-class ClassicalWeightUnitAdmin(admin.ModelAdmin):
+class ClassicalWeightUnitAdmin(BulkImportAdminMixin, admin.ModelAdmin):
     list_display = ("classical_weight", "metric_weight", "grams_value", "display_order", "is_active", "updated_at")
     list_filter = ("is_active",)
     search_fields = ("classical_weight", "metric_weight", "source_note")
     list_editable = ("display_order", "is_active")
     ordering = ("display_order", "id")
     readonly_fields = ("created_at", "updated_at")
+    change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
+    bulk_import_title = "Bulk Import Classical Weight Units"
+    bulk_import_help = "Required: classical_weight, metric_weight, grams_value. Optional: display_order, is_active, source_note."
+    bulk_import_columns = ("classical_weight", "metric_weight", "grams_value", "display_order", "is_active", "source_note")
+    bulk_import_sample_rows = (
+        {
+            "classical_weight": "Ratti",
+            "metric_weight": "121.5mg",
+            "grams_value": "0.1215",
+            "display_order": "1",
+            "is_active": "true",
+            "source_note": "Traditional Unani reference",
+        },
+    )
     fieldsets = (
         ("Unit", {
             "fields": ("classical_weight", "metric_weight", "grams_value")
@@ -1280,6 +1513,39 @@ class ClassicalWeightUnitAdmin(admin.ModelAdmin):
             "fields": ("created_at", "updated_at")
         }),
     )
+
+    def import_row(self, row_data):
+        classical_weight = str(row_data.get("classical weight") or row_data.get("classical_weight") or "").strip()
+        metric_weight = str(row_data.get("metric weight") or row_data.get("metric_weight") or "").strip()
+        grams_value = _coerce_decimal(row_data.get("grams value") if "grams value" in row_data else row_data.get("grams_value"))
+        if not classical_weight or not metric_weight or grams_value is None:
+            raise ValueError("classical_weight, metric_weight, and grams_value are required.")
+
+        unit, created = ClassicalWeightUnit.objects.get_or_create(
+            classical_weight=classical_weight,
+            defaults={
+                "metric_weight": metric_weight,
+                "grams_value": grams_value,
+            },
+        )
+
+        unit.metric_weight = metric_weight
+        unit.grams_value = grams_value
+
+        parsed_order = _coerce_int(row_data.get("display order") if "display order" in row_data else row_data.get("display_order"))
+        if parsed_order is not None:
+            unit.display_order = max(parsed_order, 0)
+
+        parsed_active = _coerce_bool(row_data.get("is active") if "is active" in row_data else row_data.get("is_active"))
+        if parsed_active is not None:
+            unit.is_active = parsed_active
+
+        source_note = row_data.get("source note") if "source note" in row_data else row_data.get("source_note")
+        if source_note not in (None, ""):
+            unit.source_note = str(source_note).strip()
+
+        unit.save()
+        return "created" if created else "updated"
 
 
 # ======================
@@ -1505,8 +1771,25 @@ class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
+class BannerAdminForm(forms.ModelForm):
+    class Meta:
+        model = Banner
+        fields = "__all__"
+        widgets = {
+            "desktop_crop_x": forms.NumberInput(attrs={"min": 0}),
+            "desktop_crop_y": forms.NumberInput(attrs={"min": 0}),
+            "desktop_crop_width": forms.NumberInput(attrs={"min": 0}),
+            "desktop_crop_height": forms.NumberInput(attrs={"min": 0}),
+            "mobile_crop_x": forms.NumberInput(attrs={"min": 0}),
+            "mobile_crop_y": forms.NumberInput(attrs={"min": 0}),
+            "mobile_crop_width": forms.NumberInput(attrs={"min": 0}),
+            "mobile_crop_height": forms.NumberInput(attrs={"min": 0}),
+        }
+
+
 @admin.register(Banner)
 class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+    form = BannerAdminForm
     list_display = (
         "preview",
         "title",
@@ -1517,6 +1800,10 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         "show_on_desktop",
         "focal_x",
         "focal_y",
+        "desktop_crop_width",
+        "desktop_crop_height",
+        "mobile_crop_width",
+        "mobile_crop_height",
         "mobile_height",
         "tablet_height",
     )
@@ -1527,6 +1814,10 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         "show_on_desktop",
         "focal_x",
         "focal_y",
+        "desktop_crop_width",
+        "desktop_crop_height",
+        "mobile_crop_width",
+        "mobile_crop_height",
         "mobile_height",
         "tablet_height",
     )
@@ -1553,6 +1844,14 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         "show_on_desktop",
         "focal_x",
         "focal_y",
+        "desktop_crop_x",
+        "desktop_crop_y",
+        "desktop_crop_width",
+        "desktop_crop_height",
+        "mobile_crop_x",
+        "mobile_crop_y",
+        "mobile_crop_width",
+        "mobile_crop_height",
         "mobile_height",
         "tablet_height",
     )
@@ -1572,10 +1871,20 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
             "show_on_desktop": "true",
             "focal_x": "50",
             "focal_y": "50",
+            "desktop_crop_x": "0",
+            "desktop_crop_y": "0",
+            "desktop_crop_width": "0",
+            "desktop_crop_height": "0",
+            "mobile_crop_x": "0",
+            "mobile_crop_y": "0",
+            "mobile_crop_width": "0",
+            "mobile_crop_height": "0",
             "mobile_height": "360",
             "tablet_height": "420",
         },
     )
+
+    readonly_fields = ("crop_box_tool",)
 
     fieldsets = (
         ("Banner", {
@@ -1584,10 +1893,23 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         ("CTA", {
             "fields": ("cta_text", "cta_category")
         }),
-        ("Mobile & Crop", {
+        ("Crop Box", {
+            "fields": ("crop_box_tool",)
+        }),
+        ("Desktop Crop Box", {
+            "fields": ("desktop_crop_x", "desktop_crop_y", "desktop_crop_width", "desktop_crop_height")
+        }),
+        ("Mobile Crop Box", {
+            "fields": ("mobile_crop_x", "mobile_crop_y", "mobile_crop_width", "mobile_crop_height")
+        }),
+        ("Display Position & Height", {
             "fields": ("focal_x", "focal_y", "mobile_height", "tablet_height")
         }),
     )
+
+    class Media:
+        css = {"all": ("admin/css/banner_crop_box.css",)}
+        js = ("admin/js/banner_crop_box.js",)
 
     @admin.display(description="Preview")
     def preview(self, obj):
@@ -1597,6 +1919,30 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
                 obj.image.url,
             )
         return "?"
+
+    @admin.display(description="Crop Tool")
+    def crop_box_tool(self, obj):
+        if not obj or not obj.image:
+            return "Save with an image first, then use crop box."
+        return format_html(
+            """
+            <div class="banner-crop-tool-wrap">
+              <p class="help">
+                Select Desktop or Mobile mode, then drag on image to set crop box.
+                Values are saved in pixel coordinates.
+              </p>
+              <div class="banner-crop-mode">
+                <button type="button" class="button" data-crop-mode="desktop">Desktop</button>
+                <button type="button" class="button" data-crop-mode="mobile">Mobile</button>
+              </div>
+              <div class="banner-crop-stage" id="banner-crop-stage">
+                <img id="banner-crop-image" src="{}" alt="Banner crop source" />
+                <div id="banner-crop-rect"></div>
+              </div>
+            </div>
+            """,
+            obj.image.url,
+        )
 
     def import_row(self, row_data):
         banner_id = _coerce_int(row_data.get("id"))
@@ -1632,7 +1978,21 @@ class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         if cta_category_name:
             banner.cta_category, _ = Category.objects.get_or_create(name=cta_category_name)
 
-        int_fields = ("order", "focal_x", "focal_y", "mobile_height", "tablet_height")
+        int_fields = (
+            "order",
+            "focal_x",
+            "focal_y",
+            "desktop_crop_x",
+            "desktop_crop_y",
+            "desktop_crop_width",
+            "desktop_crop_height",
+            "mobile_crop_x",
+            "mobile_crop_y",
+            "mobile_crop_width",
+            "mobile_crop_height",
+            "mobile_height",
+            "tablet_height",
+        )
         for field_name in int_fields:
             parsed = _coerce_int(row_data.get(field_name))
             if parsed is not None:

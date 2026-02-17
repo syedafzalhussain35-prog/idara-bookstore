@@ -1,0 +1,39 @@
+.banner-crop-tool-wrap {
+  max-width: 980px;
+}
+
+.banner-crop-mode {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.banner-crop-mode .button.active {
+  background: #0b57d0;
+  border-color: #0b57d0;
+  color: #fff;
+}
+
+.banner-crop-stage {
+  position: relative;
+  display: inline-block;
+  border: 1px solid #ccd1d8;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+#banner-crop-image {
+  display: block;
+  max-width: 100%;
+  max-height: 520px;
+  height: auto;
+}
+
+#banner-crop-rect {
+  position: absolute;
+  border: 2px solid #0b57d0;
+  background: rgba(11, 87, 208, 0.14);
+  pointer-events: none;
+  display: none;
+}

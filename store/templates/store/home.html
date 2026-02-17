@@ -20,6 +20,12 @@
                             {% if banner.category %}
                             <a href="{% url 'category_books' banner.category.slug %}">
                                 <picture>
+                                    {% if banner.mobile_crop_url %}
+                                    <source media="(max-width: 767px)" type="image/webp" srcset="{{ banner.mobile_crop_url }}">
+                                    {% endif %}
+                                    {% if banner.desktop_crop_url %}
+                                    <source media="(min-width: 768px)" type="image/webp" srcset="{{ banner.desktop_crop_url }}">
+                                    {% endif %}
                                     {% if banner.has_webp %}
                                     <source type="image/webp" srcset="{{ banner.webp_url }}">
                                     {% endif %}
@@ -28,6 +34,12 @@
                             </a>
                             {% else %}
                                 <picture>
+                                    {% if banner.mobile_crop_url %}
+                                    <source media="(max-width: 767px)" type="image/webp" srcset="{{ banner.mobile_crop_url }}">
+                                    {% endif %}
+                                    {% if banner.desktop_crop_url %}
+                                    <source media="(min-width: 768px)" type="image/webp" srcset="{{ banner.desktop_crop_url }}">
+                                    {% endif %}
                                     {% if banner.has_webp %}
                                     <source type="image/webp" srcset="{{ banner.webp_url }}">
                                     {% endif %}

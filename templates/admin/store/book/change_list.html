@@ -2,6 +2,16 @@
 
 {% block object-tools-items %}
     <li>
+        <a href="{% url 'admin:store_book_export_books_xlsx' %}" class="addlink">
+            Export All XLSX
+        </a>
+    </li>
+    <li>
+        <a href="{% url 'admin:store_book_export_books' %}" class="addlink">
+            Export All CSV
+        </a>
+    </li>
+    <li>
         <a href="{% url 'admin:store_book_import_books' %}" class="addlink">
             Import Books
         </a>

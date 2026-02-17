@@ -264,6 +264,14 @@ class Banner(models.Model):
     )
     focal_x = models.PositiveSmallIntegerField(default=50)
     focal_y = models.PositiveSmallIntegerField(default=50)
+    desktop_crop_x = models.PositiveIntegerField(default=0)
+    desktop_crop_y = models.PositiveIntegerField(default=0)
+    desktop_crop_width = models.PositiveIntegerField(default=0)
+    desktop_crop_height = models.PositiveIntegerField(default=0)
+    mobile_crop_x = models.PositiveIntegerField(default=0)
+    mobile_crop_y = models.PositiveIntegerField(default=0)
+    mobile_crop_width = models.PositiveIntegerField(default=0)
+    mobile_crop_height = models.PositiveIntegerField(default=0)
     mobile_height = models.PositiveSmallIntegerField(
         default=360,
         help_text="Banner height in pixels for mobile screens.",
@@ -287,6 +295,12 @@ class Banner(models.Model):
         base, _ = os.path.splitext(self.image.name)
         return f"{base}.webp"
 
+    def _crop_variant_name(self, variant):
+        if not self.image:
+            return ""
+        base, _ = os.path.splitext(self.image.name)
+        return f"{base}__{variant}.webp"
+
     def has_webp(self):
         if not self.image:
             return False
@@ -299,6 +313,25 @@ class Banner(models.Model):
         if self.has_webp():
             return self.image.storage.url(self.webp_name)
         return self.image.url if self.image else ""
+
+    def _crop_variant_url(self, variant):
+        name = self._crop_variant_name(variant)
+        if not name:
+            return ""
+        try:
+            if self.image.storage.exists(name):
+                return self.image.storage.url(name)
+        except Exception:
+            return ""
+        return ""
+
+    @property
+    def desktop_crop_url(self):
+        return self._crop_variant_url("desktop")
+
+    @property
+    def mobile_crop_url(self):
+        return self._crop_variant_url("mobile")
 
     def _ensure_webp(self):
         if not self.image:
@@ -326,9 +359,71 @@ class Banner(models.Model):
         except Exception:
             return
 
+    def _safe_crop_box(self, img_width, img_height, x, y, w, h):
+        if w <= 0 or h <= 0:
+            return (0, 0, img_width, img_height)
+
+        x = max(0, min(x, img_width - 1))
+        y = max(0, min(y, img_height - 1))
+        w = max(1, min(w, img_width - x))
+        h = max(1, min(h, img_height - y))
+        return (x, y, x + w, y + h)
+
+    def _ensure_cropped_variants(self):
+        if not self.image:
+            return
+
+        try:
+            from PIL import Image
+        except Exception:
+            return
+
+        try:
+            self.image.open()
+            img = Image.open(self.image)
+            if img.mode not in ("RGB", "RGBA"):
+                img = img.convert("RGB")
+            elif img.mode == "RGBA":
+                img = img.convert("RGB")
+        except Exception:
+            return
+
+        crop_specs = {
+            "desktop": (
+                int(self.desktop_crop_x or 0),
+                int(self.desktop_crop_y or 0),
+                int(self.desktop_crop_width or 0),
+                int(self.desktop_crop_height or 0),
+            ),
+            "mobile": (
+                int(self.mobile_crop_x or 0),
+                int(self.mobile_crop_y or 0),
+                int(self.mobile_crop_width or 0),
+                int(self.mobile_crop_height or 0),
+            ),
+        }
+
+        for variant, (x, y, w, h) in crop_specs.items():
+            try:
+                box = self._safe_crop_box(img.width, img.height, x, y, w, h)
+                cropped = img.crop(box)
+                buffer = BytesIO()
+                cropped.save(buffer, format="WEBP", quality=82, method=6)
+                buffer.seek(0)
+                name = self._crop_variant_name(variant)
+                try:
+                    if self.image.storage.exists(name):
+                        self.image.storage.delete(name)
+                except Exception:
+                    pass
+                self.image.storage.save(name, ContentFile(buffer.read()))
+            except Exception:
+                continue
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self._ensure_webp()
+        self._ensure_cropped_variants()
         # Keep homepage banner lists fresh after admin updates/uploads.
         from django.core.cache import cache
         cache.delete_many([

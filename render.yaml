@@ -1,17 +1,8 @@
-databases:
-  - name: idara-bookstore-db
-    plan: free
-
 services:
   - type: web
     name: idara-bookstore
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
     startCommand: python manage.py migrate && python manage.py ensure_superuser && gunicorn idara_project.wsgi:application
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: idara-bookstore-db
-          property: connectionString
     autoDeploy: true
