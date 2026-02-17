@@ -9,7 +9,6 @@ from django.db import transaction
 from django.db.models import Sum, Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
 import re
-import tempfile
 import zipfile
 from django.contrib.admin.helpers import ActionForm
 from django.http import HttpResponse
@@ -1117,6 +1116,99 @@ class BookAdmin(admin.ModelAdmin):
 
         return created, skipped, errors, error_messages
 
+    def _import_images_from_zip(self, archive_file, replace_existing=False, dry_run=False):
+        from django.core.files.base import ContentFile
+
+        created = 0
+        skipped = 0
+        errors = 0
+        error_messages = []
+
+        def image_sort_key(file_name):
+            stem = file_name.rsplit(".", 1)[0]
+            return (not stem.isdigit(), int(stem) if stem.isdigit() else stem.lower())
+
+        grouped = {}
+        try:
+            archive_file.seek(0)
+        except Exception:
+            pass
+
+        with zipfile.ZipFile(archive_file) as zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    continue
+
+                path = str(info.filename or "").replace("\\", "/").strip("/")
+                if not path:
+                    continue
+
+                parts = [part for part in path.split("/") if part]
+                if len(parts) < 2:
+                    continue
+
+                file_name = parts[-1]
+                suffix = f".{file_name.rsplit('.', 1)[-1].lower()}" if "." in file_name else ""
+                if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
+                    continue
+
+                folder_name = None
+                for segment in reversed(parts[:-1]):
+                    if re.match(r"^(.*)\((.*)\)$", segment):
+                        folder_name = segment
+                        break
+                if not folder_name:
+                    continue
+
+                grouped.setdefault(folder_name, []).append((file_name, info))
+
+            for folder_name in sorted(grouped.keys(), key=lambda x: x.lower()):
+                match = re.match(r"^(.*)\((.*)\)$", folder_name)
+                if not match:
+                    skipped += 1
+                    continue
+
+                title = match.group(1).strip()
+                author = match.group(2).strip()
+                if not title or not author:
+                    skipped += 1
+                    continue
+
+                book = Book.objects.filter(title=title, author=author).first()
+                if not book:
+                    skipped += 1
+                    continue
+
+                image_items = sorted(grouped.get(folder_name, []), key=lambda item: image_sort_key(item[0]))
+                if not image_items:
+                    skipped += 1
+                    continue
+
+                try:
+                    if replace_existing and not dry_run:
+                        if book.main_cover:
+                            book.main_cover.delete(save=False)
+                        book.images.all().delete()
+
+                    if not dry_run:
+                        main_name, main_info = image_items[0]
+                        main_data = zf.read(main_info)
+                        book.main_cover.save(main_name, ContentFile(main_data, name=main_name), save=True)
+
+                        for extra_name, extra_info in image_items[1:]:
+                            extra_data = zf.read(extra_info)
+                            BookImage.objects.create(
+                                book=book,
+                                image=ContentFile(extra_data, name=extra_name),
+                            )
+
+                    created += 1
+                except Exception as exc:
+                    errors += 1
+                    error_messages.append(f"{folder_name}: {exc}")
+
+        return created, skipped, errors, error_messages
+
     def import_images_view(self, request):
         form = self.ImportImagesForm(request.POST or None, request.FILES or None)
         if request.method == "POST" and form.is_valid():
@@ -1130,16 +1222,9 @@ class BookAdmin(admin.ModelAdmin):
                 with transaction.atomic():
                     if archive_file:
                         try:
-                            with tempfile.TemporaryDirectory() as temp_dir:
-                                with zipfile.ZipFile(archive_file) as zf:
-                                    zf.extractall(temp_dir)
-                                root = Path(temp_dir)
-                                top_dirs = [p for p in root.iterdir() if p.is_dir()]
-                                if len(top_dirs) == 1:
-                                    root = top_dirs[0]
-                                created, skipped, errors, error_messages = self._import_images_from_root(
-                                    root, replace_existing=replace_existing, dry_run=dry_run
-                                )
+                            created, skipped, errors, error_messages = self._import_images_from_zip(
+                                archive_file, replace_existing=replace_existing, dry_run=dry_run
+                            )
                         except zipfile.BadZipFile:
                             messages.error(request, "Invalid ZIP file. Please upload a valid .zip archive.")
                             return render(request, "admin/store/book/import_images.html", {"form": form})
