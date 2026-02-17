@@ -98,7 +98,7 @@ def _coerce_decimal(value, default=None):
         return default
 
 
-def _load_tabular_rows(uploaded_file):
+def _load_tabular_rows(uploaded_file, expected_headers=None, overflow_merge_header=None):
     name = (getattr(uploaded_file, "name", "") or "").lower()
     if name.endswith(".csv"):
         uploaded_file.seek(0)
@@ -132,14 +132,41 @@ def _load_tabular_rows(uploaded_file):
     if not rows:
         return []
 
-    headers = [_normalize_header(item) for item in rows[0]]
+    normalized_expected = [_normalize_header(item) for item in (expected_headers or ()) if _normalize_header(item)]
+    first_row_headers = [_normalize_header(item) for item in rows[0]]
+    has_header_row = True
+    if normalized_expected:
+        has_header_row = any(header in normalized_expected for header in first_row_headers if header)
+
+    headers = first_row_headers if has_header_row else normalized_expected
+    data_rows = rows[1:] if has_header_row else rows
+    if not headers:
+        return []
+
+    merge_index = None
+    normalized_merge_header = _normalize_header(overflow_merge_header) if overflow_merge_header else None
+    if normalized_merge_header and normalized_merge_header in headers:
+        merge_index = headers.index(normalized_merge_header)
+
     parsed_rows = []
-    for index, raw_row in enumerate(rows[1:], start=2):
+    row_start = 2 if has_header_row else 1
+    for index, raw_row in enumerate(data_rows, start=row_start):
+        row_values = list(raw_row)
+        if merge_index is not None and len(row_values) > len(headers):
+            overflow_count = len(row_values) - len(headers)
+            merged_chunk = row_values[merge_index:merge_index + overflow_count + 1]
+            merged_value = ",".join("" if value is None else str(value) for value in merged_chunk)
+            row_values = (
+                row_values[:merge_index]
+                + [merged_value]
+                + row_values[merge_index + overflow_count + 1:]
+            )
+
         row_dict = {}
         for col_index, header in enumerate(headers):
             if not header:
                 continue
-            value = raw_row[col_index] if col_index < len(raw_row) else None
+            value = row_values[col_index] if col_index < len(row_values) else None
             row_dict[header] = value
         if any(value not in (None, "") for value in row_dict.values()):
             row_dict["_row_number"] = index
@@ -159,6 +186,7 @@ class BulkImportAdminMixin:
     bulk_import_help = ""
     bulk_import_columns = ()
     bulk_import_sample_rows = ()
+    bulk_import_overflow_merge_column = None
 
     def get_bulk_import_url_name(self):
         return f"{self.model._meta.app_label}_{self.model._meta.model_name}_import_data"
@@ -209,7 +237,11 @@ class BulkImportAdminMixin:
     def get_bulk_import_rows(self, request):
         if "file" not in request.FILES:
             return []
-        return _load_tabular_rows(request.FILES["file"])
+        return _load_tabular_rows(
+            request.FILES["file"],
+            expected_headers=self.bulk_import_columns,
+            overflow_merge_header=self.bulk_import_overflow_merge_column,
+        )
 
     def import_row(self, row_data):
         raise NotImplementedError("import_row must be implemented.")
@@ -1398,6 +1430,7 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         "Required: english_term. Optional: description, transliteration, arabic_script, "
         "section, slug, is_published."
     )
+    bulk_import_overflow_merge_column = "description"
     bulk_import_columns = (
         "english_term",
         "description",
