@@ -1,19 +1,47 @@
 from .models import Category, Cart, Book, Wishlist, SiteSettings
 from django.db.models import Sum, Case, When, IntegerField
 from django.conf import settings
-from .coins import get_wallet, process_due_pending_rewards_for_user
+from django.core.cache import cache
+from .coins import get_wallet
+
+
+NAV_CACHE_KEY = "cp:nav_categories:v1"
+SITE_SETTINGS_CACHE_KEY = "cp:site_settings:v1"
+CP_CACHE_TTL = int(getattr(settings, "CATEGORY_CACHE_TTL", 180))
 
 def navbar_categories(request):
     """
     Exposes categories and cart count globally to all templates.
     """
-    # 1. Fetch Categories for the dropdown
-    nav_categories = (
-        Category.objects
-        .only('name', 'slug')
-        .all()
-        .order_by('name')
-    )
+    # Keep admin requests light; storefront-only widgets are not needed there.
+    if request.path.startswith("/admin/"):
+        return {
+            "nav_categories": [],
+            "cart_count": 0,
+            "cart_preview_items": [],
+            "cart_preview_total": 0,
+            "cart_preview_empty": True,
+            "cloudinary_base": "",
+            "recently_viewed_books": [],
+            "wishlist_preview_items": [],
+            "wishlist_count": 0,
+            "site_background_url": "",
+            "site_loader_logo": "",
+            "sales_offers_label": "Sales/Offers",
+            "sales_offers_enabled": True,
+            "coin_wallet": None,
+        }
+
+    # 1. Fetch Categories for the dropdown (cached)
+    nav_categories = cache.get(NAV_CACHE_KEY)
+    if nav_categories is None:
+        nav_categories = list(
+            Category.objects
+            .only("name", "slug", "image")
+            .all()
+            .order_by("name")
+        )
+        cache.set(NAV_CACHE_KEY, nav_categories, CP_CACHE_TTL)
 
     # 2. Fetch Cart Count + Preview Items
     cart_count = 0
@@ -69,14 +97,22 @@ def navbar_categories(request):
         wishlist_count = wishlist_qs.count()
         wishlist_preview_items = list(wishlist_qs[:3])
 
-    settings_obj = SiteSettings.objects.filter(is_active=True).first()
-    site_background_url = settings_obj.background_image.url if settings_obj and settings_obj.background_image else ""
-    site_loader_logo = settings_obj.loader_logo.url if settings_obj and settings_obj.loader_logo else ""
-    sales_offers_label = settings_obj.sales_offers_label if settings_obj and settings_obj.sales_offers_label else "Sales/Offers"
-    sales_offers_enabled = settings_obj.sales_offers_enabled if settings_obj else True
+    settings_payload = cache.get(SITE_SETTINGS_CACHE_KEY)
+    if settings_payload is None:
+        settings_obj = SiteSettings.objects.filter(is_active=True).first()
+        settings_payload = {
+            "site_background_url": settings_obj.background_image.url if settings_obj and settings_obj.background_image else "",
+            "site_loader_logo": settings_obj.loader_logo.url if settings_obj and settings_obj.loader_logo else "",
+            "sales_offers_label": settings_obj.sales_offers_label if settings_obj and settings_obj.sales_offers_label else "Sales/Offers",
+            "sales_offers_enabled": settings_obj.sales_offers_enabled if settings_obj else True,
+        }
+        cache.set(SITE_SETTINGS_CACHE_KEY, settings_payload, CP_CACHE_TTL)
+    site_background_url = settings_payload["site_background_url"]
+    site_loader_logo = settings_payload["site_loader_logo"]
+    sales_offers_label = settings_payload["sales_offers_label"]
+    sales_offers_enabled = settings_payload["sales_offers_enabled"]
     coin_wallet = None
     if request.user.is_authenticated:
-        process_due_pending_rewards_for_user(request.user)
         coin_wallet = get_wallet(request.user)
 
     return {
