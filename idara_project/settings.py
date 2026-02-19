@@ -19,8 +19,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==================================================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-secret")
 
-# Security-first default for production safety.
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Default to DEBUG locally, but stay secure by default on hosted deployments.
+is_hosted_env = bool(os.getenv("RENDER_EXTERNAL_HOSTNAME") or os.getenv("DATABASE_URL"))
+DEBUG = env_bool("DEBUG", default=not is_hosted_env)
 if not DEBUG and SECRET_KEY == "dev-only-secret":
     raise RuntimeError("Set DJANGO_SECRET_KEY when DEBUG=False.")
 

@@ -108,14 +108,14 @@ def _load_tabular_rows(uploaded_file, expected_headers=None, overflow_merge_head
             csv_text = raw
         else:
             csv_text = None
-            for encoding in ("utf-8-sig", "cp1252", "latin-1"):
+            for encoding in ("utf-8-sig", "utf-16", "utf-16-le", "utf-16-be", "cp1252", "latin-1"):
                 try:
                     csv_text = raw.decode(encoding)
                     break
                 except UnicodeDecodeError:
                     continue
             if csv_text is None:
-                raise ValueError("Could not decode CSV. Save the file as UTF-8 CSV and try again.")
+                raise ValueError("Could not decode CSV. Save the file as UTF-8 CSV or upload XLSX and try again.")
         reader = csv.reader(StringIO(csv_text))
         rows = list(reader)
     elif name.endswith(".xlsx"):
@@ -522,7 +522,7 @@ class BookAdmin(admin.ModelAdmin):
         "is_featured",
     )
 
-    readonly_fields = ("discount_display",)
+    readonly_fields = ("discount_display", "main_cover_preview")
     inlines = [BookImageInline]
 
     change_list_template = "admin/store/book/change_list.html"
@@ -544,7 +544,7 @@ class BookAdmin(admin.ModelAdmin):
             "fields": ("is_bestseller", "is_trending", "is_new_arrival", "is_featured")
         }),
         ("Images", {
-            "fields": ("main_cover",)
+            "fields": ("main_cover_preview", "main_cover")
         }),
         ("Book Files", {
             "fields": ("toc_pdf", "sample_pdf")
@@ -552,6 +552,18 @@ class BookAdmin(admin.ModelAdmin):
     )
 
     ordering = ("title",)
+
+    def main_cover_preview(self, obj):
+        if obj and obj.main_cover:
+            return format_html(
+                '<a href="{0}" target="_blank" rel="noopener noreferrer">'
+                '<img src="{0}" alt="{1}" style="max-height:120px;border:1px solid #ddd;border-radius:4px;" />'
+                "</a>",
+                obj.main_cover.url,
+                obj.title or "Book cover",
+            )
+        return "No cover uploaded"
+    main_cover_preview.short_description = "Current cover"
 
     class PriceUpdateActionForm(ActionForm):
         percentage = forms.DecimalField(
@@ -1219,26 +1231,22 @@ class BookAdmin(admin.ModelAdmin):
 
             from pathlib import Path
             try:
-                with transaction.atomic():
-                    if archive_file:
-                        try:
-                            created, skipped, errors, error_messages = self._import_images_from_zip(
-                                archive_file, replace_existing=replace_existing, dry_run=dry_run
-                            )
-                        except zipfile.BadZipFile:
-                            messages.error(request, "Invalid ZIP file. Please upload a valid .zip archive.")
-                            return render(request, "admin/store/book/import_images.html", {"form": form})
-                    else:
-                        root = Path(root_path)
-                        if not root.exists() or not root.is_dir():
-                            messages.error(request, "Root path does not exist or is not a directory.")
-                            return render(request, "admin/store/book/import_images.html", {"form": form})
-                        created, skipped, errors, error_messages = self._import_images_from_root(
-                            root, replace_existing=replace_existing, dry_run=dry_run
+                if archive_file:
+                    try:
+                        created, skipped, errors, error_messages = self._import_images_from_zip(
+                            archive_file, replace_existing=replace_existing, dry_run=dry_run
                         )
-
-                    if dry_run:
-                        transaction.set_rollback(True)
+                    except zipfile.BadZipFile:
+                        messages.error(request, "Invalid ZIP file. Please upload a valid .zip archive.")
+                        return render(request, "admin/store/book/import_images.html", {"form": form})
+                else:
+                    root = Path(root_path)
+                    if not root.exists() or not root.is_dir():
+                        messages.error(request, "Root path does not exist or is not a directory.")
+                        return render(request, "admin/store/book/import_images.html", {"form": form})
+                    created, skipped, errors, error_messages = self._import_images_from_root(
+                        root, replace_existing=replace_existing, dry_run=dry_run
+                    )
             except OSError as exc:
                 messages.error(
                     request,
@@ -1590,7 +1598,7 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
             "english_term": "Tamamiyya Asbab",
             "description": "Causes related to functions.",
             "transliteration": "Tamamiyya Asbab",
-            "arabic_script": "اسباب تامیہ",
+            "arabic_script": "\u0627\u0633\u0628\u0627\u0628 \u062a\u0627\u0645\u06cc\u06c1",
             "section": "General Terms",
             "slug": "tamamiyya-asbab",
             "is_published": "true",
@@ -1626,6 +1634,8 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
         english_term = str(row_data.get("english term") or row_data.get("english_term") or "").strip()
         if not english_term:
             raise ValueError("english_term is required.")
+        if len(english_term) > 255:
+            raise ValueError(f"english_term exceeds 255 characters (got {len(english_term)}).")
 
         term, created = UnaniTerm.objects.get_or_create(
             english_term=english_term,
@@ -1646,6 +1656,17 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
                     break
             if value is not None:
                 setattr(term, field_name, value)
+
+        char_limits = {
+            "transliteration": 255,
+            "arabic_script": 255,
+            "section": 120,
+            "slug": 255,
+        }
+        for field_name, max_len in char_limits.items():
+            value = getattr(term, field_name, "") or ""
+            if len(value) > max_len:
+                raise ValueError(f"{field_name} exceeds {max_len} characters (got {len(value)}).")
 
         parsed_publish = _coerce_bool(row_data.get("is published") if "is published" in row_data else row_data.get("is_published"))
         if parsed_publish is not None:

@@ -130,7 +130,7 @@ class Book(models.Model):
         text = getattr(settings, "BOOK_WATERMARK_TEXT", "Idara")
         if _apply_text_watermark(self.main_cover, text):
             self.is_watermarked = True
-            super().save(update_fields=["is_watermarked"])
+            super().save(update_fields=["main_cover", "is_watermarked"])
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -191,7 +191,7 @@ class BookImage(models.Model):
         text = getattr(settings, "BOOK_WATERMARK_TEXT", "Idara")
         if _apply_text_watermark(self.image, text):
             self.is_watermarked = True
-            super().save(update_fields=["is_watermarked"])
+            super().save(update_fields=["image", "is_watermarked"])
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -1168,8 +1168,8 @@ def _apply_text_watermark(image_field, text):
             storage.delete(name)
     except Exception:
         pass
-    storage.save(name, ContentFile(buffer.read()))
-    image_field.name = name
+    saved_name = storage.save(name, ContentFile(buffer.read()))
+    image_field.name = saved_name
     return True
 
 class UnaniTerm(models.Model):

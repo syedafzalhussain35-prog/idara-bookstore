@@ -1,2 +1,4 @@
 static/store/images/banners/background/7705595.psd filter=lfs diff=lfs merge=lfs -text
 static/store/images/banners/background/green-nature-design-banner-template.zip filter=lfs diff=lfs merge=lfs -text
+bulk_images/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+bulk_images/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
