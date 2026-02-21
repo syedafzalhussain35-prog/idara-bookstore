@@ -12,6 +12,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'store/images/logo2.png' %}">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}">
+    <meta name="robots" content="{% block robots_meta %}index,follow{% endblock %}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{% block twitter_title %}Idara Kitab Ul Shifa{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Idara Kitab Ul Shifa - books and academic resources.{% endblock %}">
@@ -27,6 +29,20 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="{% static 'store/css/site.css' %}" rel="stylesheet">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BookStore",
+      "name": "Idara Kitab Ul Shifa",
+      "url": "{{ request.scheme }}://{{ request.get_host }}",
+      "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'store/images/logo2.png' %}",
+      "sameAs": [
+        "https://www.facebook.com/idarakitabulshifa",
+        "https://www.instagram.com/idara_kitab_ul_shifa/"
+      ]
+    }
+    </script>
 
     {% block extra_css %}{% endblock %}
 
@@ -76,13 +92,13 @@
         <span><i class="fas fa-envelope"></i> idara.kitabulshifa@gmail.com</span>
     </div>
     <div class="top-bar-socials">
-        <a href="https://www.facebook.com/idarakitabulshifa" target="_blank">
+        <a href="https://www.facebook.com/idarakitabulshifa" target="_blank" rel="noopener noreferrer">
             <img src="{% static 'store/images/socialmedia/facebook-icon.png' %}" class="social-img">
         </a>
-        <a href="https://www.instagram.com/idara_kitab_ul_shifa/" target="_blank">
+        <a href="https://www.instagram.com/idara_kitab_ul_shifa/" target="_blank" rel="noopener noreferrer">
             <img src="{% static 'store/images/socialmedia/instagram-icon.png' %}" class="social-img">
         </a>
-        <a href="https://wa.me/919312273887" target="_blank">
+        <a href="https://wa.me/919312273887" target="_blank" rel="noopener noreferrer">
             <img src="{% static 'store/images/socialmedia/whatsapp-icon.png' %}" class="social-img">
         </a>
     </div>
@@ -382,7 +398,7 @@
     <ul class="dropdown-menu catalogue-menu">
 
                         <li>
-                            <a class="dropdown-item catalogue-featured" target="_blank"
+                            <a class="dropdown-item catalogue-featured" target="_blank" rel="noopener noreferrer"
                                href="{% static 'store/catalogues/catalogue2026.pdf' %}">
                                 Full Catalogue 2026
                             </a>
@@ -391,14 +407,14 @@
                         <li><hr class="dropdown-divider"></li>
 
                         <li>
-                            <a class="dropdown-item" target="_blank"
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer"
                                href="{% static 'store/catalogues/english-catalogue.pdf' %}">
                                 English Catalogue
                             </a>
                         </li>
 
                         <li>
-                            <a class="dropdown-item" target="_blank"
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer"
                                href="{% static 'store/catalogues/urdu-catalogue.pdf' %}">
                                 Urdu Catalogue
                             </a>
@@ -411,28 +427,28 @@
                                 Prof-wise Catalogue
                             </a>
                             <ul class="dropdown-menu catalogue-submenu-menu">
-                                <li><a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/1st-prof.pdf' %}">1st Prof</a></li>
-                                <li><a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/2nd-prof.pdf' %}">2nd Prof</a></li>
-                                <li><a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/3rd-prof.pdf' %}">3rd Prof</a></li>
-                                <li><a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/pg-md.pdf' %}">P.G. / M.D.</a></li>
-                                <li><a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/neet-aiapget.pdf' %}">NEET / AIAPGET</a></li>
+                                <li><a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/1st-prof.pdf' %}">1st Prof</a></li>
+                                <li><a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/2nd-prof.pdf' %}">2nd Prof</a></li>
+                                <li><a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/3rd-prof.pdf' %}">3rd Prof</a></li>
+                                <li><a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/pg-md.pdf' %}">P.G. / M.D.</a></li>
+                                <li><a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/neet-aiapget.pdf' %}">NEET / AIAPGET</a></li>
                             </ul>
                         </li>
 
                         <li class="d-lg-none">
-                            <a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/1st-prof.pdf' %}">1st Prof Catalogue</a>
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/1st-prof.pdf' %}">1st Prof Catalogue</a>
                         </li>
                         <li class="d-lg-none">
-                            <a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/2nd-prof.pdf' %}">2nd Prof Catalogue</a>
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/2nd-prof.pdf' %}">2nd Prof Catalogue</a>
                         </li>
                         <li class="d-lg-none">
-                            <a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/3rd-prof.pdf' %}">3rd Prof Catalogue</a>
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/3rd-prof.pdf' %}">3rd Prof Catalogue</a>
                         </li>
                         <li class="d-lg-none">
-                            <a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/pg-md.pdf' %}">P.G. / M.D. Catalogue</a>
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/pg-md.pdf' %}">P.G. / M.D. Catalogue</a>
                         </li>
                         <li class="d-lg-none">
-                            <a class="dropdown-item" target="_blank" href="{% static 'store/catalogues/neet-aiapget.pdf' %}">NEET / AIAPGET Catalogue</a>
+                            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% static 'store/catalogues/neet-aiapget.pdf' %}">NEET / AIAPGET Catalogue</a>
                         </li>
 
                     </ul>

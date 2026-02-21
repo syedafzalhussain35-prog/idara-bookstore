@@ -76,6 +76,13 @@ if not DEBUG:
         CSRF_TRUSTED_ORIGINS.append('https://idara-bookstore.onrender.com')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 # ==================================================
 # APPLICATIONS
 # ==================================================
@@ -88,6 +95,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django.contrib.sitemaps',
 
     # 🔐 Allauth
     'allauth',

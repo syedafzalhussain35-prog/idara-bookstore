@@ -4,7 +4,7 @@
 {% block title %}{{ book.title }} | Idara Kitab Ul Shifa{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5 book-detail-page">
 
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -156,14 +156,14 @@
                         {% if book.toc_pdf or book.sample_pdf %}
                         <div class="doc-tiles mt-4">
                             {% if book.toc_pdf %}
-                            <a class="doc-tile" href="{{ book.toc_pdf_url }}" target="_blank" rel="noopener">
+                            <a class="doc-tile" href="{{ book.toc_pdf_url }}" target="_blank" rel="noopener noreferrer">
                                 <span class="doc-badge">PDF</span>
                                 <span class="doc-icon"><i class="fas fa-file-pdf"></i></span>
                                 <span class="doc-label">TOC</span>
                             </a>
                             {% endif %}
                             {% if book.sample_pdf %}
-                            <a class="doc-tile" href="{{ book.sample_pdf_url }}" target="_blank" rel="noopener">
+                            <a class="doc-tile" href="{{ book.sample_pdf_url }}" target="_blank" rel="noopener noreferrer">
                                 <span class="doc-badge">PDF</span>
                                 <span class="doc-icon"><i class="fas fa-file-pdf"></i></span>
                                 <span class="doc-label">Sample Pages</span>

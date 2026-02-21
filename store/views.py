@@ -1612,40 +1612,35 @@ def invoice_view(request, order_id):
 # 🔍 LIVE SEARCH (AJAX)
 # ==================================================
 
-from difflib import SequenceMatcher
-
-def similarity(a, b):
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
-
-
 def live_search(request):
     q = request.GET.get('q', '').strip()
-    results = []
 
     if len(q) < 2:
         return JsonResponse({'results': []})
 
-    books = (
+    books = list(
         Book.objects
+        .only("id", "title", "author", "main_cover")
         .filter(
             Q(title__icontains=q) |
             Q(author__icontains=q)
         )
-        .distinct()[:20]
+        .annotate(
+            rank=Case(
+                When(title__istartswith=q, then=Value(1)),
+                When(author__istartswith=q, then=Value(2)),
+                When(title__icontains=q, then=Value(3)),
+                When(author__icontains=q, then=Value(4)),
+                default=Value(5),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("rank", "title")
+        .distinct()[:8]
     )
 
-    ranked = []
+    results = []
     for book in books:
-        score = max(
-            similarity(q, book.title),
-            similarity(q, book.author)
-        )
-        if score > 0.35:  # Roman-Urdu tolerance
-            ranked.append((score, book))
-
-    ranked.sort(key=lambda x: x[0], reverse=True)
-
-    for score, book in ranked[:8]:
         results.append({
             'id': book.id,
             'title': book.title,
