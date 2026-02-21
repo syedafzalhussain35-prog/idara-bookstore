@@ -111,7 +111,7 @@ def _get_recently_viewed(request, exclude_id=None, limit=8):
     if not ids:
         return []
     preserved = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(ids)], output_field=IntegerField())
-    return list(Book.objects.filter(id__in=ids).order_by(preserved)[:limit])
+    return list(Book.objects.filter(is_active=True, id__in=ids).order_by(preserved)[:limit])
 
 
 # ==================================================
@@ -127,7 +127,7 @@ def _ordered_by_ids(model, ids):
 
 def _recommended_books(limit=6, exclude_ids=None):
     exclude_ids = exclude_ids or []
-    qs = Book.objects.filter(stock__gt=0).exclude(id__in=exclude_ids)
+    qs = Book.objects.filter(is_active=True, stock__gt=0).exclude(id__in=exclude_ids)
     qs = qs.order_by("-is_bestseller", "-is_trending", "-created_at")
     return qs[:limit]
 
@@ -217,28 +217,28 @@ def home(request):
 
     featured_ids = _cache_get_ids(
         "home:featured",
-        Book.objects.filter(is_featured=True).order_by("-id")[:8],
+        Book.objects.filter(is_active=True, is_featured=True).order_by("-id")[:8],
         cache_ttl,
     )
     featured_books = list(_ordered_by_ids(Book, featured_ids))
 
     bestseller_ids = _cache_get_ids(
         "home:bestsellers",
-        Book.objects.filter(is_bestseller=True).order_by("-id")[:8],
+        Book.objects.filter(is_active=True, is_bestseller=True).order_by("-id")[:8],
         cache_ttl,
     )
     bestsellers = list(_ordered_by_ids(Book, bestseller_ids))
 
     trending_ids = _cache_get_ids(
         "home:trending",
-        Book.objects.filter(is_trending=True).order_by("-id")[:8],
+        Book.objects.filter(is_active=True, is_trending=True).order_by("-id")[:8],
         cache_ttl,
     )
     trending_books = list(_ordered_by_ids(Book, trending_ids))
 
     new_ids = _cache_get_ids(
         "home:new_arrivals",
-        Book.objects.filter(is_new_arrival=True).order_by("-id")[:8],
+        Book.objects.filter(is_active=True, is_new_arrival=True).order_by("-id")[:8],
         cache_ttl,
     )
     new_arrivals = list(_ordered_by_ids(Book, new_ids))
@@ -265,7 +265,7 @@ def home(request):
 
     popular_ids = _cache_get_ids(
         "home:popular",
-        Book.objects.annotate(sales=Sum("orderitem__quantity")).order_by("-sales", "-id")[:8],
+        Book.objects.filter(is_active=True).annotate(sales=Sum("orderitem__quantity")).order_by("-sales", "-id")[:8],
         cache_ttl,
     )
     popular_books = list(_ordered_by_ids(Book, popular_ids))
@@ -275,10 +275,11 @@ def home(request):
         viewed_ids = [b.id for b in recently_viewed]
         category_ids = [b.category_id for b in recently_viewed if b.category_id]
         subject_ids = list(
-            Book.objects.filter(id__in=viewed_ids).values_list("subjects__id", flat=True)
+            Book.objects.filter(is_active=True, id__in=viewed_ids).values_list("subjects__id", flat=True)
         )
         recommended_qs = (
             Book.objects
+            .filter(is_active=True)
             .filter(Q(category_id__in=category_ids) | Q(subjects__id__in=subject_ids))
             .exclude(id__in=viewed_ids)
             .distinct()
@@ -323,7 +324,7 @@ def offers_view(request):
 
 def category_books(request, slug):
     category = get_object_or_404(Category, slug=slug)
-    books_qs = Book.objects.filter(category=category)
+    books_qs = Book.objects.filter(is_active=True, category=category)
 
     query = request.GET.get('q', '').strip()
     if query:
@@ -405,7 +406,8 @@ def search(request):
     rating = request.GET.get('rating', '').strip()
 
     books_qs = Book.objects.filter(
-        Q(title__icontains=query) | Q(author__icontains=query)
+        Q(title__icontains=query) | Q(author__icontains=query),
+        is_active=True,
     ) if query else Book.objects.none()
 
     if category_slug:
@@ -573,7 +575,7 @@ def unani_weight_converter(request):
 
 def subject_books(request, slug):
     subject = get_object_or_404(Subject, slug=slug, is_active=True)
-    books_qs = Book.objects.filter(subjects=subject)
+    books_qs = Book.objects.filter(is_active=True, subjects=subject)
 
     query = request.GET.get('q', '').strip()
     if query:
@@ -623,7 +625,7 @@ def subject_books(request, slug):
 # ==================================================
 
 def book_detail(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
+    book = get_object_or_404(Book, id=book_id, is_active=True)
     _update_recently_viewed(request, book.id)
 
     reviews = Review.objects.filter(book=book).select_related('user')
@@ -654,7 +656,7 @@ def book_detail(request, book_id):
     if book.category_id:
         related_books = list(
             Book.objects
-            .filter(category=book.category)
+            .filter(is_active=True, category=book.category)
             .exclude(id=book.id)
             .order_by("-is_bestseller", "-id")[:8]
         )
@@ -663,7 +665,7 @@ def book_detail(request, book_id):
         exclude_ids = [book.id] + [b.id for b in related_books]
         fallback = list(
             Book.objects
-            .filter(is_bestseller=True)
+            .filter(is_active=True, is_bestseller=True)
             .exclude(id__in=exclude_ids)
             .order_by("-id")[:8 - len(related_books)]
         )
@@ -697,7 +699,7 @@ def book_detail(request, book_id):
 @login_required
 @require_POST
 def add_review(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
+    book = get_object_or_404(Book, id=book_id, is_active=True)
 
     # ✔ Only verified buyers
     if not OrderItem.objects.filter(order__user=request.user, book=book).exists():
@@ -753,7 +755,7 @@ def wishlist_view(request):
 @login_required
 @require_POST
 def wishlist_toggle(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
+    book = get_object_or_404(Book, id=book_id, is_active=True)
     obj, created = Wishlist.objects.get_or_create(user=request.user, book=book)
 
     if created:
@@ -767,7 +769,7 @@ def wishlist_toggle(request, book_id):
 def add_to_wishlist(request, book_id):
     Wishlist.objects.get_or_create(
         user=request.user,
-        book=get_object_or_404(Book, id=book_id)
+        book=get_object_or_404(Book, id=book_id, is_active=True)
     )
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 
@@ -923,7 +925,7 @@ def _get_or_create_cart(request):
 
 @require_POST
 def add_to_cart(request, book_id):
-    book = get_object_or_404(Book, id=book_id)
+    book = get_object_or_404(Book, id=book_id, is_active=True)
     cart = _get_or_create_cart(request)
 
     if book.stock < 1:
@@ -1622,8 +1624,8 @@ def live_search(request):
         Book.objects
         .only("id", "title", "author", "main_cover")
         .filter(
-            Q(title__icontains=q) |
-            Q(author__icontains=q)
+            Q(title__icontains=q) | Q(author__icontains=q),
+            is_active=True,
         )
         .annotate(
             rank=Case(

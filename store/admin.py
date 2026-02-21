@@ -474,6 +474,9 @@ class CategoryAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdm
 class BookImageInline(admin.TabularInline):
     model = BookImage
     extra = 1
+    fields = ("image", "is_watermarked")
+    readonly_fields = ("is_watermarked",)
+    show_change_link = True
 
 
 class BundleBookInline(admin.TabularInline):
@@ -504,6 +507,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
         "mrp_price",
         "discount_display",
         "stock",
+        "is_active",
         "category",
         "is_bestseller",
         "is_trending",
@@ -514,6 +518,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_filter = (
         "category",
         ("subjects", admin.RelatedOnlyFieldListFilter),
+        "is_active",
         "is_bestseller",
         "is_trending",
         "is_new_arrival",
@@ -527,6 +532,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
         "price",
         "mrp_price",
         "stock",
+        "is_active",
         "is_bestseller",
         "is_trending",
         "is_new_arrival",
@@ -549,7 +555,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
             "fields": ("price", "mrp_price", "discount_display")
         }),
         ("Stock", {
-            "fields": ("stock",)
+            "fields": ("stock", "is_active")
         }),
         ("Homepage Flags", {
             "fields": ("is_bestseller", "is_trending", "is_new_arrival", "is_featured")
@@ -589,7 +595,20 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
         )
 
     action_form = PriceUpdateActionForm
-    actions = ("bulk_update_price", "export_books_csv")
+    actions = (
+        "mark_as_featured",
+        "remove_from_featured",
+        "mark_as_new_arrival",
+        "remove_from_new_arrival",
+        "mark_as_bestseller",
+        "remove_from_bestseller",
+        "mark_as_trending",
+        "remove_from_trending",
+        "activate_books",
+        "deactivate_books",
+        "bulk_update_price",
+        "export_books_csv",
+    )
 
     class ImportBooksForm(forms.Form):
         file = forms.FileField(help_text="Upload CSV or XLSX file.")
@@ -650,9 +669,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     def discount_display(self, obj):
         if obj.discount_percentage > 0:
             return f"{obj.discount_percentage}% OFF"
-        return "—"
-
-
+        return "-"
 
     @admin.action(description="Bulk update price by percent")
     def bulk_update_price(self, request, queryset):
@@ -687,12 +704,62 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
 
         self.message_user(request, f"Updated {updated} books.")
 
+    @admin.action(description="Mark as Featured")
+    def mark_as_featured(self, request, queryset):
+        updated = queryset.update(is_featured=True)
+        self.message_user(request, f"Marked {updated} book(s) as featured.")
+
+    @admin.action(description="Remove from Featured")
+    def remove_from_featured(self, request, queryset):
+        updated = queryset.update(is_featured=False)
+        self.message_user(request, f"Removed {updated} book(s) from featured.")
+
+    @admin.action(description="Mark as New Arrival")
+    def mark_as_new_arrival(self, request, queryset):
+        updated = queryset.update(is_new_arrival=True)
+        self.message_user(request, f"Marked {updated} book(s) as new arrival.")
+
+    @admin.action(description="Remove from New Arrival")
+    def remove_from_new_arrival(self, request, queryset):
+        updated = queryset.update(is_new_arrival=False)
+        self.message_user(request, f"Removed {updated} book(s) from new arrival.")
+
+    @admin.action(description="Mark as Bestseller")
+    def mark_as_bestseller(self, request, queryset):
+        updated = queryset.update(is_bestseller=True)
+        self.message_user(request, f"Marked {updated} book(s) as bestseller.")
+
+    @admin.action(description="Remove from Bestseller")
+    def remove_from_bestseller(self, request, queryset):
+        updated = queryset.update(is_bestseller=False)
+        self.message_user(request, f"Removed {updated} book(s) from bestseller.")
+
+    @admin.action(description="Mark as Trending")
+    def mark_as_trending(self, request, queryset):
+        updated = queryset.update(is_trending=True)
+        self.message_user(request, f"Marked {updated} book(s) as trending.")
+
+    @admin.action(description="Remove from Trending")
+    def remove_from_trending(self, request, queryset):
+        updated = queryset.update(is_trending=False)
+        self.message_user(request, f"Removed {updated} book(s) from trending.")
+
+    @admin.action(description="Activate books")
+    def activate_books(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f"Activated {updated} book(s).")
+
+    @admin.action(description="Deactivate books")
+    def deactivate_books(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f"Deactivated {updated} book(s).")
+
     @admin.action(description="Export selected books to CSV")
     def export_books_csv(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="books.csv"'
         writer = csv.writer(response)
-        writer.writerow(["System ID", "Book Title", "Author", "Category", "Subject", "Price", "MRP", "Stock", "ISBN"])
+        writer.writerow(["System ID", "Book Title", "Author", "Category", "Subject", "Price", "MRP", "Stock", "ISBN", "is_active"])
         for book in queryset:
             writer.writerow([
                 book.system_id or "",
@@ -704,6 +771,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
                 book.mrp_price or "",
                 book.stock,
                 book.isbn or "",
+                "true" if book.is_active else "false",
             ])
         return response
 
@@ -757,6 +825,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
             "Binding",
             "Pages",
             "Weight",
+            "is_active",
             "is_bestseller",
             "is_trending",
             "is_new_arrival",
@@ -780,6 +849,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
                 book.binding or "",
                 book.pages or "",
                 book.weight or "",
+                "true" if book.is_active else "false",
                 "true" if book.is_bestseller else "false",
                 "true" if book.is_trending else "false",
                 "true" if book.is_new_arrival else "false",
@@ -812,6 +882,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
             "Binding",
             "Pages",
             "Weight",
+            "is_active",
             "is_bestseller",
             "is_trending",
             "is_new_arrival",
@@ -835,6 +906,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
                 book.binding or "",
                 book.pages or "",
                 book.weight or "",
+                "true" if book.is_active else "false",
                 "true" if book.is_bestseller else "false",
                 "true" if book.is_trending else "false",
                 "true" if book.is_new_arrival else "false",
@@ -864,6 +936,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
             "Binding",
             "Pages",
             "Weight",
+            "is_active",
             "is_bestseller",
             "is_trending",
             "is_new_arrival",
@@ -885,7 +958,7 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
                 "Paperback",
                 "420",
                 "0.45kg",
-                "UG/PG",
+                "true",
                 "true",
                 "false",
                 "true",
@@ -1028,8 +1101,10 @@ class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
                         if weight not in (None, ""):
                             book.weight = str(weight).strip()
 
-                        for flag_field in ("is_bestseller", "is_trending", "is_new_arrival", "is_featured"):
+                        for flag_field in ("is_active", "is_bestseller", "is_trending", "is_new_arrival", "is_featured"):
                             parsed = _coerce_bool(row.get(flag_field))
+                            if parsed is None:
+                                parsed = _coerce_bool(row.get(flag_field.replace("_", " ")))
                             if parsed is not None:
                                 setattr(book, flag_field, parsed)
 
@@ -2288,3 +2363,4 @@ admin_site.register(IKSWallet, IKSWalletAdmin)
 admin_site.register(IKSWalletTransaction, IKSWalletTransactionAdmin)
 admin_site.register(UnaniTerm, UnaniTermAdmin)
 admin_site.register(ClassicalWeightUnit, ClassicalWeightUnitAdmin)
+

@@ -292,7 +292,7 @@ fieldset.module h2 {
   }
 }
 
-/* Admin UX refresh: higher contrast, better density, sticky workflow controls */
+/* Modern polish without sticky offsets */
 #content-main .object-tools {
   display: flex;
   flex-wrap: wrap;
@@ -307,41 +307,34 @@ fieldset.module h2 {
 #content-main .object-tools a {
   background: linear-gradient(180deg, #2b69ef, #1e56cd);
   border: 1px solid #1e56cd;
-  color: #fff;
   border-radius: 10px;
-  padding: 8px 12px;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.2);
+  color: #fff;
   font-weight: 600;
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+  padding: 8px 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 #content-main .object-tools a:hover {
-  background: linear-gradient(180deg, #245dd7, #1d4db6);
-  border-color: #1d4db6;
   transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
 }
 
-#changelist-search {
-  position: sticky;
-  top: 12px;
-  z-index: 40;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+.change-list .actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-#changelist-form .actions {
-  position: sticky;
-  top: 88px;
-  z-index: 35;
-  background: #f8fbff;
-  border: 1px solid #dbe5f3;
-  border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.07);
+.change-list .actions select {
+  border-radius: 8px;
+  min-width: 220px;
 }
 
-#changelist table thead th {
-  position: sticky;
-  top: 146px;
-  z-index: 30;
-  box-shadow: inset 0 -1px 0 var(--seller-border);
+.change-list .actions .button {
+  border-radius: 8px;
+  padding: 7px 12px;
 }
 
 .change-list #result_list td,
@@ -357,109 +350,41 @@ fieldset.module h2 {
   background: #eef4ff;
 }
 
-.change-list .paginator {
-  background: #fff;
-  border: 1px solid var(--seller-border);
-  border-radius: 10px;
+.change-form .submit-row {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.inline-group .tabular td,
+.inline-group .tabular th {
   padding: 8px 10px;
-  margin-top: 10px;
 }
 
-.submit-row {
-  position: sticky;
-  bottom: 10px;
-  z-index: 50;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+.inline-group .tabular td.original p {
+  color: var(--seller-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0;
+  max-width: 320px;
+  white-space: normal;
+  word-break: break-word;
 }
 
-.change-form fieldset.module {
-  overflow: hidden;
+.inline-group .tabular td.field-image input[type="file"] {
+  max-width: 100%;
 }
 
-.change-form fieldset.module h2 {
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
-
-.change-form .aligned .form-row {
-  padding: 10px 12px;
-}
-
-.change-form .aligned .form-row:nth-child(odd) {
-  background: #fbfdff;
-}
-
-.change-form .aligned label {
-  min-width: 180px;
-}
-
-.inline-group .tabular tr.has_original td {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-.inline-group .tabular thead th {
-  background: #f1f5ff;
-}
-
-.inline-group .tabular td {
-  border-bottom: 1px solid #e5ecf7;
-}
-
-/* Make dashboard cards feel consistent with admin lists/forms */
-.dashboard-module,
-#content-related .module {
-  border-radius: 14px;
-}
-
-/* Better focus visibility for keyboard navigation */
-a:focus,
-button:focus,
-input:focus,
-select:focus,
-textarea:focus {
-  outline: 2px solid rgba(37, 99, 235, 0.45);
-  outline-offset: 1px;
-}
-
-@media (max-width: 1200px) {
-  #changelist-form .actions {
-    position: static;
-    top: auto;
-  }
-
-  #changelist table thead th {
-    position: static;
-    top: auto;
-  }
-
-  #changelist-search {
-    position: static;
-    top: auto;
-  }
+.inline-group .tabular tr.form-row.has_original {
+  background: #fcfdff;
 }
 
 @media (max-width: 768px) {
-  #header {
-    box-shadow: none;
-  }
-
-  #content-main .object-tools {
-    gap: 6px;
-  }
-
   #content-main .object-tools a {
     border-radius: 8px;
-    padding: 7px 10px;
     font-size: 12px;
+    padding: 7px 10px;
   }
 
-  .change-form .aligned label {
-    min-width: 0;
-  }
-
-  .submit-row {
-    position: static;
-    box-shadow: none;
+  .change-list .actions select {
+    min-width: 180px;
   }
 }

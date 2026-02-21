@@ -93,6 +93,7 @@ class Book(models.Model):
     is_trending = models.BooleanField(default=False)
     is_new_arrival = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True, db_index=True)
     is_watermarked = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
