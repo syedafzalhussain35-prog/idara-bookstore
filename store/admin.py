@@ -424,12 +424,22 @@ class BulkImportAdminMixin:
         }
         return render(request, self.bulk_import_template, context)
 
+
+class ProductivityAdminMixin:
+    save_on_top = True
+    list_per_page = 50
+    list_max_show_all = 200
+    preserve_filters = True
+    show_full_result_count = False
+    actions_on_top = True
+    actions_on_bottom = True
+
 # ======================
 # CATEGORY ADMIN
 # ======================
 
 @admin.register(Category)
-class CategoryAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+class CategoryAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("name",)
@@ -472,7 +482,7 @@ class BundleBookInline(admin.TabularInline):
 
 
 @admin.register(Bundle)
-class BundleAdmin(admin.ModelAdmin):
+class BundleAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("name", "bundle_price", "is_active", "created_at")
     list_filter = ("is_active", "created_at")
     search_fields = ("name",)
@@ -485,7 +495,7 @@ class BundleAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(Book)
-class BookAdmin(admin.ModelAdmin):
+class BookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = (
         "system_id",
         "title",
@@ -511,6 +521,7 @@ class BookAdmin(admin.ModelAdmin):
     )
     search_fields = ("system_id", "isbn", "title", "author", "description")
     list_select_related = ("category",)
+    autocomplete_fields = ("category", "subjects")
 
     list_editable = (
         "price",
@@ -1285,7 +1296,7 @@ class OrderItemInline(admin.TabularInline):
 # ======================
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "full_name",
@@ -1310,6 +1321,8 @@ class OrderAdmin(admin.ModelAdmin):
 
     list_filter = ("status", "is_paid", "created_at", "city", "packing_assignee", "shipping_assignee", "courier_service")
     search_fields = ("full_name", "email", "city", "user__username", "consignment_number")
+    list_select_related = ("user", "coupon", "packing_assignee", "shipping_assignee")
+    autocomplete_fields = ("coupon",)
     readonly_fields = (
         "user",
         "created_at",
@@ -1332,7 +1345,14 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
     ordering = ("-created_at",)
-    actions = ("export_orders_csv", "force_credit_coins", "cancel_pending_coin_credit")
+    actions = (
+        "set_status_processing",
+        "set_status_packed",
+        "set_status_shipped",
+        "export_orders_csv",
+        "force_credit_coins",
+        "cancel_pending_coin_credit",
+    )
 
     def save_model(self, request, obj, form, change):
         original = None
@@ -1429,6 +1449,35 @@ class OrderAdmin(admin.ModelAdmin):
             ])
         return response
 
+    def _bulk_update_status(self, request, queryset, target_status):
+        updated = 0
+        for order in queryset:
+            if order.status == target_status:
+                continue
+            old_status = order.status
+            order.status = target_status
+            order.save(update_fields=["status"])
+            _log_audit(
+                request,
+                "order_status_change",
+                order,
+                {"status": {"from": old_status, "to": target_status}},
+            )
+            updated += 1
+        self.message_user(request, f"Updated {updated} order(s) to {target_status}.")
+
+    @admin.action(description="Set status: Processing")
+    def set_status_processing(self, request, queryset):
+        self._bulk_update_status(request, queryset, "Processing")
+
+    @admin.action(description="Set status: Packed")
+    def set_status_packed(self, request, queryset):
+        self._bulk_update_status(request, queryset, "Packed")
+
+    @admin.action(description="Set status: Shipped")
+    def set_status_shipped(self, request, queryset):
+        self._bulk_update_status(request, queryset, "Shipped")
+
     @admin.action(description="Force credit pending coins now")
     def force_credit_coins(self, request, queryset):
         updated = 0
@@ -1479,7 +1528,7 @@ class CartBundleItemInline(admin.TabularInline):
 
 
 @admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
+class CartAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("user", "created_at")
     search_fields = ("user__username",)
     inlines = [CartItemInline, CartBundleItemInline]
@@ -1490,7 +1539,7 @@ class CartAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(Wishlist)
-class WishlistAdmin(admin.ModelAdmin):
+class WishlistAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("user", "book", "created_at")
     search_fields = ("user__username", "book__title")
     list_select_related = ("user", "book")
@@ -1501,7 +1550,7 @@ class WishlistAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
+class ReviewAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = (
         "book",
         "user",
@@ -1526,7 +1575,7 @@ class ReviewAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(Coupon)
-class CouponAdmin(admin.ModelAdmin):
+class CouponAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = (
         "code",
         "discount_type",
@@ -1568,7 +1617,7 @@ class CouponAdmin(admin.ModelAdmin):
 
 
 @admin.register(UnaniTerm)
-class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("english_term", "section", "is_published", "updated_at")
     search_fields = ("arabic_script", "transliteration", "english_term", "description")
     list_filter = ("section", "is_published")
@@ -1677,7 +1726,7 @@ class UnaniTermAdmin(BulkImportAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(ClassicalWeightUnit)
-class ClassicalWeightUnitAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+class ClassicalWeightUnitAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("classical_weight", "metric_weight", "grams_value", "display_order", "is_active", "updated_at")
     list_filter = ("is_active",)
     search_fields = ("classical_weight", "metric_weight", "source_note")
@@ -1752,7 +1801,7 @@ class ClassicalWeightUnitAdmin(BulkImportAdminMixin, admin.ModelAdmin):
 # ======================
 
 @admin.register(SyllabusPDF)
-class SyllabusPDFAdmin(admin.ModelAdmin):
+class SyllabusPDFAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("title", "category", "semester", "uploaded_at")
     list_filter = ("category", "semester")
     search_fields = ("title",)
@@ -1773,7 +1822,7 @@ class SyllabusPDFAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(GalleryItem)
-class GalleryItemAdmin(admin.ModelAdmin):
+class GalleryItemAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("event", "media_type", "title", "order", "created_at")
     list_filter = ("event", "media_type")
     search_fields = ("event", "title", "media")
@@ -1786,14 +1835,14 @@ class GalleryItemAdmin(admin.ModelAdmin):
 # ======================
 
 @admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("user", "phone", "city", "company", "iks_follow_instagram", "iks_follow_facebook", "updated_at")
     search_fields = ("user__username", "user__email", "phone", "city", "company")
     ordering = ("-updated_at",)
 
 
 @admin.register(UserAddress)
-class UserAddressAdmin(admin.ModelAdmin):
+class UserAddressAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("user", "label", "city", "zip_code", "is_default", "created_at")
     list_filter = ("is_default", "city")
     search_fields = ("user__username", "user__email", "label", "address", "city", "zip_code")
@@ -1801,24 +1850,26 @@ class UserAddressAdmin(admin.ModelAdmin):
 
 
 @admin.register(SearchQueryLog)
-class SearchQueryLogAdmin(admin.ModelAdmin):
+class SearchQueryLogAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("query", "results_count", "user", "created_at")
     list_filter = ("results_count", "created_at")
     search_fields = ("query", "category_slug", "subject_slug", "ip_address")
     ordering = ("-created_at",)
+    date_hierarchy = "created_at"
 
 
 @admin.register(AuditLog)
-class AuditLogAdmin(admin.ModelAdmin):
+class AuditLogAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("action", "model_name", "object_id", "user", "created_at")
     list_filter = ("action", "model_name", "created_at")
     search_fields = ("object_repr", "user__username", "user__email")
     readonly_fields = ("user", "action", "model_name", "object_id", "object_repr", "changes", "created_at")
     ordering = ("-created_at",)
+    date_hierarchy = "created_at"
 
 
 @admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
+class SiteSettingsAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("id", "sales_offers_label", "sales_offers_enabled", "is_active", "created_at")
     list_filter = ("is_active", "created_at")
     ordering = ("-created_at",)
@@ -1836,7 +1887,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
 
 @admin.register(IKSCoinsSettings)
-class IKSCoinsSettingsAdmin(admin.ModelAdmin):
+class IKSCoinsSettingsAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = (
         "name",
         "is_active",
@@ -1853,7 +1904,7 @@ class IKSCoinsSettingsAdmin(admin.ModelAdmin):
 
 
 @admin.register(IKSWallet)
-class IKSWalletAdmin(admin.ModelAdmin):
+class IKSWalletAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = (
         "user",
         "balance",
@@ -1905,7 +1956,7 @@ class IKSWalletAdmin(admin.ModelAdmin):
 
 
 @admin.register(IKSWalletTransaction)
-class IKSWalletTransactionAdmin(admin.ModelAdmin):
+class IKSWalletTransactionAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("id", "wallet", "tx_type", "status", "coins", "order", "book", "release_date", "created_at")
     list_filter = ("tx_type", "status", "created_at")
     search_fields = ("wallet__user__username", "wallet__user__email", "note")
@@ -1932,7 +1983,7 @@ class IKSWalletTransactionAdmin(admin.ModelAdmin):
             obj.save(update_fields=["completed_at"])
 
 @admin.register(Subject)
-class SubjectAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+class SubjectAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("name", "slug", "is_active")
     search_fields = ("name",)
     list_filter = ("is_active",)
@@ -1963,7 +2014,7 @@ class SubjectAdmin(BulkImportAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(PublishWithUsSubmission)
-class PublishWithUsSubmissionAdmin(admin.ModelAdmin):
+class PublishWithUsSubmissionAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     list_display = ("title", "author_name", "email", "phone", "created_at")
     search_fields = ("title", "author_name", "email", "phone")
     readonly_fields = ("created_at",)
@@ -1987,7 +2038,7 @@ class BannerAdminForm(forms.ModelForm):
 
 
 @admin.register(Banner)
-class BannerAdmin(BulkImportAdminMixin, admin.ModelAdmin):
+class BannerAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
     form = BannerAdminForm
     list_display = (
         "preview",
