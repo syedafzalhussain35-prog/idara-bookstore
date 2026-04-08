@@ -68,6 +68,15 @@ DICTIONARY_SCRIPT_LETTERS = [
 ]
 
 
+_BIDI_CONTROL_TRANSLATION = str.maketrans("", "", "\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\u061c")
+
+
+def _clean_script_text(value):
+    if not value:
+        return value
+    return value.translate(_BIDI_CONTROL_TRANSLATION).strip()
+
+
 def _is_mobile_request(request):
     ua = (request.META.get("HTTP_USER_AGENT") or "").lower()
     return bool(re.search(r"android|iphone|ipod|mobile|opera mini|iemobile", ua))
@@ -523,6 +532,8 @@ def dictionary_list(request):
     page_size = int(getattr(settings, "DICTIONARY_PAGE_SIZE", 20))
     paginator = Paginator(terms_qs, page_size)
     page_obj = paginator.get_page(request.GET.get("page"))
+    for term in page_obj.object_list:
+        term.arabic_script = _clean_script_text(term.arabic_script)
 
     return render(request, "store/dictionary_list.html", {
         "page_obj": page_obj,
@@ -537,6 +548,7 @@ def dictionary_list(request):
 
 def dictionary_detail(request, slug):
     term = get_object_or_404(UnaniTerm, slug=slug, is_published=True)
+    term.arabic_script = _clean_script_text(term.arabic_script)
     description_snippet = strip_tags(term.description or "").strip()
     meta_description = description_snippet[:150]
     if len(description_snippet) > 150:
