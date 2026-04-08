@@ -1253,7 +1253,6 @@ class UnaniTerm(models.Model):
     def save(self, *args, **kwargs):
         self.arabic_script = normalize_script_text(self.arabic_script)
         self.transliteration = normalize_transliteration_text(self.transliteration)
-        self.english_term = " ".join(str(self.english_term or "").split()).strip()
         self.arabic_script_normalized = normalize_script_text(self.arabic_script)
         self.transliteration_normalized = normalize_latin_search_text(self.transliteration)
         self.english_term_normalized = normalize_latin_search_text(self.english_term)

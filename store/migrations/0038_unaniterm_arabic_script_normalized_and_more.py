@@ -66,14 +66,13 @@ def populate_unaniterm_normalized_fields(apps, schema_editor):
     for term in UnaniTerm.objects.all().iterator():
         cleaned_script = _normalize_script_text(term.arabic_script)
         cleaned_translit = _normalize_translit_text(term.transliteration)
-        cleaned_english = _WHITESPACE_RE.sub(" ", str(term.english_term or "")).strip()
+        raw_english = str(term.english_term or "")
         updates = {
             "arabic_script": cleaned_script,
             "transliteration": cleaned_translit,
-            "english_term": cleaned_english,
             "arabic_script_normalized": _normalize_script_text(cleaned_script),
             "transliteration_normalized": _normalize_latin_search(cleaned_translit),
-            "english_term_normalized": _normalize_latin_search(cleaned_english),
+            "english_term_normalized": _normalize_latin_search(raw_english),
         }
         UnaniTerm.objects.filter(pk=term.pk).update(**updates)
 
