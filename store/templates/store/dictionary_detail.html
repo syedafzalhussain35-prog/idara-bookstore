@@ -26,6 +26,27 @@
                     <div class="small text-muted">Section</div>
                     <div class="fw-semibold">{{ term.section|default:"-" }}</div>
                 </div>
+                <div class="col-md-6">
+                    <div class="small text-muted">Reference</div>
+                    <div class="fw-semibold">
+                        {% if term.reference_source %}
+                            {% if term.reference_source.source_url %}
+                            <a href="{{ term.reference_source.source_url }}" target="_blank" rel="noopener">{{ term.reference_source.name }}</a>
+                            {% else %}
+                            {{ term.reference_source.name }}
+                            {% endif %}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-copy" data-copy="{{ term.arabic_script|default:'' }}">Copy Script</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-copy" data-copy="{{ term.transliteration|default:'' }}">Copy Transliteration</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="shareTerm">Share</button>
+                    </div>
+                </div>
                 <div class="col-12">
                     <div class="small text-muted mb-1">Description</div>
                     <div class="lh-lg">{{ term.description|linebreaks }}</div>
@@ -34,4 +55,33 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".js-copy").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const value = btn.getAttribute("data-copy") || "";
+            if (!value.trim()) return;
+            try {
+                await navigator.clipboard.writeText(value);
+            } catch (err) {
+            }
+        });
+    });
+
+    const shareBtn = document.getElementById("shareTerm");
+    if (shareBtn) {
+        shareBtn.addEventListener("click", async () => {
+            const url = window.location.href;
+            try {
+                if (navigator.share) {
+                    await navigator.share({ url });
+                    return;
+                }
+                await navigator.clipboard.writeText(url);
+            } catch (err) {
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -2,11 +2,12 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 from django import forms
+from datetime import timedelta
 from django.contrib import messages
 from django.urls import path, reverse
 from django.shortcuts import render, redirect
 from django.db import transaction
-from django.db.models import Sum, Case, When, Value, IntegerField
+from django.db.models import Sum, Case, When, Value, IntegerField, Count
 from decimal import Decimal, InvalidOperation
 import re
 import zipfile
@@ -36,6 +37,9 @@ from .models import (
     PublishWithUsSubmission,
     Banner,
     SearchQueryLog,
+    DictionaryQueryLog,
+    DictionaryTermOpenLog,
+    UnaniReferenceSource,
     AuditLog,
     SiteSettings,
     IKSCoinsSettings,
@@ -46,6 +50,13 @@ from .models import (
 )
 from .admin_site import IdaraAdminSite
 from .coins import manual_adjust_wallet, queue_order_pending_rewards, process_due_pending_rewards_for_user
+from .dictionary_text import (
+    normalize_latin_search_text,
+    normalize_script_text,
+    normalize_transliteration_text,
+    transliteration_invalid_chars,
+    validate_transliteration_style,
+)
 
 admin_site = IdaraAdminSite(name="idara_admin")
 
@@ -1691,21 +1702,59 @@ class CouponAdmin(ProductivityAdminMixin, admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class UnaniTermActionForm(ActionForm):
+    reference_source = forms.ModelChoiceField(
+        queryset=UnaniReferenceSource.objects.none(),
+        required=False,
+        label="Reference (for assign action)",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["reference_source"].queryset = UnaniReferenceSource.objects.filter(
+            is_active=True
+        ).order_by("name")
+
+
+class UnaniTermAdminForm(forms.ModelForm):
+    class Meta:
+        model = UnaniTerm
+        fields = "__all__"
+
+    def clean_arabic_script(self):
+        return normalize_script_text(self.cleaned_data.get("arabic_script"))
+
+    def clean_transliteration(self):
+        value = normalize_transliteration_text(self.cleaned_data.get("transliteration"))
+        validate_transliteration_style(value)
+        return value
+
+
 @admin.register(UnaniTerm)
 class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
-    list_display = ("english_term", "section", "is_published", "updated_at")
-    search_fields = ("arabic_script", "transliteration", "english_term", "description")
-    list_filter = ("section", "is_published")
+    form = UnaniTermAdminForm
+    action_form = UnaniTermActionForm
+    change_list_template = "admin/store/unaniterm/change_list.html"
+    list_display = ("english_term", "reference_source", "section", "is_published", "updated_at")
+    search_fields = (
+        "arabic_script",
+        "arabic_script_normalized",
+        "transliteration",
+        "transliteration_normalized",
+        "english_term",
+        "english_term_normalized",
+        "description",
+    )
+    list_filter = ("section", "reference_source", "is_published")
     prepopulated_fields = {"slug": ("english_term",)}
     ordering = ("english_term",)
     readonly_fields = ("created_at", "updated_at")
     list_per_page = 50
-    actions = ("publish_terms", "unpublish_terms")
-    change_list_template = BulkImportAdminMixin.bulk_import_changelist_template
+    actions = ("publish_terms", "unpublish_terms", "assign_reference_source", "clear_reference_source")
     bulk_import_title = "Bulk Import Unani Terms"
     bulk_import_help = (
         "Required: english_term. Optional: description, transliteration, arabic_script, "
-        "section, slug, is_published."
+        "section, reference_source, slug, is_published."
     )
     bulk_import_overflow_merge_column = "description"
     bulk_import_columns = (
@@ -1714,6 +1763,7 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
         "transliteration",
         "arabic_script",
         "section",
+        "reference_source",
         "slug",
         "is_published",
     )
@@ -1724,6 +1774,7 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
             "transliteration": "Tamamiyya Asbab",
             "arabic_script": "\u0627\u0633\u0628\u0627\u0628 \u062a\u0627\u0645\u06cc\u06c1",
             "section": "General Terms",
+            "reference_source": "Qarabadin-e-Qadri",
             "slug": "tamamiyya-asbab",
             "is_published": "true",
         },
@@ -1732,17 +1783,51 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         if search_term:
+            normalized_script = normalize_script_text(search_term)
+            normalized_text = normalize_latin_search_text(search_term)
             queryset = queryset.annotate(
                 search_priority=Case(
-                    When(arabic_script__icontains=search_term, then=Value(1)),
-                    When(transliteration__icontains=search_term, then=Value(2)),
-                    When(english_term__icontains=search_term, then=Value(3)),
-                    When(description__icontains=search_term, then=Value(4)),
-                    default=Value(5),
+                    When(arabic_script_normalized=normalized_script, then=Value(1)),
+                    When(arabic_script_normalized__startswith=normalized_script, then=Value(2)),
+                    When(transliteration_normalized__icontains=normalized_text, then=Value(3)),
+                    When(english_term_normalized__icontains=normalized_text, then=Value(4)),
+                    When(description__icontains=search_term, then=Value(5)),
+                    default=Value(6),
                     output_field=IntegerField(),
                 )
             ).order_by("search_priority", "english_term")
         return queryset, use_distinct
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        since = timezone.now() - timedelta(days=7)
+        top_searches = list(
+            DictionaryQueryLog.objects.filter(created_at__gte=since)
+            .exclude(query="")
+            .values("query")
+            .annotate(total=Count("id"))
+            .order_by("-total", "query")[:10]
+        )
+        zero_result_searches = list(
+            DictionaryQueryLog.objects.filter(created_at__gte=since, results_count=0)
+            .exclude(query="")
+            .values("query")
+            .annotate(total=Count("id"))
+            .order_by("-total", "query")[:10]
+        )
+        most_opened_terms = list(
+            DictionaryTermOpenLog.objects.filter(created_at__gte=since)
+            .values("term_id", "term__english_term")
+            .annotate(total=Count("id"))
+            .order_by("-total", "term__english_term")[:10]
+        )
+        extra_context["dictionary_analytics"] = {
+            "since": since,
+            "top_searches": top_searches,
+            "zero_result_searches": zero_result_searches,
+            "most_opened_terms": most_opened_terms,
+        }
+        return super().changelist_view(request, extra_context=extra_context)
 
     @admin.action(description="Publish selected terms")
     def publish_terms(self, request, queryset):
@@ -1753,6 +1838,32 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
     def unpublish_terms(self, request, queryset):
         count = queryset.update(is_published=False)
         self.message_user(request, f"{count} term(s) unpublished.")
+
+    @admin.action(description="Assign selected reference source")
+    def assign_reference_source(self, request, queryset):
+        reference_id = request.POST.get("reference_source")
+        if not reference_id:
+            self.message_user(
+                request,
+                "Choose a reference from the dropdown before running this action.",
+                level=messages.ERROR,
+            )
+            return
+        reference = UnaniReferenceSource.objects.filter(pk=reference_id, is_active=True).first()
+        if not reference:
+            self.message_user(
+                request,
+                "Selected reference is invalid or inactive.",
+                level=messages.ERROR,
+            )
+            return
+        count = queryset.update(reference_source=reference)
+        self.message_user(request, f"{count} term(s) updated with reference '{reference.name}'.")
+
+    @admin.action(description="Clear reference source")
+    def clear_reference_source(self, request, queryset):
+        count = queryset.update(reference_source=None)
+        self.message_user(request, f"Reference source cleared for {count} term(s).")
 
     def import_row(self, row_data):
         english_term = str(row_data.get("english term") or row_data.get("english_term") or "").strip()
@@ -1780,6 +1891,26 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
                     break
             if value is not None:
                 setattr(term, field_name, value)
+
+        reference_name = str(
+            row_data.get("reference source")
+            or row_data.get("reference_source")
+            or row_data.get("reference")
+            or ""
+        ).strip()
+        if reference_name:
+            reference, _ = UnaniReferenceSource.objects.get_or_create(name=reference_name)
+            term.reference_source = reference
+
+        term.arabic_script = normalize_script_text(term.arabic_script)
+        term.transliteration = normalize_transliteration_text(term.transliteration)
+        bad_chars = transliteration_invalid_chars(term.transliteration)
+        if bad_chars:
+            bad_display = ", ".join(repr(ch) for ch in bad_chars[:8])
+            raise ValueError(
+                "Transliteration has unsupported characters. "
+                f"Use one style (Latin + diacritics). Found: {bad_display}"
+            )
 
         char_limits = {
             "transliteration": 255,
@@ -1931,6 +2062,34 @@ class SearchQueryLogAdmin(ProductivityAdminMixin, admin.ModelAdmin):
     search_fields = ("query", "category_slug", "subject_slug", "ip_address")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
+
+
+@admin.register(UnaniReferenceSource)
+class UnaniReferenceSourceAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("name", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "citation", "source_url")
+    ordering = ("name",)
+
+
+@admin.register(DictionaryQueryLog)
+class DictionaryQueryLogAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("query", "results_count", "section", "letter", "user", "created_at")
+    list_filter = ("results_count", "section", "letter", "created_at")
+    search_fields = ("query", "normalized_query", "ip_address")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    readonly_fields = ("query", "normalized_query", "results_count", "section", "letter", "user", "ip_address", "created_at")
+
+
+@admin.register(DictionaryTermOpenLog)
+class DictionaryTermOpenLogAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("term", "user", "ip_address", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("term__english_term", "term__arabic_script", "term__transliteration", "ip_address")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    readonly_fields = ("term", "user", "ip_address", "created_at")
 
 
 @admin.register(AuditLog)
@@ -2356,6 +2515,9 @@ admin_site.register(Order, OrderAdmin)
 admin_site.register(PublishWithUsSubmission, PublishWithUsSubmissionAdmin)
 admin_site.register(Banner, BannerAdmin)
 admin_site.register(SearchQueryLog, SearchQueryLogAdmin)
+admin_site.register(UnaniReferenceSource, UnaniReferenceSourceAdmin)
+admin_site.register(DictionaryQueryLog, DictionaryQueryLogAdmin)
+admin_site.register(DictionaryTermOpenLog, DictionaryTermOpenLogAdmin)
 admin_site.register(AuditLog, AuditLogAdmin)
 admin_site.register(SiteSettings, SiteSettingsAdmin)
 admin_site.register(IKSCoinsSettings, IKSCoinsSettingsAdmin)

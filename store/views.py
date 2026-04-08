@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from difflib import get_close_matches
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core import signing
 from django.contrib.auth.decorators import login_required
@@ -40,6 +41,8 @@ from .models import (
     Banner,
     SearchQueryLog,
     UnaniTerm,
+    DictionaryQueryLog,
+    DictionaryTermOpenLog,
     ClassicalWeightUnit,
 )
 from .email_utils import send_publish_with_us
@@ -55,6 +58,7 @@ from .coins import (
     award_review_bonus_if_eligible,
     award_profile_completion_bonus_if_eligible,
 )
+from .dictionary_text import normalize_latin_search_text, normalize_script_text
 
 logger = logging.getLogger(__name__)
 
@@ -68,13 +72,73 @@ DICTIONARY_SCRIPT_LETTERS = [
 ]
 
 
-_BIDI_CONTROL_TRANSLATION = str.maketrans("", "", "\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\u061c")
+def _get_request_ip(request):
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+    if forwarded:
+        return forwarded
+    return request.META.get("REMOTE_ADDR")
 
 
-def _clean_script_text(value):
-    if not value:
-        return value
-    return value.translate(_BIDI_CONTROL_TRANSLATION).strip()
+def _build_dictionary_suggestions(normalized_script_query, normalized_text_query, limit=6):
+    suggestions = []
+
+    if normalized_script_query:
+        script_pool = cache.get("dictionary_script_pool_v1")
+        if script_pool is None:
+            script_pool = list(
+                UnaniTerm.objects.filter(is_published=True)
+                .exclude(arabic_script_normalized="")
+                .values_list("arabic_script_normalized", "arabic_script")
+            )
+            cache.set("dictionary_script_pool_v1", script_pool, 600)
+
+        script_map = {}
+        for norm, display in script_pool:
+            if norm and norm not in script_map:
+                script_map[norm] = display
+        script_matches = get_close_matches(
+            normalized_script_query,
+            list(script_map.keys()),
+            n=limit,
+            cutoff=0.45,
+        )
+        suggestions.extend(
+            {"value": script_map[key], "kind": "Script"} for key in script_matches
+        )
+
+    if normalized_text_query and len(suggestions) < limit:
+        translit_pool = cache.get("dictionary_translit_pool_v1")
+        if translit_pool is None:
+            translit_pool = list(
+                UnaniTerm.objects.filter(is_published=True)
+                .exclude(transliteration_normalized="")
+                .values_list("transliteration_normalized", "transliteration")
+            )
+            cache.set("dictionary_translit_pool_v1", translit_pool, 600)
+
+        translit_map = {}
+        for norm, display in translit_pool:
+            if norm and norm not in translit_map:
+                translit_map[norm] = display
+        translit_matches = get_close_matches(
+            normalized_text_query,
+            list(translit_map.keys()),
+            n=max(0, limit - len(suggestions)),
+            cutoff=0.52,
+        )
+        suggestions.extend(
+            {"value": translit_map[key], "kind": "Transliteration"}
+            for key in translit_matches
+        )
+
+    deduped = []
+    seen = set()
+    for item in suggestions:
+        key = item["value"].strip().lower()
+        if key and key not in seen:
+            deduped.append(item)
+            seen.add(key)
+    return deduped[:limit]
 
 
 def _is_mobile_request(request):
@@ -480,27 +544,35 @@ def dictionary_list(request):
     query = (request.GET.get("q") or "").strip()
     selected_section = (request.GET.get("section") or "").strip()
     selected_letter = (request.GET.get("letter") or "").strip()
+    normalized_script_query = normalize_script_text(query)
+    normalized_text_query = normalize_latin_search_text(query)
 
     terms_qs = UnaniTerm.objects.filter(is_published=True)
 
     if query:
-        terms_qs = terms_qs.filter(
-            Q(english_term__icontains=query)
-            | Q(transliteration__icontains=query)
-            | Q(arabic_script__icontains=query)
-            | Q(description__icontains=query)
-        )
-        # Prioritize native script matches for Unani usage patterns.
+        search_filters = Q(description__icontains=query)
+        if normalized_script_query:
+            search_filters |= Q(arabic_script_normalized__icontains=normalized_script_query)
+        if normalized_text_query:
+            search_filters |= Q(transliteration_normalized__icontains=normalized_text_query)
+            search_filters |= Q(english_term_normalized__icontains=normalized_text_query)
+        terms_qs = terms_qs.filter(search_filters)
+
+        ranking = []
+        if normalized_script_query:
+            ranking.append(When(arabic_script_normalized=normalized_script_query, then=Value(1)))
+            ranking.append(When(arabic_script_normalized__startswith=normalized_script_query, then=Value(2)))
+        if normalized_text_query:
+            ranking.append(When(transliteration_normalized__icontains=normalized_text_query, then=Value(3)))
+            ranking.append(When(english_term_normalized__icontains=normalized_text_query, then=Value(4)))
+        ranking.append(When(description__icontains=query, then=Value(5)))
         terms_qs = terms_qs.annotate(
             match_priority=Case(
-                When(arabic_script__icontains=query, then=Value(1)),
-                When(transliteration__icontains=query, then=Value(2)),
-                When(english_term__icontains=query, then=Value(3)),
-                When(description__icontains=query, then=Value(4)),
-                default=Value(5),
+                *ranking,
+                default=Value(6),
                 output_field=IntegerField(),
             )
-        ).order_by("match_priority", "arabic_script", "transliteration", "english_term")
+        )
 
     all_sections = list(
         UnaniTerm.objects.filter(is_published=True)
@@ -515,29 +587,59 @@ def dictionary_list(request):
         selected_section = ""
 
     if selected_letter and selected_letter in DICTIONARY_SCRIPT_LETTERS:
-        terms_qs = terms_qs.filter(arabic_script__startswith=selected_letter)
+        terms_qs = terms_qs.filter(arabic_script_normalized__startswith=normalize_script_text(selected_letter))
     else:
         selected_letter = ""
 
-    # Script-first ordering for a Unani Urdu/Arabic/Persian dictionary.
-    terms_qs = terms_qs.annotate(
+    terms_qs = terms_qs.select_related("reference_source").annotate(
         script_priority=Case(
             When(arabic_script="", then=Value(1)),
             default=Value(0),
             output_field=IntegerField(),
         )
-    ).order_by("script_priority", "arabic_script", "transliteration", "english_term")
+    )
+    if query:
+        terms_qs = terms_qs.order_by(
+            "match_priority",
+            "script_priority",
+            "arabic_script_normalized",
+            "transliteration_normalized",
+            "english_term",
+        )
+    else:
+        terms_qs = terms_qs.order_by(
+            "script_priority",
+            "arabic_script_normalized",
+            "transliteration_normalized",
+            "english_term",
+        )
 
     total_published = UnaniTerm.objects.filter(is_published=True).count()
     page_size = int(getattr(settings, "DICTIONARY_PAGE_SIZE", 20))
     paginator = Paginator(terms_qs, page_size)
     page_obj = paginator.get_page(request.GET.get("page"))
-    for term in page_obj.object_list:
-        term.arabic_script = _clean_script_text(term.arabic_script)
+    suggestion_items = []
+    if query and paginator.count == 0:
+        suggestion_items = _build_dictionary_suggestions(
+            normalized_script_query=normalized_script_query,
+            normalized_text_query=normalized_text_query,
+        )
+
+    if query or selected_section or selected_letter:
+        DictionaryQueryLog.objects.create(
+            query=query[:255],
+            normalized_query=(normalized_script_query or normalized_text_query)[:255],
+            results_count=paginator.count,
+            section=selected_section[:120],
+            letter=selected_letter[:8],
+            user=request.user if request.user.is_authenticated else None,
+            ip_address=_get_request_ip(request),
+        )
 
     return render(request, "store/dictionary_list.html", {
         "page_obj": page_obj,
         "query": query,
+        "suggestion_items": suggestion_items,
         "selected_section": selected_section,
         "selected_letter": selected_letter,
         "letters": DICTIONARY_SCRIPT_LETTERS,
@@ -547,8 +649,16 @@ def dictionary_list(request):
 
 
 def dictionary_detail(request, slug):
-    term = get_object_or_404(UnaniTerm, slug=slug, is_published=True)
-    term.arabic_script = _clean_script_text(term.arabic_script)
+    term = get_object_or_404(
+        UnaniTerm.objects.select_related("reference_source"),
+        slug=slug,
+        is_published=True,
+    )
+    DictionaryTermOpenLog.objects.create(
+        term=term,
+        user=request.user if request.user.is_authenticated else None,
+        ip_address=_get_request_ip(request),
+    )
     description_snippet = strip_tags(term.description or "").strip()
     meta_description = description_snippet[:150]
     if len(description_snippet) > 150:

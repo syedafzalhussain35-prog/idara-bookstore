@@ -10,6 +10,11 @@ from io import BytesIO
 from urllib.parse import urlsplit, urlunsplit
 from django.core.files.base import ContentFile
 
+from .dictionary_text import (
+    normalize_latin_search_text,
+    normalize_script_text,
+    normalize_transliteration_text,
+)
 
 # ======================
 # CATEGORY
@@ -913,6 +918,46 @@ class SearchQueryLog(models.Model):
         return f"{self.query} ({self.results_count})"
 
 
+class UnaniReferenceSource(models.Model):
+    name = models.CharField(max_length=140, unique=True)
+    citation = models.CharField(max_length=255, blank=True)
+    source_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["is_active", "name"]),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class DictionaryQueryLog(models.Model):
+    query = models.CharField(max_length=255, db_index=True)
+    normalized_query = models.CharField(max_length=255, blank=True, db_index=True)
+    results_count = models.PositiveIntegerField(default=0)
+    section = models.CharField(max_length=120, blank=True)
+    letter = models.CharField(max_length=8, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["results_count"]),
+            models.Index(fields=["normalized_query"]),
+        ]
+
+    def __str__(self):
+        return f"{self.query} ({self.results_count})"
+
+
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
@@ -1177,8 +1222,18 @@ class UnaniTerm(models.Model):
     english_term = models.CharField(max_length=255, unique=True, db_index=True)
     description = models.TextField()
     transliteration = models.CharField(max_length=255, blank=True, db_index=True)
+    transliteration_normalized = models.CharField(max_length=255, blank=True, db_index=True, editable=False)
     arabic_script = models.CharField(max_length=255, blank=True, db_index=True)
+    arabic_script_normalized = models.CharField(max_length=255, blank=True, db_index=True, editable=False)
+    english_term_normalized = models.CharField(max_length=255, blank=True, db_index=True, editable=False)
     section = models.CharField(max_length=120, blank=True, db_index=True)
+    reference_source = models.ForeignKey(
+        UnaniReferenceSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="terms",
+    )
     slug = models.SlugField(max_length=255, unique=True, db_index=True, blank=True)
     is_published = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1196,6 +1251,12 @@ class UnaniTerm(models.Model):
         return self.english_term
 
     def save(self, *args, **kwargs):
+        self.arabic_script = normalize_script_text(self.arabic_script)
+        self.transliteration = normalize_transliteration_text(self.transliteration)
+        self.english_term = " ".join(str(self.english_term or "").split()).strip()
+        self.arabic_script_normalized = normalize_script_text(self.arabic_script)
+        self.transliteration_normalized = normalize_latin_search_text(self.transliteration)
+        self.english_term_normalized = normalize_latin_search_text(self.english_term)
         if not self.slug:
             base = slugify(self.english_term)[:245] or "term"
             candidate = base
@@ -1206,3 +1267,20 @@ class UnaniTerm(models.Model):
                 counter += 1
             self.slug = candidate
         super().save(*args, **kwargs)
+
+
+class DictionaryTermOpenLog(models.Model):
+    term = models.ForeignKey(UnaniTerm, on_delete=models.CASCADE, related_name="open_logs")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["term", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.term.english_term} @ {self.created_at:%Y-%m-%d}"

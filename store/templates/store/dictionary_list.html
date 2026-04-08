@@ -1,4 +1,5 @@
-﻿{% extends 'store/base.html' %}
+{% extends 'store/base.html' %}
+{% load dictionary_extras %}
 
 {% block title %}IKS Unani Medical Dictionary{% endblock %}
 {% block extra_css %}
@@ -176,6 +177,13 @@
     font-size: 0.9rem;
 }
 
+.term-card mark {
+    background: #fff2a8;
+    color: inherit;
+    border-radius: 4px;
+    padding: 0 2px;
+}
+
 .term-results {
     margin-top: 14px;
     display: grid;
@@ -252,6 +260,21 @@
     line-height: 1.25;
 }
 
+.term-reference {
+    margin: 2px 0 0;
+    color: #4f3c46;
+    font-size: 0.9rem;
+}
+
+.term-reference a {
+    color: #7a1f49;
+    text-decoration: none;
+}
+
+.term-reference a:hover {
+    text-decoration: underline;
+}
+
 .term-actions {
     display: flex;
     flex-direction: row;
@@ -294,6 +317,75 @@
     line-height: 1.2;
     text-transform: none;
     letter-spacing: 0;
+}
+
+.term-quick-actions {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ecd9e3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.term-quick-btn {
+    border: 1px solid #dfc7d3;
+    border-radius: 999px;
+    background: #fff;
+    color: #5d2441;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 6px 10px;
+}
+
+.term-quick-btn:hover {
+    border-color: #be1d63;
+    color: #be1d63;
+}
+
+.dictionary-suggestions {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dictionary-suggestion-chip {
+    border: 1px solid #dec8d4;
+    border-radius: 999px;
+    background: #fff;
+    color: #5a2740;
+    text-decoration: none;
+    font-size: 0.82rem;
+    padding: 5px 10px;
+}
+
+.dictionary-suggestion-chip:hover {
+    border-color: #be1d63;
+    color: #be1d63;
+}
+
+.dictionary-toast {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1000;
+    background: #28131d;
+    color: #fff;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 0.85rem;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.dictionary-toast.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .dictionary-pagination .page-link {
@@ -526,14 +618,24 @@
                     <div class="term-script-wrap">
                         <div class="term-script-label">Arabic/Persian/Urdu</div>
                         <div class="term-script-box">
-                            <div class="term-script" dir="rtl">{{ item.arabic_script|default:"-" }}</div>
+                            <div class="term-script" dir="rtl">{{ item.arabic_script|default:"-"|highlight_query:query }}</div>
                         </div>
                     </div>
                     <div class="term-main">
                         <div class="term-field-label">Transliteration</div>
-                        <p class="term-transliteration term-transliteration-wrap">{{ item.transliteration|default:"-" }}</p>
+                        <p class="term-transliteration term-transliteration-wrap">{{ item.transliteration|default:"-"|highlight_query:query }}</p>
                         <div class="term-field-label mt-2">English term</div>
-                        <h2 class="term-title">{{ item.english_term }}</h2>
+                        <h2 class="term-title">{{ item.english_term|highlight_query:query }}</h2>
+                        {% if item.reference_source %}
+                        <div class="term-field-label mt-2">Reference</div>
+                        <p class="term-reference">
+                            {% if item.reference_source.source_url %}
+                            <a href="{{ item.reference_source.source_url }}" target="_blank" rel="noopener">{{ item.reference_source.name }}</a>
+                            {% else %}
+                            {{ item.reference_source.name }}
+                            {% endif %}
+                        </p>
+                        {% endif %}
                     </div>
                     <div class="term-actions">
                         {% if item.section %}
@@ -545,6 +647,11 @@
                         <a href="{% url 'dictionary_detail' item.slug %}" class="btn btn-sm btn-brand term-open">Open</a>
                     </div>
                 </div>
+                <div class="term-quick-actions">
+                    <button type="button" class="term-quick-btn js-copy-script" data-copy="{{ item.arabic_script|default:'' }}">Copy Script</button>
+                    <button type="button" class="term-quick-btn js-copy-translit" data-copy="{{ item.transliteration|default:'' }}">Copy Transliteration</button>
+                    <button type="button" class="term-quick-btn js-share-term" data-share-url="{% url 'dictionary_detail' item.slug %}">Share</button>
+                </div>
             </article>
             {% endfor %}
         </div>
@@ -554,6 +661,16 @@
             No dictionary entries are published yet. Please add/publish terms from admin.
             {% else %}
             No dictionary terms found for your current search/filter.
+            {% if suggestion_items %}
+            <div class="mt-2 fw-semibold">Did you mean:</div>
+            <div class="dictionary-suggestions">
+                {% for suggestion in suggestion_items %}
+                <a class="dictionary-suggestion-chip" href="?q={{ suggestion.value|urlencode }}{% if selected_section %}&section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}&letter={{ selected_letter }}{% endif %}">
+                    {{ suggestion.value }} <span class="text-muted">({{ suggestion.kind }})</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% endif %}
         </div>
         {% endif %}
@@ -582,11 +699,58 @@
     </div>
 </div>
 
+<div id="dictionaryToast" class="dictionary-toast" role="status" aria-live="polite"></div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const input = document.getElementById("dictionarySearchInput");
     const panel = document.getElementById("scriptKeyboardPanel");
     const toggle = document.getElementById("scriptKeyboardToggle");
+    const toast = document.getElementById("dictionaryToast");
+    const showToast = (message) => {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(showToast._timer);
+        showToast._timer = window.setTimeout(() => {
+            toast.classList.remove("show");
+        }, 1500);
+    };
+
+    document.querySelectorAll(".js-copy-script, .js-copy-translit").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const value = btn.getAttribute("data-copy") || "";
+            if (!value.trim()) {
+                showToast("Nothing to copy");
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(value);
+                showToast("Copied");
+            } catch (err) {
+                showToast("Copy failed");
+            }
+        });
+    });
+
+    document.querySelectorAll(".js-share-term").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const path = btn.getAttribute("data-share-url") || "";
+            if (!path) return;
+            const url = `${window.location.origin}${path}`;
+            try {
+                if (navigator.share) {
+                    await navigator.share({ url });
+                    return;
+                }
+                await navigator.clipboard.writeText(url);
+                showToast("Link copied");
+            } catch (err) {
+                showToast("Share failed");
+            }
+        });
+    });
+
     if (!input || !panel || !toggle) return;
 
     const insertAtCursor = (text) => {
@@ -639,3 +803,4 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endblock %}
+
