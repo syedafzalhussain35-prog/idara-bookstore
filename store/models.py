@@ -6,6 +6,7 @@ from django.db.models import Sum, F, Avg
 from django.conf import settings
 from decimal import Decimal
 import os
+import logging
 from io import BytesIO
 from urllib.parse import urlsplit, urlunsplit
 from django.core.files.base import ContentFile
@@ -15,6 +16,8 @@ from .dictionary_text import (
     normalize_script_text,
     normalize_transliteration_text,
 )
+
+logger = logging.getLogger(__name__)
 
 # ======================
 # CATEGORY
@@ -313,6 +316,7 @@ class Banner(models.Model):
         try:
             return self.image.storage.exists(self.webp_name)
         except Exception:
+            logger.exception("Banner %s: failed checking WEBP existence", self.pk)
             return False
 
     def webp_url(self):
@@ -328,6 +332,7 @@ class Banner(models.Model):
             if self.image.storage.exists(name):
                 return self.image.storage.url(name)
         except Exception:
+            logger.exception("Banner %s: failed loading %s crop URL", self.pk, variant)
             return ""
         return ""
 
@@ -349,6 +354,7 @@ class Banner(models.Model):
         try:
             from PIL import Image
         except Exception:
+            logger.warning("Banner %s: Pillow unavailable, skipping WEBP generation", self.pk)
             return
         try:
             # Some remote storages (e.g. Cloudinary) may not allow reopening an
@@ -363,6 +369,7 @@ class Banner(models.Model):
             buffer.seek(0)
             self.image.storage.save(self.webp_name, ContentFile(buffer.read()))
         except Exception:
+            logger.exception("Banner %s: WEBP generation failed", self.pk)
             return
 
     def _safe_crop_box(self, img_width, img_height, x, y, w, h):
@@ -382,6 +389,7 @@ class Banner(models.Model):
         try:
             from PIL import Image
         except Exception:
+            logger.warning("Banner %s: Pillow unavailable, skipping crop variants", self.pk)
             return
 
         try:
@@ -392,6 +400,7 @@ class Banner(models.Model):
             elif img.mode == "RGBA":
                 img = img.convert("RGB")
         except Exception:
+            logger.exception("Banner %s: source image could not be opened for cropping", self.pk)
             return
 
         crop_specs = {
@@ -421,9 +430,14 @@ class Banner(models.Model):
                     if self.image.storage.exists(name):
                         self.image.storage.delete(name)
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Banner %s: failed deleting previous %s variant before overwrite",
+                        self.pk,
+                        variant,
+                    )
                 self.image.storage.save(name, ContentFile(buffer.read()))
             except Exception:
+                logger.exception("Banner %s: failed generating %s crop variant", self.pk, variant)
                 continue
 
     def save(self, *args, **kwargs):
@@ -1251,6 +1265,7 @@ class UnaniTerm(models.Model):
         return self.english_term
 
     def save(self, *args, **kwargs):
+        self.section = (self.section or "").strip()
         self.arabic_script = normalize_script_text(self.arabic_script)
         self.transliteration = normalize_transliteration_text(self.transliteration)
         self.arabic_script_normalized = normalize_script_text(self.arabic_script)

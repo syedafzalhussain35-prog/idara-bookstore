@@ -6,7 +6,7 @@ from django.template.loader import get_template
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Book, Order, OrderItem, Review
+from .models import Book, Order, OrderItem, Review, UnaniReferenceSource, UnaniTerm
 from .views import _apply_price_rating_filters, _to_decimal
 
 
@@ -147,3 +147,51 @@ class CheckoutSecurityTests(TestCase):
         self.assertEqual(second.status_code, 200)
         self.book.refresh_from_db()
         self.assertEqual(self.book.stock, 8)
+
+
+class DictionaryListTests(TestCase):
+    def setUp(self):
+        self.reference = UnaniReferenceSource.objects.create(
+            name="WHO international standard terminologies on Unani medicine"
+        )
+        self.term_a = UnaniTerm.objects.create(
+            english_term="Term A",
+            description="Desc A",
+            section="Anatomy",
+            reference_source=self.reference,
+        )
+        self.term_b = UnaniTerm.objects.create(
+            english_term="Term B",
+            description="Desc B",
+            section=" Anatomy ",
+            reference_source=self.reference,
+        )
+        self.term_blank = UnaniTerm.objects.create(
+            english_term="Term Blank",
+            description="Desc Blank",
+            section="   ",
+            reference_source=self.reference,
+        )
+
+    def test_sections_are_trimmed_and_deduplicated(self):
+        response = self.client.get(reverse("dictionary_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["sections"], ["Anatomy"])
+
+    def test_section_filter_matches_trimmed_section_values(self):
+        response = self.client.get(reverse("dictionary_list"), {"section": "Anatomy"})
+        self.assertEqual(response.status_code, 200)
+        names = {term.english_term for term in response.context["page_obj"].object_list}
+        self.assertIn("Term A", names)
+        self.assertIn("Term B", names)
+        self.assertNotIn("Term Blank", names)
+
+    def test_reference_hidden_in_list_but_visible_in_detail(self):
+        list_response = self.client.get(reverse("dictionary_list"))
+        self.assertEqual(list_response.status_code, 200)
+        self.assertNotContains(list_response, 'class="term-reference"', status_code=200)
+
+        detail_response = self.client.get(reverse("dictionary_detail", args=[self.term_a.slug]))
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, "Reference", status_code=200)
+        self.assertContains(detail_response, self.reference.name, status_code=200)

@@ -7,6 +7,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
 from django.contrib import messages
 from django.db.models import Q, Avg, Count, Case, When, IntegerField, Sum, Value
+from django.db.models.functions import Trim
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -547,7 +548,9 @@ def dictionary_list(request):
     normalized_script_query = normalize_script_text(query)
     normalized_text_query = normalize_latin_search_text(query)
 
-    terms_qs = UnaniTerm.objects.filter(is_published=True)
+    terms_qs = UnaniTerm.objects.filter(is_published=True).annotate(
+        section_clean=Trim("section")
+    )
 
     if query:
         search_filters = Q(description__icontains=query)
@@ -576,13 +579,14 @@ def dictionary_list(request):
 
     all_sections = list(
         UnaniTerm.objects.filter(is_published=True)
-        .exclude(section="")
-        .values_list("section", flat=True)
+        .annotate(section_clean=Trim("section"))
+        .exclude(section_clean="")
+        .values_list("section_clean", flat=True)
         .distinct()
-        .order_by("section")
+        .order_by("section_clean")
     )
     if selected_section and selected_section in all_sections:
-        terms_qs = terms_qs.filter(section=selected_section)
+        terms_qs = terms_qs.filter(section_clean=selected_section)
     else:
         selected_section = ""
 
@@ -591,7 +595,7 @@ def dictionary_list(request):
     else:
         selected_letter = ""
 
-    terms_qs = terms_qs.select_related("reference_source").annotate(
+    terms_qs = terms_qs.annotate(
         script_priority=Case(
             When(arabic_script="", then=Value(1)),
             default=Value(0),
