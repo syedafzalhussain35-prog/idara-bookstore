@@ -260,21 +260,6 @@
     line-height: 1.25;
 }
 
-.term-reference {
-    margin: 2px 0 0;
-    color: #4f3c46;
-    font-size: 0.9rem;
-}
-
-.term-reference a {
-    color: #7a1f49;
-    text-decoration: none;
-}
-
-.term-reference a:hover {
-    text-decoration: underline;
-}
-
 .term-actions {
     display: flex;
     flex-direction: row;
@@ -626,16 +611,6 @@
                         <p class="term-transliteration term-transliteration-wrap">{{ item.transliteration|default:"-"|highlight_query:query }}</p>
                         <div class="term-field-label mt-2">English term</div>
                         <h2 class="term-title">{{ item.english_term|highlight_query:query }}</h2>
-                        {% if item.reference_source %}
-                        <div class="term-field-label mt-2">Reference</div>
-                        <p class="term-reference">
-                            {% if item.reference_source.source_url %}
-                            <a href="{{ item.reference_source.source_url }}" target="_blank" rel="noopener">{{ item.reference_source.name }}</a>
-                            {% else %}
-                            {{ item.reference_source.name }}
-                            {% endif %}
-                        </p>
-                        {% endif %}
                     </div>
                     <div class="term-actions">
                         {% if item.section %}

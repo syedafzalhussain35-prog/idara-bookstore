@@ -277,6 +277,41 @@ textarea:focus {
   font-weight: 700;
 }
 
+/* Keep changelist filters stable across browsers and long filter lists. */
+#changelist .changelist-form-container {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+#changelist .changelist-form-container > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  order: 0;
+}
+
+#changelist-filter {
+  align-self: flex-start;
+  flex: 0 0 260px;
+  margin: 0;
+  max-height: calc(100vh - 180px);
+  order: 1;
+  overflow: auto;
+}
+
+#changelist-filter ul {
+  list-style: none;
+  margin: 5px 0;
+  padding: 0 15px 15px;
+}
+
+#changelist-filter li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 fieldset.module {
   border-radius: 12px;
 }
@@ -289,6 +324,16 @@ fieldset.module h2 {
   #nav-sidebar {
     position: static;
     height: auto;
+  }
+
+  #changelist .changelist-form-container {
+    flex-wrap: wrap;
+  }
+
+  #changelist-filter {
+    flex: 1 1 100%;
+    max-height: none;
+    order: 0;
   }
 }
 

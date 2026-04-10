@@ -8,6 +8,7 @@ from django.urls import path, reverse
 from django.shortcuts import render, redirect
 from django.db import transaction
 from django.db.models import Sum, Case, When, Value, IntegerField, Count
+from django.db.models.functions import Trim
 from decimal import Decimal, InvalidOperation
 import re
 import zipfile
@@ -1730,6 +1731,34 @@ class UnaniTermAdminForm(forms.ModelForm):
         return value
 
 
+class UnaniSectionListFilter(admin.SimpleListFilter):
+    title = "section"
+    parameter_name = "section"
+    uncategorized_value = "__blank__"
+
+    def lookups(self, request, model_admin):
+        base_qs = model_admin.get_queryset(request).annotate(section_clean=Trim("section"))
+        sections = (
+            base_qs.exclude(section_clean="")
+            .values_list("section_clean", flat=True)
+            .distinct()
+            .order_by("section_clean")
+        )
+        lookups = [(section, section) for section in sections]
+        if base_qs.filter(section_clean="").exists():
+            lookups.append((self.uncategorized_value, "(Uncategorized)"))
+        return lookups
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if not value:
+            return queryset
+        filtered = queryset.annotate(section_clean=Trim("section"))
+        if value == self.uncategorized_value:
+            return filtered.filter(section_clean="")
+        return filtered.filter(section_clean=value)
+
+
 @admin.register(UnaniTerm)
 class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin):
     form = UnaniTermAdminForm
@@ -1745,7 +1774,7 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
         "english_term_normalized",
         "description",
     )
-    list_filter = ("section", "reference_source", "is_published")
+    list_filter = (UnaniSectionListFilter, "reference_source", "is_published")
     prepopulated_fields = {"slug": ("english_term",)}
     ordering = ("english_term",)
     readonly_fields = ("created_at", "updated_at")
