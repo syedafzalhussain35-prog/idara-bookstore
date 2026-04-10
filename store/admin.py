@@ -9,6 +9,7 @@ from django.shortcuts import render, redirect
 from django.db import transaction
 from django.db.models import Sum, Case, When, Value, IntegerField, Count
 from django.db.models.functions import Trim
+from django.utils.text import slugify
 from decimal import Decimal, InvalidOperation
 import re
 import zipfile
@@ -55,7 +56,6 @@ from .dictionary_text import (
     normalize_latin_search_text,
     normalize_script_text,
     normalize_transliteration_text,
-    transliteration_invalid_chars,
     validate_transliteration_style,
 )
 
@@ -393,23 +393,29 @@ class BulkImportAdminMixin:
                 messages.error(request, str(exc))
                 rows = None
 
-            if rows is not None:
-                with transaction.atomic():
-                    for row in rows:
-                        try:
+            def process_rows():
+                nonlocal created, updated, skipped, errors
+                for row in rows:
+                    try:
+                        with transaction.atomic():
                             status = self.import_row(row)
-                        except Exception as exc:
-                            errors.append(f"Row {row.get('_row_number', '?')}: {exc}")
-                            continue
-                        if status == "created":
-                            created += 1
-                        elif status == "updated":
-                            updated += 1
-                        else:
-                            skipped += 1
+                    except Exception as exc:
+                        errors.append(f"Row {row.get('_row_number', '?')}: {exc}")
+                        continue
+                    if status == "created":
+                        created += 1
+                    elif status == "updated":
+                        updated += 1
+                    else:
+                        skipped += 1
 
-                    if dry_run:
+            if rows is not None:
+                if dry_run:
+                    with transaction.atomic():
+                        process_rows()
                         transaction.set_rollback(True)
+                else:
+                    process_rows()
 
             if rows is not None:
                 summary = (
@@ -1894,6 +1900,16 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
         count = queryset.update(reference_source=None)
         self.message_user(request, f"Reference source cleared for {count} term(s).")
 
+    def _unique_slug(self, slug_value, current_pk=None):
+        base = (slugify(slug_value) or "term")[:245]
+        candidate = base
+        counter = 2
+        while UnaniTerm.objects.exclude(pk=current_pk).filter(slug=candidate).exists():
+            suffix = f"-{counter}"
+            candidate = f"{base[:255-len(suffix)]}{suffix}"
+            counter += 1
+        return candidate
+
     def import_row(self, row_data):
         english_term = str(row_data.get("english term") or row_data.get("english_term") or "").strip()
         if not english_term:
@@ -1933,13 +1949,8 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
 
         term.arabic_script = normalize_script_text(term.arabic_script)
         term.transliteration = normalize_transliteration_text(term.transliteration)
-        bad_chars = transliteration_invalid_chars(term.transliteration)
-        if bad_chars:
-            bad_display = ", ".join(repr(ch) for ch in bad_chars[:8])
-            raise ValueError(
-                "Transliteration has unsupported characters. "
-                f"Use one style (Latin + diacritics). Found: {bad_display}"
-            )
+        term.transliteration = re.sub(r"\s*/\s*", " / ", term.transliteration)
+        term.transliteration = re.sub(r"\s+", " ", term.transliteration).strip()
 
         char_limits = {
             "transliteration": 255,
@@ -1955,6 +1966,9 @@ class UnaniTermAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAd
         parsed_publish = _coerce_bool(row_data.get("is published") if "is published" in row_data else row_data.get("is_published"))
         if parsed_publish is not None:
             term.is_published = parsed_publish
+
+        if term.slug:
+            term.slug = self._unique_slug(term.slug, term.pk)
 
         term.save()
         return "created" if created else "updated"

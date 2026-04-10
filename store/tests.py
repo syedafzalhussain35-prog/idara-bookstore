@@ -1,11 +1,13 @@
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
+from django.contrib import admin
 from django.contrib.auth.models import AnonymousUser, User
 from django.template.loader import get_template
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from .admin import UnaniTermAdmin
 from .models import Book, Order, OrderItem, Review, UnaniReferenceSource, UnaniTerm
 from .views import _apply_price_rating_filters, _to_decimal
 
@@ -195,3 +197,41 @@ class DictionaryListTests(TestCase):
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, "Reference", status_code=200)
         self.assertContains(detail_response, self.reference.name, status_code=200)
+
+
+class UnaniImportRobustnessTests(TestCase):
+    def setUp(self):
+        self.model_admin = UnaniTermAdmin(UnaniTerm, admin.site)
+        self.existing = UnaniTerm.objects.create(
+            english_term="Existing",
+            description="Existing entry",
+            slug="abnormal-temperament",
+            transliteration="Existing",
+        )
+
+    def test_import_row_allows_slash_transliteration(self):
+        status = self.model_admin.import_row(
+            {
+                "english_term": "Acute Stage",
+                "description": "desc",
+                "transliteration": "Hararat / Hiddat",
+                "slug": "acute-stage",
+            }
+        )
+        self.assertEqual(status, "created")
+        term = UnaniTerm.objects.get(english_term="Acute Stage")
+        self.assertEqual(term.transliteration, "Hararat / Hiddat")
+
+    def test_import_row_autofixes_duplicate_slug(self):
+        status = self.model_admin.import_row(
+            {
+                "english_term": "Abnormal Temperament Variant",
+                "description": "desc",
+                "transliteration": "Mizaj / Variant",
+                "slug": "abnormal-temperament",
+            }
+        )
+        self.assertEqual(status, "created")
+        term = UnaniTerm.objects.get(english_term="Abnormal Temperament Variant")
+        self.assertNotEqual(term.slug, "abnormal-temperament")
+        self.assertTrue(term.slug.startswith("abnormal-temperament-"))
