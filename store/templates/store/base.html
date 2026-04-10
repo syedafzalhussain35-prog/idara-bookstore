@@ -57,7 +57,7 @@
       data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
       data-login-url="{% url 'account_login' %}?next={{ request.path }}">
 
-<div class="page-loader" id="pageLoader" aria-hidden="true">
+<div class="page-loader" id="pageLoader" aria-hidden="true" hidden>
     <div class="loader-card" aria-label="Loading">
         <div class="loader-logo">
             {% if site_loader_logo %}
@@ -779,8 +779,35 @@ document.addEventListener("DOMContentLoaded", function () {
     const loader = document.getElementById("pageLoader");
     if (!loader) return;
 
-    const showLoader = () => loader.classList.add("active");
-    const hideLoader = () => loader.classList.remove("active");
+    let hideTimer = null;
+    let failSafeTimer = null;
+
+    const hideLoader = () => {
+        if (failSafeTimer) {
+            clearTimeout(failSafeTimer);
+            failSafeTimer = null;
+        }
+        loader.classList.remove("active");
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+            loader.hidden = true;
+            loader.setAttribute("aria-hidden", "true");
+            hideTimer = null;
+        }, 220);
+    };
+
+    const showLoader = () => {
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+        loader.hidden = false;
+        loader.setAttribute("aria-hidden", "false");
+        requestAnimationFrame(() => loader.classList.add("active"));
+        if (failSafeTimer) clearTimeout(failSafeTimer);
+        // Prevent the UI from getting stuck if navigation is interrupted.
+        failSafeTimer = setTimeout(() => hideLoader(), 10000);
+    };
 
     document.querySelectorAll("a[href]").forEach(link => {
         if (link.target === "_blank") return;
@@ -788,6 +815,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (href === "#" || href.startsWith("#")) return;
         if (link.getAttribute("data-bs-toggle") === "dropdown") return;
         if (href.startsWith("mailto:") || href.startsWith("tel:")) return;
+        if (href.startsWith("javascript:")) return;
+        if (link.hasAttribute("download")) return;
+        if (link.hasAttribute("data-no-loader")) return;
         link.addEventListener("click", () => showLoader());
     });
 
@@ -799,7 +829,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    window.addEventListener("load", hideLoader, { once: true });
     window.addEventListener("pageshow", () => hideLoader());
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") hideLoader();
+    });
 });
 </script>
 

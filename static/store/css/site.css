@@ -586,6 +586,10 @@
         z-index: 9999;
     }
 
+    .page-loader[hidden] {
+        display: none !important;
+    }
+
     .page-loader.active {
         opacity: 1;
         pointer-events: all;
