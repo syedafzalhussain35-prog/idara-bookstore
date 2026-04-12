@@ -87,6 +87,20 @@
     color: #be1d63;
 }
 
+.script-toggle[aria-expanded="true"] {
+    border-color: #be1d63;
+    color: #be1d63;
+    background: #fff3f8;
+}
+
+.search-clear-btn {
+    min-width: 50px;
+}
+
+.search-clear-btn[hidden] {
+    display: none !important;
+}
+
 .dictionary-search .form-select,
 .dictionary-search .btn {
     min-height: var(--search-control-height);
@@ -117,6 +131,66 @@
     border: 1px solid #e8d2dc;
     border-radius: 14px;
     background: #fff;
+    padding: 10px;
+}
+
+.vk-grid {
+    display: grid;
+    grid-template-columns: repeat(15, minmax(34px, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.vk-key {
+    min-height: 38px;
+    font-size: 1.18rem;
+    line-height: 1;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Amiri", serif;
+    padding: 0;
+}
+
+.vk-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vk-controls .btn {
+    min-height: 38px;
+    border-radius: 10px;
+}
+
+.dictionary-active-filters {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.active-filter-label {
+    color: #6b5460;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.active-filter-chip {
+    border: 1px solid #e3cad7;
+    background: #fff;
+    color: #5d2340;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 0.82rem;
+    padding: 4px 10px;
+}
+
+.active-filter-chip:hover {
+    border-color: #be1d63;
+    color: #be1d63;
 }
 
 .alpha-strip-wrap {
@@ -282,6 +356,12 @@
     padding: 7px 16px;
 }
 
+.term-open[aria-expanded="true"] {
+    background: #fff;
+    color: #be1d63;
+    border-color: #be1d63;
+}
+
 .term-section {
     font-size: 0.72rem;
     color: #6e5561;
@@ -311,6 +391,30 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+.term-details-panel {
+    margin-top: 10px;
+    border: 1px solid #ecd6e1;
+    border-radius: 12px;
+    background: #fff9fc;
+    padding: 10px;
+}
+
+.term-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+}
+
+.term-detail-value {
+    color: #2f1e27;
+    font-weight: 600;
+}
+
+.term-description {
+    color: #2f1e27;
+    line-height: 1.55;
 }
 
 .term-quick-btn {
@@ -439,8 +543,41 @@
         font-size: 1.05rem;
     }
 
-    .dictionary-input-row .script-toggle .script-toggle-text {
+    .dictionary-input-row .script-toggle .script-toggle-text,
+    .dictionary-input-row .search-clear-btn .script-toggle-text {
         display: none;
+    }
+
+    .search-clear-btn {
+        width: 50px;
+        min-width: 50px;
+        border-radius: 12px;
+        padding: 0;
+    }
+
+    .script-keyboard {
+        padding: 8px;
+    }
+
+    .vk-grid {
+        grid-template-columns: repeat(9, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .vk-key {
+        min-height: 42px;
+        font-size: 1.22rem;
+        border-radius: 10px;
+    }
+
+    .vk-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .vk-controls .btn {
+        width: 100%;
     }
 
     .alpha-strip-wrap {
@@ -484,6 +621,10 @@
     .term-script {
         font-size: 1.65rem;
     }
+
+    .term-details-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}
@@ -498,13 +639,17 @@
             <form method="get" class="row g-2 dictionary-search align-items-start">
                 <div class="col-12 col-lg-6">
                     <div class="dictionary-input-row">
-                        <input type="text" id="dictionarySearchInput" name="q" class="form-control dictionary-search-input" dir="auto" value="{{ query }}" placeholder="Search Urdu/Arabic/Persian term (recommended), transliteration, or English...">
-                        <button class="btn script-toggle" type="button" id="scriptKeyboardToggle" aria-label="Toggle script keyboard">
+                        <input type="text" id="dictionarySearchInput" name="q" class="form-control dictionary-search-input" dir="auto" value="{{ query }}" placeholder="Search Urdu/Arabic/Persian term (recommended), transliteration, or English..." autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false">
+                        <button class="btn script-toggle search-clear-btn" type="button" id="searchClearBtn" aria-label="Clear search">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                            <span class="script-toggle-text">Clear</span>
+                        </button>
+                        <button class="btn script-toggle" type="button" id="scriptKeyboardToggle" aria-label="Toggle script keyboard" aria-expanded="false" aria-controls="scriptKeyboardPanel">
                             <i class="fas fa-keyboard" aria-hidden="true"></i>
                             <span class="script-toggle-text">Keyboard</span>
                         </button>
                     </div>
-                    <div class="small text-muted mt-1">Tip: search in script for best relevance.</div>
+                    <div class="small text-muted mt-1">Tip: search in script for best relevance. Press Enter to search fast.</div>
                 </div>
                 <div class="col-8 col-lg-3">
                     <select name="section" class="form-select">
@@ -525,8 +670,24 @@
                 {% endif %}
             </form>
 
-            <div id="scriptKeyboardPanel" class="script-keyboard mt-2 p-2" style="display:none;">
-                <div class="d-flex flex-wrap gap-1 mb-2">
+            {% if query or selected_section or selected_letter %}
+            <div class="dictionary-active-filters">
+                <span class="active-filter-label">Active:</span>
+                {% if query %}
+                <a class="active-filter-chip" href="?{% if selected_section %}section={{ selected_section|urlencode }}{% endif %}{% if selected_letter %}{% if selected_section %}&{% endif %}letter={{ selected_letter|urlencode }}{% endif %}">Query: {{ query }} x</a>
+                {% endif %}
+                {% if selected_section %}
+                <a class="active-filter-chip" href="?{% if query %}q={{ query|urlencode }}{% endif %}{% if selected_letter %}{% if query %}&{% endif %}letter={{ selected_letter|urlencode }}{% endif %}">Section: {{ selected_section }} x</a>
+                {% endif %}
+                {% if selected_letter %}
+                <a class="active-filter-chip" href="?{% if query %}q={{ query|urlencode }}{% endif %}{% if selected_section %}{% if query %}&{% endif %}section={{ selected_section|urlencode }}{% endif %}">Letter: {{ selected_letter }} x</a>
+                {% endif %}
+                <a class="active-filter-chip" href="{% url 'dictionary_list' %}">Clear all</a>
+            </div>
+            {% endif %}
+
+            <div id="scriptKeyboardPanel" class="script-keyboard mt-2" style="display:none;">
+                <div class="vk-grid">
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ا</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ب</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">پ</button>
@@ -567,7 +728,7 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ی</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary vk-key">ے</button>
                 </div>
-                <div class="d-flex flex-wrap gap-1">
+                <div class="vk-controls">
                     <button type="button" class="btn btn-sm btn-outline-dark" id="vkSpace">Space</button>
                     <button type="button" class="btn btn-sm btn-outline-dark" id="vkBackspace">Backspace</button>
                     <button type="button" class="btn btn-sm btn-outline-danger" id="vkClear">Clear</button>
@@ -619,13 +780,47 @@
                             <div class="term-section-badge">{{ item.section }}</div>
                         </div>
                         {% endif %}
-                        <a href="{% url 'dictionary_detail' item.slug %}" class="btn btn-sm btn-brand term-open">Open</a>
+                        <button type="button" class="btn btn-sm btn-brand term-open js-toggle-details" data-target-id="term-details-{{ forloop.counter0 }}" aria-expanded="false">Show details</button>
                     </div>
                 </div>
                 <div class="term-quick-actions">
                     <button type="button" class="term-quick-btn js-copy-script" data-copy="{{ item.arabic_script|default:'' }}">Copy Script</button>
                     <button type="button" class="term-quick-btn js-copy-translit" data-copy="{{ item.transliteration|default:'' }}">Copy Transliteration</button>
                     <button type="button" class="term-quick-btn js-share-term" data-share-url="{% url 'dictionary_detail' item.slug %}">Share</button>
+                </div>
+                <div class="term-details-panel" id="term-details-{{ forloop.counter0 }}" hidden>
+                    <div class="term-details-grid">
+                        <div>
+                            <div class="term-field-label">Arabic/Persian/Urdu Script</div>
+                            <div class="term-detail-value term-script" dir="rtl">{{ item.arabic_script|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <div class="term-field-label">Transliteration</div>
+                            <div class="term-detail-value">{{ item.transliteration|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <div class="term-field-label">Section</div>
+                            <div class="term-detail-value">{{ item.section|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <div class="term-field-label">Reference</div>
+                            <div class="term-detail-value">
+                                {% if item.reference_source %}
+                                    {% if item.reference_source.source_url %}
+                                    <a href="{{ item.reference_source.source_url }}" target="_blank" rel="noopener">{{ item.reference_source.name }}</a>
+                                    {% else %}
+                                    {{ item.reference_source.name }}
+                                    {% endif %}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="term-field-label">Description</div>
+                        <div class="term-description">{{ item.description|linebreaksbr }}</div>
+                    </div>
                 </div>
             </article>
             {% endfor %}
@@ -681,6 +876,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const input = document.getElementById("dictionarySearchInput");
     const panel = document.getElementById("scriptKeyboardPanel");
     const toggle = document.getElementById("scriptKeyboardToggle");
+    const clearSearchBtn = document.getElementById("searchClearBtn");
     const toast = document.getElementById("dictionaryToast");
     const showToast = (message) => {
         if (!toast) return;
@@ -726,7 +922,44 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    const detailToggleButtons = Array.from(document.querySelectorAll(".js-toggle-details"));
+    const closeAllDetailPanels = () => {
+        detailToggleButtons.forEach((toggleBtn) => {
+            const otherTargetId = toggleBtn.getAttribute("data-target-id");
+            if (!otherTargetId) return;
+            const otherPanel = document.getElementById(otherTargetId);
+            if (!otherPanel) return;
+            otherPanel.hidden = true;
+            toggleBtn.setAttribute("aria-expanded", "false");
+            toggleBtn.textContent = "Show details";
+        });
+    };
+
+    detailToggleButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const targetId = btn.getAttribute("data-target-id");
+            if (!targetId) return;
+            const panel = document.getElementById(targetId);
+            if (!panel) return;
+            const isExpanded = btn.getAttribute("aria-expanded") === "true";
+            closeAllDetailPanels();
+            if (!isExpanded) {
+                panel.hidden = false;
+                btn.setAttribute("aria-expanded", "true");
+                btn.textContent = "Hide details";
+            }
+        });
+    });
+
     if (!input || !panel || !toggle) return;
+
+    const syncClearButton = () => {
+        if (!clearSearchBtn) return;
+        clearSearchBtn.hidden = !(input.value || "").trim();
+    };
+
+    syncClearButton();
+    input.addEventListener("input", syncClearButton);
 
     const insertAtCursor = (text) => {
         const start = input.selectionStart ?? input.value.length;
@@ -735,11 +968,17 @@ document.addEventListener("DOMContentLoaded", function () {
         const pos = start + text.length;
         input.setSelectionRange(pos, pos);
         input.focus();
+        syncClearButton();
+    };
+
+    const setKeyboardOpen = (isOpen) => {
+        panel.style.display = isOpen ? "block" : "none";
+        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        if (isOpen) input.focus();
     };
 
     toggle.addEventListener("click", () => {
-        panel.style.display = panel.style.display === "none" ? "block" : "none";
-        if (panel.style.display === "block") input.focus();
+        setKeyboardOpen(panel.style.display === "none");
     });
 
     panel.querySelectorAll(".vk-key").forEach((btn) => {
@@ -759,6 +998,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 input.setSelectionRange(start - 1, start - 1);
             }
             input.focus();
+            syncClearButton();
         });
     }
 
@@ -770,11 +1010,27 @@ document.addEventListener("DOMContentLoaded", function () {
         clear.addEventListener("click", () => {
             input.value = "";
             input.focus();
+            syncClearButton();
         });
     }
 
     const close = document.getElementById("vkClose");
-    if (close) close.addEventListener("click", () => { panel.style.display = "none"; });
+    if (close) close.addEventListener("click", () => setKeyboardOpen(false));
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener("click", () => {
+            input.value = "";
+            input.focus();
+            syncClearButton();
+        });
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && panel.style.display !== "none") {
+            setKeyboardOpen(false);
+            input.focus();
+        }
+    });
 });
 </script>
 {% endblock %}

@@ -548,7 +548,7 @@ def dictionary_list(request):
     normalized_script_query = normalize_script_text(query)
     normalized_text_query = normalize_latin_search_text(query)
 
-    terms_qs = UnaniTerm.objects.filter(is_published=True).annotate(
+    terms_qs = UnaniTerm.objects.filter(is_published=True).select_related("reference_source").annotate(
         section_clean=Trim("section")
     )
 
