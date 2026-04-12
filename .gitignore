@@ -17,6 +17,9 @@ static/store/gallery/
 *.mp4
 *.exe
 *.docx
+bulk_images/
+static/store/images/banners/background/7705595.psd
+static/store/images/banners/background/green-nature-design-banner-template.zip
 
 # Secrets and local key exports
 domain/*.csv
