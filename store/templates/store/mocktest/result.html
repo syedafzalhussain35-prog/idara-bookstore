@@ -1,0 +1,65 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Mock Test Result{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="h4 fw-bold mb-0" style="color: var(--primary-magenta);">Result: {{ attempt.exam.title }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'mocktest_hub' %}" class="btn btn-sm btn-outline-dark">Back to Hub</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'mocktest_dashboard' %}" class="btn btn-sm btn-brand">Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Score</div><div class="fw-bold">{{ attempt.score }} / {{ attempt.max_score }}</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Correct</div><div class="fw-bold text-success">{{ attempt.correct_count }}</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Wrong</div><div class="fw-bold text-danger">{{ attempt.wrong_count }}</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Skipped</div><div class="fw-bold">{{ attempt.skipped_count }}</div></div></div></div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold">Projection</h2>
+                    <div class="small mb-1">Percentile Estimate: <strong>{{ attempt.percentile_estimate }}%</strong></div>
+                    <div class="small">Projected Rank: <strong>{{ attempt.rank_projection }}</strong></div>
+                    <div class="small text-muted mt-2">Guess Risk: {{ analytics.guess_risk_percent|default:0 }}%</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold">Daily Plan</h2>
+                    {% if analytics.daily_plan %}
+                    <ul class="mb-0">
+                        {% for item in analytics.daily_plan %}<li class="small">{{ item }}</li>{% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="small text-muted">Great attempt. Keep practicing mixed tests.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h2 class="h6 fw-bold">Question Review</h2>
+            {% for ans in answers %}
+            <div class="border rounded p-2 mb-2">
+                <div class="small fw-semibold">Q{{ ans.question_order }}. {{ ans.question.question_text }}</div>
+                <div class="small">Your answer: <strong>{{ ans.selected_option|default:'Skipped' }}</strong> | Correct: <strong>{{ ans.question.correct_option }}</strong></div>
+                {% if ans.question.explanation_short %}<div class="small text-muted mt-1">{{ ans.question.explanation_short }}</div>{% endif %}
+                {% if ans.question.memory_trick %}<div class="small"><em>Memory trick:</em> {{ ans.question.memory_trick }}</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

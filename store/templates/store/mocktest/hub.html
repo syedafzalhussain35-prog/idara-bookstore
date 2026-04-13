@@ -1,0 +1,65 @@
+{% extends 'store/base.html' %}
+
+{% block title %}NEET PG Unani Mock Tests{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="h3 fw-bold mb-0" style="color: var(--primary-magenta);">NEET PG Unani Mock Test Hub</h1>
+        {% if user.is_authenticated %}
+        <a href="{% url 'mocktest_dashboard' %}" class="btn btn-sm btn-outline-dark">My Dashboard</a>
+        {% endif %}
+    </div>
+
+    <div class="alert alert-light border mb-4">
+        <div class="fw-semibold">Question Bank Ready: {{ question_count }}</div>
+        <div class="small text-muted">Use subject-wise, topic-wise, full-length, and daily/adaptive modes from one pool.</div>
+    </div>
+
+    <div class="row g-3">
+        {% for exam in exams %}
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-secondary-subtle text-dark border">{{ exam.get_mode_display }}</span>
+                        <span class="badge bg-success-subtle text-success border">{{ exam.get_access_level_display }}</span>
+                    </div>
+                    <h2 class="h6 fw-bold mb-1">{{ exam.title }}</h2>
+                    <div class="small text-muted mb-2">
+                        {{ exam.question_count }} Q | {{ exam.duration_minutes }} mins | -{{ exam.negative_marking }}
+                    </div>
+                    {% if exam.subject %}
+                    <div class="small mb-1"><strong>Subject:</strong> {{ exam.subject.name }}</div>
+                    {% endif %}
+                    {% if exam.topic %}
+                    <div class="small mb-2"><strong>Topic:</strong> {{ exam.topic.name }}</div>
+                    {% endif %}
+                    {% if exam.description %}
+                    <p class="small text-muted flex-grow-1">{{ exam.description|truncatechars:140 }}</p>
+                    {% else %}
+                    <p class="small text-muted flex-grow-1">Exam-style mock with analytics and revision workflow.</p>
+                    {% endif %}
+                    <a href="{% url 'mocktest_start' exam.slug %}" class="btn btn-brand mt-2">Start Test</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-warning mb-0">No active tests configured yet. Add exams and publish questions from admin/import.</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if subjects %}
+    <div class="mt-4">
+        <h3 class="h6 fw-bold">Active Subjects</h3>
+        <div class="d-flex flex-wrap gap-2">
+            {% for s in subjects %}
+            <span class="badge rounded-pill text-bg-light border">{{ s.name }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 from decimal import Decimal, InvalidOperation
 from difflib import get_close_matches
+import random
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core import signing
 from django.contrib.auth.decorators import login_required
@@ -12,11 +13,13 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.cache import cache
 import logging
+from datetime import timedelta
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
@@ -45,6 +48,14 @@ from .models import (
     DictionaryQueryLog,
     DictionaryTermOpenLog,
     ClassicalWeightUnit,
+    MockTestSubject,
+    MockTestTopic,
+    MockTestQuestion,
+    MockTestExam,
+    MockTestAttempt,
+    MockTestAttemptAnswer,
+    MockTestMistakeNotebook,
+    MockTestRevisionQueue,
 )
 from .email_utils import send_publish_with_us
 from .tasks import enqueue_order_confirmation, enqueue_order_alert
@@ -693,6 +704,383 @@ def unani_weight_converter(request):
         "units_payload": units_payload,
         "source_note": source_note,
     })
+
+
+def _mocktest_question_pool():
+    return (
+        MockTestQuestion.objects.select_related("subject", "topic")
+        .filter(
+            status="published",
+            is_active=True,
+            subject__is_active=True,
+        )
+    )
+
+
+def _select_question_ids_for_exam(exam):
+    pool = _mocktest_question_pool()
+    if exam.subject_id:
+        pool = pool.filter(subject_id=exam.subject_id)
+    if exam.topic_id:
+        pool = pool.filter(topic_id=exam.topic_id)
+
+    if exam.mode == "adaptive":
+        easy_ids = list(pool.filter(difficulty="easy").values_list("id", flat=True))
+        med_ids = list(pool.filter(difficulty="medium").values_list("id", flat=True))
+        hard_ids = list(pool.filter(difficulty="hard").values_list("id", flat=True))
+        random.shuffle(easy_ids)
+        random.shuffle(med_ids)
+        random.shuffle(hard_ids)
+        segment = max(1, exam.question_count // 3)
+        selected = easy_ids[:segment] + med_ids[:segment] + hard_ids[:segment]
+        if len(selected) < exam.question_count:
+            remaining_pool = [qid for qid in (easy_ids + med_ids + hard_ids) if qid not in selected]
+            selected.extend(remaining_pool[: exam.question_count - len(selected)])
+        random.shuffle(selected)
+        return selected[:exam.question_count]
+
+    all_ids = list(pool.values_list("id", flat=True))
+    if not all_ids:
+        return []
+
+    if exam.mode == "daily":
+        rng = random.Random(timezone.localdate().strftime("%Y%m%d"))
+        rng.shuffle(all_ids)
+        return all_ids[: exam.question_count]
+
+    random.shuffle(all_ids)
+    return all_ids[: exam.question_count]
+
+
+def _build_option_order(exam):
+    base = ["A", "B", "C", "D"]
+    if exam.shuffle_options:
+        random.shuffle(base)
+    return base
+
+
+def _finalize_mock_attempt(attempt, final_status="submitted"):
+    answers = list(
+        attempt.answers.select_related("question", "question__subject", "question__topic").all()
+    )
+    exam = attempt.exam
+    total = len(answers)
+    correct = 0
+    wrong = 0
+    skipped = 0
+    attempted = 0
+    total_time = 0
+    guess_count = 0
+    subject_stats = {}
+    topic_stats = {}
+
+    for ans in answers:
+        selected = (ans.selected_option or "").strip()
+        correct_opt = (ans.question.correct_option or "").strip()
+        total_time += ans.time_spent_seconds or 0
+        subject_name = ans.question.subject.name if ans.question.subject_id else "Uncategorized"
+        topic_name = ans.question.topic.name if ans.question.topic_id else "General"
+        subject_stats.setdefault(subject_name, {"correct": 0, "wrong": 0, "skipped": 0, "total": 0})
+        topic_stats.setdefault(topic_name, {"correct": 0, "wrong": 0, "skipped": 0, "total": 0})
+        subject_stats[subject_name]["total"] += 1
+        topic_stats[topic_name]["total"] += 1
+
+        if not selected:
+            ans.is_correct = False
+            skipped += 1
+            subject_stats[subject_name]["skipped"] += 1
+            topic_stats[topic_name]["skipped"] += 1
+            ans.save(update_fields=["is_correct"])
+            continue
+
+        attempted += 1
+        if (ans.time_spent_seconds or 0) <= 15:
+            guess_count += 1
+        if selected == correct_opt:
+            ans.is_correct = True
+            correct += 1
+            subject_stats[subject_name]["correct"] += 1
+            topic_stats[topic_name]["correct"] += 1
+        else:
+            ans.is_correct = False
+            wrong += 1
+            subject_stats[subject_name]["wrong"] += 1
+            topic_stats[topic_name]["wrong"] += 1
+        ans.save(update_fields=["is_correct"])
+
+    marks_per = exam.marks_per_question
+    negative = exam.negative_marking
+    score = (Decimal(correct) * marks_per) - (Decimal(wrong) * negative)
+    max_score = Decimal(total) * marks_per
+    accuracy_pct = (Decimal(correct) * Decimal("100") / Decimal(attempted)) if attempted else Decimal("0")
+    completion_pct = (Decimal(attempted) * Decimal("100") / Decimal(total)) if total else Decimal("0")
+    percentile = max(Decimal("1.00"), min(Decimal("99.90"), (accuracy_pct * Decimal("0.72")) + (completion_pct * Decimal("0.28"))))
+    rank_projection = int((Decimal("100.00") - percentile) * Decimal("500")) + 1
+
+    weak_subjects = []
+    for name, stats in subject_stats.items():
+        total_s = stats["total"] or 1
+        acc = (stats["correct"] * 100.0) / total_s
+        weak_subjects.append({"name": name, "accuracy": round(acc, 2), **stats})
+    weak_subjects.sort(key=lambda item: item["accuracy"])
+
+    weak_topics = []
+    for name, stats in topic_stats.items():
+        total_t = stats["total"] or 1
+        acc = (stats["correct"] * 100.0) / total_t
+        weak_topics.append({"name": name, "accuracy": round(acc, 2), **stats})
+    weak_topics.sort(key=lambda item: item["accuracy"])
+
+    avg_time = int(total_time / attempted) if attempted else 0
+    speed_band = "fast" if avg_time and avg_time <= 35 else "balanced" if avg_time and avg_time <= 70 else "slow"
+    guess_risk = round((guess_count * 100.0 / attempted), 2) if attempted else 0.0
+
+    attempt.status = final_status
+    attempt.submitted_at = timezone.now()
+    attempt.time_taken_seconds = total_time
+    attempt.total_questions = total
+    attempt.correct_count = correct
+    attempt.wrong_count = wrong
+    attempt.skipped_count = skipped
+    attempt.attempted_count = attempted
+    attempt.score = score
+    attempt.max_score = max_score
+    attempt.percentile_estimate = percentile.quantize(Decimal("0.01"))
+    attempt.rank_projection = max(1, rank_projection)
+    attempt.analytics = {
+        "subject_breakdown": weak_subjects,
+        "topic_breakdown": weak_topics,
+        "avg_time_per_attempted": avg_time,
+        "speed_band": speed_band,
+        "guess_risk_percent": guess_risk,
+        "weak_subjects_top3": weak_subjects[:3],
+        "weak_topics_top5": weak_topics[:5],
+        "daily_plan": [
+            f"Revise {item['name']} for 45 minutes."
+            for item in weak_subjects[:3]
+        ],
+    }
+    attempt.save()
+
+    if attempt.user_id:
+        due_intervals = [1, 3, 7, 15]
+        answered_map = {entry.question_id: entry for entry in answers}
+        for entry in answers:
+            selected = (entry.selected_option or "").strip()
+            is_wrong_or_skipped = (not selected) or (selected != (entry.question.correct_option or "").strip())
+            notebook, _ = MockTestMistakeNotebook.objects.get_or_create(
+                user=attempt.user,
+                question=entry.question,
+                defaults={
+                    "latest_attempt": attempt,
+                    "status": "active",
+                    "error_type": "skipped" if not selected else "wrong",
+                    "revision_stage": 0,
+                    "next_revision_on": timezone.localdate() + timedelta(days=1),
+                },
+            )
+            if is_wrong_or_skipped:
+                notebook.latest_attempt = attempt
+                notebook.status = "active"
+                notebook.error_type = "skipped" if not selected else "wrong"
+                notebook.revision_stage = 0
+                notebook.next_revision_on = timezone.localdate() + timedelta(days=1)
+                notebook.resolved_at = None
+                notebook.save()
+                for interval in due_intervals:
+                    MockTestRevisionQueue.objects.create(
+                        user=attempt.user,
+                        question=entry.question,
+                        source_attempt=attempt,
+                        interval_days=interval,
+                        due_at=timezone.now() + timedelta(days=interval),
+                    )
+            elif notebook.status != "resolved":
+                notebook.status = "resolved"
+                notebook.resolved_at = timezone.now()
+                notebook.next_revision_on = None
+                notebook.save()
+
+    return attempt
+
+
+def mocktest_hub(request):
+    subjects = list(MockTestSubject.objects.filter(is_active=True).order_by("name"))
+    exams = list(
+        MockTestExam.objects.filter(is_active=True)
+        .select_related("subject", "topic")
+        .order_by("-updated_at", "-id")[:30]
+    )
+    question_count = _mocktest_question_pool().count()
+    return render(request, "store/mocktest/hub.html", {
+        "subjects": subjects,
+        "exams": exams,
+        "question_count": question_count,
+    })
+
+
+def mocktest_start(request, slug):
+    exam = get_object_or_404(MockTestExam, slug=slug, is_active=True)
+    question_ids = _select_question_ids_for_exam(exam)
+    if not question_ids:
+        messages.error(request, "No published questions are available for this test yet.")
+        return redirect("mocktest_hub")
+
+    if not request.session.session_key:
+        request.session.save()
+    attempt = MockTestAttempt.objects.create(
+        exam=exam,
+        user=request.user if request.user.is_authenticated else None,
+        guest_token=request.session.session_key or "",
+        integrity_flags={"focus_losses": 0, "fullscreen_exits": 0},
+    )
+
+    for idx, qid in enumerate(question_ids, start=1):
+        MockTestAttemptAnswer.objects.create(
+            attempt=attempt,
+            question_id=qid,
+            question_order=idx,
+            option_order=_build_option_order(exam),
+        )
+
+    return redirect("mocktest_take", attempt_id=attempt.id)
+
+
+def mocktest_take(request, attempt_id):
+    attempt = get_object_or_404(
+        MockTestAttempt.objects.select_related("exam", "user"),
+        pk=attempt_id,
+    )
+    if attempt.user_id and request.user.is_authenticated and attempt.user_id != request.user.id:
+        messages.error(request, "This attempt does not belong to your account.")
+        return redirect("mocktest_hub")
+    if not attempt.user_id:
+        if not request.session.session_key:
+            request.session.save()
+        if attempt.guest_token and attempt.guest_token != request.session.session_key:
+            messages.error(request, "This guest attempt belongs to another browser session.")
+            return redirect("mocktest_hub")
+    if attempt.status in {"submitted", "auto_submitted"}:
+        return redirect("mocktest_result", attempt_id=attempt.id)
+
+    answers = list(
+        attempt.answers.select_related("question", "question__subject", "question__topic").order_by("question_order")
+    )
+    now = timezone.now()
+    deadline = attempt.started_at + timedelta(minutes=attempt.exam.duration_minutes)
+    remaining_seconds = int((deadline - now).total_seconds())
+    if remaining_seconds <= 0:
+        _finalize_mock_attempt(attempt, final_status="auto_submitted")
+        messages.info(request, "Time is over. The test was auto-submitted.")
+        return redirect("mocktest_result", attempt_id=attempt.id)
+
+    if request.method == "POST":
+        action = (request.POST.get("action") or "save").strip().lower()
+        focus_losses = int((request.POST.get("focus_losses") or "0").strip() or "0")
+        fullscreen_exits = int((request.POST.get("fullscreen_exits") or "0").strip() or "0")
+        attempt.integrity_flags = {
+            "focus_losses": focus_losses,
+            "fullscreen_exits": fullscreen_exits,
+        }
+        attempt.warning_count = focus_losses + fullscreen_exits
+        attempt.save(update_fields=["integrity_flags", "warning_count"])
+
+        for ans in answers:
+            selected = (request.POST.get(f"ans_{ans.id}") or "").strip().upper()
+            if selected not in {"A", "B", "C", "D"}:
+                selected = ""
+            marked_review = request.POST.get(f"review_{ans.id}") == "on"
+            spent_raw = (request.POST.get(f"time_{ans.id}") or "0").strip()
+            try:
+                spent = max(0, int(spent_raw))
+            except ValueError:
+                spent = 0
+            ans.selected_option = selected
+            ans.is_marked_for_review = marked_review
+            ans.time_spent_seconds = spent
+            ans.answered_at = timezone.now() if selected else None
+            ans.save(update_fields=["selected_option", "is_marked_for_review", "time_spent_seconds", "answered_at"])
+
+        if action == "submit":
+            _finalize_mock_attempt(attempt, final_status="submitted")
+            return redirect("mocktest_result", attempt_id=attempt.id)
+        messages.success(request, "Answers saved. Continue when ready.")
+        return redirect("mocktest_take", attempt_id=attempt.id)
+
+    return render(request, "store/mocktest/take.html", {
+        "attempt": attempt,
+        "answers": answers,
+        "remaining_seconds": remaining_seconds,
+        "deadline_iso": deadline.isoformat(),
+    })
+
+
+def mocktest_result(request, attempt_id):
+    attempt = get_object_or_404(
+        MockTestAttempt.objects.select_related("exam", "user"),
+        pk=attempt_id,
+    )
+    answers = list(
+        attempt.answers.select_related("question", "question__subject", "question__topic").order_by("question_order")
+    )
+    review_mode = request.GET.get("mode") == "review"
+    return render(request, "store/mocktest/result.html", {
+        "attempt": attempt,
+        "answers": answers,
+        "analytics": attempt.analytics or {},
+        "review_mode": review_mode,
+    })
+
+
+@login_required
+def mocktest_dashboard(request):
+    attempts = list(
+        MockTestAttempt.objects.filter(user=request.user, status__in=["submitted", "auto_submitted"])
+        .select_related("exam")
+        .order_by("-submitted_at", "-id")[:20]
+    )
+    due_revisions = list(
+        MockTestRevisionQueue.objects.filter(user=request.user, is_done=False, due_at__lte=timezone.now())
+        .select_related("question", "question__subject")
+        .order_by("due_at")[:50]
+    )
+    active_mistakes = list(
+        MockTestMistakeNotebook.objects.filter(user=request.user, status="active")
+        .select_related("question", "question__subject")
+        .order_by("-updated_at")[:40]
+    )
+
+    last_7_cutoff = timezone.now() - timedelta(days=7)
+    last_30_cutoff = timezone.now() - timedelta(days=30)
+    last_7 = [a for a in attempts if a.submitted_at and a.submitted_at >= last_7_cutoff]
+    last_30 = [a for a in attempts if a.submitted_at and a.submitted_at >= last_30_cutoff]
+
+    avg7 = round(sum(float(a.score) for a in last_7) / len(last_7), 2) if last_7 else 0
+    avg30 = round(sum(float(a.score) for a in last_30) / len(last_30), 2) if last_30 else 0
+    last_attempt = attempts[0] if attempts else None
+    weak_subjects = (last_attempt.analytics or {}).get("weak_subjects_top3", []) if last_attempt else []
+    daily_plan = (last_attempt.analytics or {}).get("daily_plan", []) if last_attempt else []
+
+    return render(request, "store/mocktest/dashboard.html", {
+        "attempts": attempts,
+        "due_revisions": due_revisions,
+        "active_mistakes": active_mistakes,
+        "avg7": avg7,
+        "avg30": avg30,
+        "weak_subjects": weak_subjects,
+        "daily_plan": daily_plan,
+    })
+
+
+@login_required
+@require_POST
+def mocktest_revision_done(request, entry_id):
+    entry = get_object_or_404(MockTestRevisionQueue, pk=entry_id, user=request.user)
+    if not entry.is_done:
+        entry.is_done = True
+        entry.done_at = timezone.now()
+        entry.save(update_fields=["is_done", "done_at"])
+    return redirect("mocktest_dashboard")
 
 
 # ==================================================

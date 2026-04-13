@@ -108,6 +108,9 @@ def navbar_categories(request):
         }
         cache.set(SITE_SETTINGS_CACHE_KEY, settings_payload, CP_CACHE_TTL)
     site_background_url = settings_payload["site_background_url"]
+    # Keep decorative background focused on homepage so content pages remain readable.
+    if request.path != "/":
+        site_background_url = ""
     site_loader_logo = settings_payload["site_loader_logo"]
     sales_offers_label = settings_payload["sales_offers_label"]
     sales_offers_enabled = settings_payload["sales_offers_enabled"]

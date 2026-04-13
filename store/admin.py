@@ -49,6 +49,15 @@ from .models import (
     IKSWalletTransaction,
     ClassicalWeightUnit,
     UnaniTerm,
+    MockTestSubject,
+    MockTestTopic,
+    MockTestQuestion,
+    MockTestExam,
+    MockTestAttempt,
+    MockTestAttemptAnswer,
+    MockTestMistakeNotebook,
+    MockTestRevisionQueue,
+    MockTestQuestionAuditLog,
 )
 from .admin_site import IdaraAdminSite
 from .coins import manual_adjust_wallet, queue_order_pending_rewards, process_due_pending_rewards_for_user
@@ -2538,6 +2547,76 @@ class BannerAdmin(BulkImportAdminMixin, ProductivityAdminMixin, admin.ModelAdmin
         banner.save()
         return "created" if created else "updated"
 
+
+@admin.register(MockTestSubject)
+class MockTestSubjectAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("name", "is_active", "created_at")
+    search_fields = ("name",)
+    list_filter = ("is_active",)
+
+
+@admin.register(MockTestTopic)
+class MockTestTopicAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("name", "subject", "is_active", "created_at")
+    search_fields = ("name", "subject__name")
+    list_filter = ("subject", "is_active")
+
+
+@admin.register(MockTestQuestion)
+class MockTestQuestionAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("id", "question_preview", "subject", "topic", "difficulty", "status", "is_previous_year", "updated_at")
+    search_fields = ("question_text", "key_concept", "tags")
+    list_filter = ("status", "difficulty", "is_previous_year", "subject", "topic")
+    readonly_fields = ("created_at", "updated_at")
+
+    @admin.display(description="Question")
+    def question_preview(self, obj):
+        text = (obj.question_text or "").strip().replace("\n", " ")
+        return (text[:96] + "...") if len(text) > 96 else text
+
+
+@admin.register(MockTestExam)
+class MockTestExamAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("title", "mode", "subject", "topic", "question_count", "duration_minutes", "access_level", "is_active", "updated_at")
+    list_filter = ("mode", "access_level", "is_active", "subject", "topic")
+    search_fields = ("title", "description")
+
+
+@admin.register(MockTestAttempt)
+class MockTestAttemptAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("id", "exam", "user", "status", "score", "correct_count", "wrong_count", "submitted_at")
+    list_filter = ("status", "exam")
+    search_fields = ("exam__title", "user__username")
+    readonly_fields = ("started_at", "submitted_at", "analytics", "integrity_flags")
+
+
+@admin.register(MockTestAttemptAnswer)
+class MockTestAttemptAnswerAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("attempt", "question", "question_order", "selected_option", "is_correct", "time_spent_seconds")
+    list_filter = ("is_correct", "attempt__exam")
+    search_fields = ("attempt__exam__title", "question__question_text")
+
+
+@admin.register(MockTestMistakeNotebook)
+class MockTestMistakeNotebookAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("user", "question", "status", "error_type", "next_revision_on", "revision_stage", "updated_at")
+    list_filter = ("status", "error_type")
+    search_fields = ("user__username", "question__question_text")
+
+
+@admin.register(MockTestRevisionQueue)
+class MockTestRevisionQueueAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("user", "question", "interval_days", "due_at", "is_done", "done_at")
+    list_filter = ("is_done", "interval_days")
+    search_fields = ("user__username", "question__question_text")
+
+
+@admin.register(MockTestQuestionAuditLog)
+class MockTestQuestionAuditLogAdmin(ProductivityAdminMixin, admin.ModelAdmin):
+    list_display = ("question", "action", "changed_by", "created_at")
+    list_filter = ("action", "created_at")
+    search_fields = ("question__question_text", "notes")
+
 # ======================
 # CUSTOM ADMIN SITE
 # ======================
@@ -2568,4 +2647,13 @@ admin_site.register(IKSWallet, IKSWalletAdmin)
 admin_site.register(IKSWalletTransaction, IKSWalletTransactionAdmin)
 admin_site.register(UnaniTerm, UnaniTermAdmin)
 admin_site.register(ClassicalWeightUnit, ClassicalWeightUnitAdmin)
+admin_site.register(MockTestSubject, MockTestSubjectAdmin)
+admin_site.register(MockTestTopic, MockTestTopicAdmin)
+admin_site.register(MockTestQuestion, MockTestQuestionAdmin)
+admin_site.register(MockTestExam, MockTestExamAdmin)
+admin_site.register(MockTestAttempt, MockTestAttemptAdmin)
+admin_site.register(MockTestAttemptAnswer, MockTestAttemptAnswerAdmin)
+admin_site.register(MockTestMistakeNotebook, MockTestMistakeNotebookAdmin)
+admin_site.register(MockTestRevisionQueue, MockTestRevisionQueueAdmin)
+admin_site.register(MockTestQuestionAuditLog, MockTestQuestionAuditLogAdmin)
 

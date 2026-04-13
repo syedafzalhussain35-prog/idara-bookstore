@@ -1,0 +1,178 @@
+{% extends 'store/base.html' %}
+
+{% block title %}{{ attempt.exam.title }} - Mock Test{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h5 fw-bold mb-0" style="color: var(--primary-magenta);">{{ attempt.exam.title }}</h1>
+            <div class="small text-muted">{{ attempt.exam.question_count }} questions | Negative marking: {{ attempt.exam.negative_marking }}</div>
+        </div>
+        <div class="text-end">
+            <div class="small text-muted">Time Left</div>
+            <div id="examTimer" class="fw-bold fs-5 text-danger">--:--</div>
+        </div>
+    </div>
+
+    <form method="post" id="mockTestForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="actionInput" value="save">
+        <input type="hidden" name="focus_losses" id="focusLosses" value="0">
+        <input type="hidden" name="fullscreen_exits" id="fullscreenExits" value="0">
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-9">
+                {% for ans in answers %}
+                <article class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h2 class="h6 fw-bold mb-0">Q{{ ans.question_order }}. {{ ans.question.question_text }}</h2>
+                            <span class="badge text-bg-light border">{{ ans.question.difficulty|title }}</span>
+                        </div>
+
+                        <input type="hidden" name="time_{{ ans.id }}" id="time_{{ ans.id }}" value="{{ ans.time_spent_seconds|default:0 }}">
+
+                        {% for opt in ans.option_order %}
+                        <label class="d-block border rounded p-2 mb-2">
+                            <input type="radio" name="ans_{{ ans.id }}" value="{{ opt }}" {% if ans.selected_option == opt %}checked{% endif %}>
+                            <strong>{{ opt }}.</strong>
+                            {% if opt == 'A' %}{{ ans.question.option_a }}{% endif %}
+                            {% if opt == 'B' %}{{ ans.question.option_b }}{% endif %}
+                            {% if opt == 'C' %}{{ ans.question.option_c }}{% endif %}
+                            {% if opt == 'D' %}{{ ans.question.option_d }}{% endif %}
+                        </label>
+                        {% endfor %}
+
+                        <label class="small">
+                            <input type="checkbox" name="review_{{ ans.id }}" {% if ans.is_marked_for_review %}checked{% endif %}>
+                            Mark for review
+                        </label>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+
+            <div class="col-12 col-lg-3">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 90px;">
+                    <div class="card-body">
+                        <h3 class="h6 fw-bold">Progress</h3>
+                        <div class="small text-muted mb-2">Questions: {{ answers|length }}</div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-outline-dark" onclick="document.getElementById('actionInput').value='save'">Save Progress</button>
+                            <button type="submit" class="btn btn-brand" onclick="document.getElementById('actionInput').value='submit'">Submit Test</button>
+                            <a href="{% url 'mocktest_hub' %}" class="btn btn-sm btn-link">Back to Hub</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const form = document.getElementById("mockTestForm");
+    const timerEl = document.getElementById("examTimer");
+    const deadline = new Date("{{ deadline_iso }}").getTime();
+    const storageKey = `mock_attempt_{{ attempt.id }}`;
+    let focusLosses = 0;
+    let fullscreenExits = 0;
+
+    const saveLocal = () => {
+        const data = {
+            answers: {},
+            reviews: {},
+            times: {},
+            focusLosses,
+            fullscreenExits,
+        };
+        document.querySelectorAll("input[type='radio']:checked").forEach((el) => {
+            data.answers[el.name] = el.value;
+        });
+        document.querySelectorAll("input[type='checkbox'][name^='review_']").forEach((el) => {
+            data.reviews[el.name] = el.checked;
+        });
+        document.querySelectorAll("input[id^='time_']").forEach((el) => {
+            data.times[el.id] = el.value;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(data));
+    };
+
+    const restoreLocal = () => {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return;
+        try {
+            const data = JSON.parse(raw);
+            Object.entries(data.answers || {}).forEach(([name, value]) => {
+                const el = document.querySelector(`input[type='radio'][name='${name}'][value='${value}']`);
+                if (el) el.checked = true;
+            });
+            Object.entries(data.reviews || {}).forEach(([name, value]) => {
+                const el = document.querySelector(`input[type='checkbox'][name='${name}']`);
+                if (el) el.checked = !!value;
+            });
+            Object.entries(data.times || {}).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            });
+            focusLosses = Number(data.focusLosses || 0);
+            fullscreenExits = Number(data.fullscreenExits || 0);
+        } catch (_) {}
+    };
+
+    const updateTimer = () => {
+        const diff = deadline - Date.now();
+        if (diff <= 0) {
+            timerEl.textContent = "00:00";
+            document.getElementById("actionInput").value = "submit";
+            document.getElementById("focusLosses").value = String(focusLosses);
+            document.getElementById("fullscreenExits").value = String(fullscreenExits);
+            saveLocal();
+            form.submit();
+            return;
+        }
+        const secs = Math.floor(diff / 1000);
+        const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+        const ss = String(secs % 60).padStart(2, "0");
+        timerEl.textContent = `${mm}:${ss}`;
+    };
+
+    let activeQuestionTimeStart = Date.now();
+    const tickQuestionTimes = () => {
+        const elapsed = Math.max(1, Math.floor((Date.now() - activeQuestionTimeStart) / 1000));
+        const fields = document.querySelectorAll("input[id^='time_']");
+        if (!fields.length) return;
+        const perField = Math.max(1, Math.floor(elapsed / fields.length));
+        fields.forEach((el) => {
+            const v = Number(el.value || 0);
+            el.value = String(v + perField);
+        });
+        activeQuestionTimeStart = Date.now();
+    };
+
+    window.addEventListener("blur", () => { focusLosses += 1; saveLocal(); });
+    document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement) {
+            fullscreenExits += 1;
+            saveLocal();
+        }
+    });
+
+    form.addEventListener("submit", () => {
+        tickQuestionTimes();
+        document.getElementById("focusLosses").value = String(focusLosses);
+        document.getElementById("fullscreenExits").value = String(fullscreenExits);
+        saveLocal();
+        if (document.getElementById("actionInput").value === "submit") {
+            localStorage.removeItem(storageKey);
+        }
+    });
+
+    setInterval(updateTimer, 1000);
+    setInterval(() => { tickQuestionTimes(); saveLocal(); }, 15000);
+    restoreLocal();
+    updateTimer();
+})();
+</script>
+{% endblock %}

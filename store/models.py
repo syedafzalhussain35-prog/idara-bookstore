@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Sum, F, Avg
 from django.conf import settings
@@ -1298,3 +1299,300 @@ class DictionaryTermOpenLog(models.Model):
 
     def __str__(self):
         return f"{self.term.english_term} @ {self.created_at:%Y-%m-%d}"
+
+
+class MockTestSubject(models.Model):
+    name = models.CharField(max_length=120, unique=True, db_index=True)
+    slug = models.SlugField(max_length=140, unique=True, blank=True, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)[:132] or "subject"
+            candidate = base
+            counter = 2
+            while MockTestSubject.objects.exclude(pk=self.pk).filter(slug=candidate).exists():
+                suffix = f"-{counter}"
+                candidate = f"{base[:140-len(suffix)]}{suffix}"
+                counter += 1
+            self.slug = candidate
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class MockTestTopic(models.Model):
+    subject = models.ForeignKey(MockTestSubject, on_delete=models.CASCADE, related_name="topics")
+    name = models.CharField(max_length=140, db_index=True)
+    slug = models.SlugField(max_length=160, blank=True, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["subject__name", "name"]
+        unique_together = [("subject", "name")]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)[:152] or "topic"
+            candidate = base
+            counter = 2
+            while MockTestTopic.objects.exclude(pk=self.pk).filter(subject=self.subject, slug=candidate).exists():
+                suffix = f"-{counter}"
+                candidate = f"{base[:160-len(suffix)]}{suffix}"
+                counter += 1
+            self.slug = candidate
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.subject.name} - {self.name}"
+
+
+class MockTestQuestion(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("published", "Published"),
+    ]
+    DIFFICULTY_CHOICES = [
+        ("easy", "Easy"),
+        ("medium", "Medium"),
+        ("hard", "Hard"),
+    ]
+    OPTION_CHOICES = [
+        ("A", "A"),
+        ("B", "B"),
+        ("C", "C"),
+        ("D", "D"),
+    ]
+
+    subject = models.ForeignKey(MockTestSubject, on_delete=models.SET_NULL, null=True, blank=True, related_name="questions")
+    topic = models.ForeignKey(MockTestTopic, on_delete=models.SET_NULL, null=True, blank=True, related_name="questions")
+    question_text = models.TextField()
+    option_a = models.TextField()
+    option_b = models.TextField()
+    option_c = models.TextField()
+    option_d = models.TextField()
+    correct_option = models.CharField(max_length=1, choices=OPTION_CHOICES)
+    explanation_short = models.TextField(blank=True)
+    explanation_detailed = models.TextField(blank=True)
+    memory_trick = models.TextField(blank=True)
+    key_concept = models.CharField(max_length=255, blank=True)
+    reference_source = models.CharField(max_length=255, blank=True)
+    tags = models.CharField(max_length=400, blank=True, help_text="Comma-separated concept tags.")
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default="medium", db_index=True)
+    is_previous_year = models.BooleanField(default=False, db_index=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="draft", db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="mocktest_questions_created")
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="mocktest_questions_updated")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "is_active"]),
+            models.Index(fields=["subject", "topic"]),
+            models.Index(fields=["difficulty", "is_previous_year"]),
+        ]
+
+    def __str__(self):
+        preview = (self.question_text or "").strip().replace("\n", " ")
+        return preview[:80] if preview else f"Question {self.pk}"
+
+
+class MockTestExam(models.Model):
+    MODE_CHOICES = [
+        ("full_length", "Full Length"),
+        ("subject", "Subject Wise"),
+        ("topic", "Topic Wise"),
+        ("daily", "Daily Test"),
+        ("adaptive", "Adaptive"),
+        ("custom", "Custom"),
+    ]
+    ACCESS_CHOICES = [
+        ("free", "Free"),
+        ("premium", "Premium"),
+    ]
+
+    title = models.CharField(max_length=200, db_index=True)
+    slug = models.SlugField(max_length=220, unique=True, blank=True, db_index=True)
+    description = models.TextField(blank=True)
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default="full_length", db_index=True)
+    subject = models.ForeignKey(MockTestSubject, on_delete=models.SET_NULL, null=True, blank=True, related_name="exams")
+    topic = models.ForeignKey(MockTestTopic, on_delete=models.SET_NULL, null=True, blank=True, related_name="exams")
+    question_count = models.PositiveIntegerField(default=100, validators=[MinValueValidator(1)])
+    duration_minutes = models.PositiveIntegerField(default=120, validators=[MinValueValidator(1)])
+    marks_per_question = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("4.00"))
+    negative_marking = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("1.00"))
+    pass_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("50.00"))
+    language = models.CharField(max_length=40, default="English")
+    shuffle_questions = models.BooleanField(default=True)
+    shuffle_options = models.BooleanField(default=True)
+    show_result_immediately = models.BooleanField(default=True)
+    allow_review_mode = models.BooleanField(default=True)
+    is_ranked = models.BooleanField(default=False)
+    access_level = models.CharField(max_length=10, choices=ACCESS_CHOICES, default="free")
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-id"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.title)[:210] or "mock-test"
+            candidate = base
+            counter = 2
+            while MockTestExam.objects.exclude(pk=self.pk).filter(slug=candidate).exists():
+                suffix = f"-{counter}"
+                candidate = f"{base[:220-len(suffix)]}{suffix}"
+                counter += 1
+            self.slug = candidate
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
+class MockTestAttempt(models.Model):
+    STATUS_CHOICES = [
+        ("in_progress", "In Progress"),
+        ("submitted", "Submitted"),
+        ("auto_submitted", "Auto Submitted"),
+    ]
+
+    exam = models.ForeignKey(MockTestExam, on_delete=models.CASCADE, related_name="attempts")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="mocktest_attempts")
+    guest_token = models.CharField(max_length=120, blank=True, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="in_progress", db_index=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    time_taken_seconds = models.PositiveIntegerField(default=0)
+    total_questions = models.PositiveIntegerField(default=0)
+    correct_count = models.PositiveIntegerField(default=0)
+    wrong_count = models.PositiveIntegerField(default=0)
+    skipped_count = models.PositiveIntegerField(default=0)
+    attempted_count = models.PositiveIntegerField(default=0)
+    score = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    max_score = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    percentile_estimate = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    rank_projection = models.PositiveIntegerField(default=0)
+    warning_count = models.PositiveIntegerField(default=0)
+    integrity_flags = models.JSONField(default=dict, blank=True)
+    analytics = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-started_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "started_at"]),
+            models.Index(fields=["exam", "status"]),
+        ]
+
+    def __str__(self):
+        owner = self.user.username if self.user_id else "Guest"
+        return f"{owner} - {self.exam.title}"
+
+
+class MockTestAttemptAnswer(models.Model):
+    OPTION_CHOICES = [
+        ("A", "A"),
+        ("B", "B"),
+        ("C", "C"),
+        ("D", "D"),
+        ("", "Unanswered"),
+    ]
+
+    attempt = models.ForeignKey(MockTestAttempt, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(MockTestQuestion, on_delete=models.CASCADE, related_name="attempt_answers")
+    question_order = models.PositiveIntegerField(default=0)
+    option_order = models.JSONField(default=list, blank=True)
+    selected_option = models.CharField(max_length=1, choices=OPTION_CHOICES, blank=True, default="")
+    is_marked_for_review = models.BooleanField(default=False)
+    is_correct = models.BooleanField(default=False)
+    time_spent_seconds = models.PositiveIntegerField(default=0)
+    answered_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("attempt", "question")]
+        ordering = ["question_order", "id"]
+
+    def __str__(self):
+        return f"Attempt {self.attempt_id} Q{self.question_id}"
+
+
+class MockTestMistakeNotebook(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("resolved", "Resolved"),
+    ]
+    ERROR_TYPE_CHOICES = [
+        ("wrong", "Wrong"),
+        ("skipped", "Skipped"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mocktest_mistakes")
+    question = models.ForeignKey(MockTestQuestion, on_delete=models.CASCADE, related_name="mistake_entries")
+    latest_attempt = models.ForeignKey(MockTestAttempt, on_delete=models.SET_NULL, null=True, blank=True, related_name="mistake_entries")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="active", db_index=True)
+    error_type = models.CharField(max_length=10, choices=ERROR_TYPE_CHOICES, default="wrong")
+    next_revision_on = models.DateField(null=True, blank=True, db_index=True)
+    revision_stage = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("user", "question")]
+        ordering = ["-updated_at", "-id"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.question_id}"
+
+
+class MockTestRevisionQueue(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mocktest_revision_queue")
+    question = models.ForeignKey(MockTestQuestion, on_delete=models.CASCADE, related_name="revision_queue_entries")
+    source_attempt = models.ForeignKey(MockTestAttempt, on_delete=models.SET_NULL, null=True, blank=True, related_name="revision_queue_entries")
+    interval_days = models.PositiveSmallIntegerField(default=1)
+    due_at = models.DateTimeField(db_index=True)
+    is_done = models.BooleanField(default=False, db_index=True)
+    done_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["due_at", "id"]
+        indexes = [
+            models.Index(fields=["user", "is_done", "due_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - Q{self.question_id} ({self.interval_days}d)"
+
+
+class MockTestQuestionAuditLog(models.Model):
+    ACTION_CHOICES = [
+        ("create", "Create"),
+        ("update", "Update"),
+        ("publish", "Publish"),
+        ("unpublish", "Unpublish"),
+    ]
+
+    question = models.ForeignKey(MockTestQuestion, on_delete=models.CASCADE, related_name="audit_logs")
+    action = models.CharField(max_length=12, choices=ACTION_CHOICES)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+    snapshot = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.question_id} - {self.action}"

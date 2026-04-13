@@ -1,0 +1,93 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Mock Test Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 fw-bold mb-0" style="color: var(--primary-magenta);">My Mock Test Dashboard</h1>
+        <a href="{% url 'mocktest_hub' %}" class="btn btn-sm btn-outline-dark">Open Tests</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Avg Score (7d)</div><div class="fw-bold">{{ avg7 }}</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Avg Score (30d)</div><div class="fw-bold">{{ avg30 }}</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Due Revisions</div><div class="fw-bold">{{ due_revisions|length }}</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="small text-muted">Active Mistakes</div><div class="fw-bold">{{ active_mistakes|length }}</div></div></div></div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold">Weak Subjects</h2>
+                    {% if weak_subjects %}
+                    <ul class="mb-0">
+                        {% for ws in weak_subjects %}
+                        <li class="small">{{ ws.name }} - {{ ws.accuracy }}% accuracy</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="small text-muted">No weak-subject data yet. Attempt a test first.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 fw-bold">Today Plan</h2>
+                    {% if daily_plan %}
+                    <ul class="mb-0">
+                        {% for item in daily_plan %}<li class="small">{{ item }}</li>{% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="small text-muted">Practice one subject-wise test and review wrong answers.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h6 fw-bold">Due Revision Queue</h2>
+            {% for entry in due_revisions %}
+            <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
+                <div class="small">Q{{ entry.question.id }} | {{ entry.question.subject.name|default:'General' }} | due {{ entry.due_at }}</div>
+                <form method="post" action="{% url 'mocktest_revision_done' entry.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-success" type="submit">Mark Done</button>
+                </form>
+            </div>
+            {% empty %}
+            <div class="small text-muted">No due revisions right now.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h2 class="h6 fw-bold">Recent Attempts</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>Exam</th><th>Score</th><th>Correct</th><th>Submitted</th><th></th></tr></thead>
+                    <tbody>
+                    {% for at in attempts %}
+                    <tr>
+                        <td>{{ at.exam.title }}</td>
+                        <td>{{ at.score }} / {{ at.max_score }}</td>
+                        <td>{{ at.correct_count }}</td>
+                        <td>{{ at.submitted_at|default:'-' }}</td>
+                        <td><a href="{% url 'mocktest_result' at.id %}" class="btn btn-sm btn-outline-dark">View</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-muted">No attempts yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

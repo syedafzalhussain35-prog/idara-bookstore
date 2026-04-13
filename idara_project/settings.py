@@ -5,6 +5,8 @@ Django settings for idara_project
 from pathlib import Path
 from decimal import Decimal
 import os
+import hashlib
+import warnings
 import dj_database_url
 import cloudinary
 
@@ -17,9 +19,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==================================================
 # SECURITY
 # ==================================================
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-secret")
-
-
 def env_bool(name, default=False):
     value = os.getenv(name)
     if value is None:
@@ -29,9 +28,34 @@ def env_bool(name, default=False):
 
 # Default to DEBUG locally, but stay secure by default on hosted deployments.
 is_hosted_env = bool(os.getenv("RENDER_EXTERNAL_HOSTNAME") or os.getenv("DATABASE_URL"))
+
+
+def resolve_secret_key():
+    configured = os.getenv("DJANGO_SECRET_KEY")
+    if configured:
+        return configured
+
+    if not is_hosted_env:
+        return "dev-only-secret"
+
+    # Keep hosted app alive even if env var is missing; still warn so it can be fixed.
+    entropy = "|".join([
+        os.getenv("RENDER_SERVICE_ID", ""),
+        os.getenv("RENDER_EXTERNAL_HOSTNAME", ""),
+        os.getenv("DATABASE_URL", ""),
+        str(BASE_DIR),
+    ])
+    digest = hashlib.sha256(entropy.encode("utf-8")).hexdigest()
+    warnings.warn(
+        "DJANGO_SECRET_KEY is not set in hosted environment. "
+        "Using a generated fallback key. Set DJANGO_SECRET_KEY in Render env vars.",
+        RuntimeWarning,
+    )
+    return f"render-fallback-{digest}"
+
+
+SECRET_KEY = resolve_secret_key()
 DEBUG = env_bool("DEBUG", default=not is_hosted_env)
-if not DEBUG and SECRET_KEY == "dev-only-secret":
-    raise RuntimeError("Set DJANGO_SECRET_KEY when DEBUG=False.")
 
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
 if allowed_hosts_env:
